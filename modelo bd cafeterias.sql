@@ -1,6 +1,6 @@
 -- ============================================================================
 -- PROYECTO: Sistema de Cafeterías UPB
--- BASE DE DATOS: PostgreSQL (DBeaver / Docker)
+-- BASE DE DATOS: PostgreSQL 16.14
 -- ESTRUCTURA: Tablas Normalizadas (3FN) + Funciones Almacenadas (CRUD)
 -- ============================================================================
 
