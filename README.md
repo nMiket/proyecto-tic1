@@ -22,6 +22,18 @@ En horas pico, los estudiantes, docentes y colaboradores de la UPB enfrentan fil
 
 ---
 
+##  Alcance del Proyecto
+
+Para garantizar el cumplimiento de los objetivos dentro del marco del curso, el alcance ha sido delimitado de la siguiente manera:
+
+###  Incluido en el Sistema (In Scope)
+* **Plataforma Web Responsive:** Interfaz adaptada a dispositivos móviles y de escritorio para consulta de menús y selección de cafeterías.
+* **Gestión de Pedidos & Carrito:** Selección de productos, resumen de orden, desglose de totales y caja de observaciones.
+* **Módulo de Identificación del Cliente:** Formulario para la captura de datos institucionales UPB (Nombre, Teléfono y Correo).
+* **Panel Operativo de Cocina:** Interfaz en tiempo real para el personal operativo con cambio inmediato de estados de comanda.
+* **Módulo Administrativo de Menú:** Panel para editar precios, tamaños, descripción, ingredientes extra y alternar disponibilidad (disponible/agotado).
+* **Checkout & Flujo de Pago:** Integración del proceso con pasarela de pagos.
+
 ##  Equipo de Trabajo
 
 Este proyecto es desarrollado en el marco de la asignatura **Proyecto Aplicado en TIC 1**, guiado por la docente **Yuri Marcela Escobar**:
