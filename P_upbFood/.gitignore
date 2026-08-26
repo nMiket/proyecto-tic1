@@ -1,0 +1,56 @@
+# =========================
+# Monorepo - General
+# =========================
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.iml
+*.ipr
+*.iws
+
+# Logs
+*.log
+logs/
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# =========================
+# Frontend (Vite + React)
+# =========================
+Frontend/node_modules/
+Frontend/dist/
+Frontend/dist-ssr/
+Frontend/.vite/
+Frontend/.eslintcache
+Frontend/coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# Backend (Spring Boot + Maven)
+# =========================
+Backend/target/
+Backend/.mvn/wrapper/maven-wrapper.jar
+!Backend/**/src/main/**/target/
+!Backend/**/src/test/**/target/
+
+# Java compiled artifacts
+*.class
+
+# =========================
+# Database / Docker
+# =========================
+postgres_data/
+*.pid
+
+# Docker build cache / artifacts
+**/.docker/

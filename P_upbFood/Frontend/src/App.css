@@ -1,0 +1,35 @@
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+}
+
+.card {
+  width: min(720px, 100%);
+  padding: 2rem;
+  border-radius: 14px;
+  border: 1px solid #d8e0de;
+  background: #ffffff;
+  box-shadow: 0 16px 40px -24px rgba(18, 45, 38, 0.35);
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2c6e5f;
+}
+
+.card h1 {
+  margin: 0.5rem 0 1rem;
+  color: #153c33;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+}
+
+.card p {
+  margin: 0;
+  color: #315349;
+  line-height: 1.5;
+}
