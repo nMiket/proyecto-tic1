@@ -386,3 +386,6 @@ SELECT fn_categoria_crear('Snacks');
 
 SELECT fn_producto_crear(1, 1, 'Ejecutivo de Carne', 15000.00, TRUE);
 SELECT fn_producto_crear(1, 2, 'Jugo Natural 16oz', 4500.00, TRUE);
+
+-- Usuario administrativo de demostración para el login del panel administrativo
+SELECT fn_usuario_admin_crear(1, 'admin@upb.edu.co', 'admin123');

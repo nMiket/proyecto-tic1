@@ -1,35 +1,343 @@
 .app-shell {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-.card {
-  width: min(720px, 100%);
-  padding: 2rem;
-  border-radius: 14px;
-  border: 1px solid #d8e0de;
-  background: #ffffff;
-  box-shadow: 0 16px 40px -24px rgba(18, 45, 38, 0.35);
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid #d9e7e2;
+  border-radius: 16px;
+  padding: 14px 18px;
+  backdrop-filter: blur(10px);
+}
+
+.brand {
+  font-weight: 700;
+  color: #123e36;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.nav-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.nav-actions a,
+.login-form button,
+.dashboard-header button,
+.product-form button {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-actions a {
+  background: #edf5f2;
+  color: #1f4d46;
+}
+
+.nav-actions a.active {
+  background: #0f766e;
+  color: white;
+}
+
+.hero-card,
+.login-card,
+.dashboard-card {
+  width: min(820px, 100%);
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid #d9e7e2;
+  border-radius: 26px;
+  box-shadow: 0 18px 42px -28px rgba(15, 118, 110, 0.35);
+  padding: 32px;
 }
 
 .eyebrow {
-  margin: 0;
-  font-size: 0.85rem;
+  margin: 0 0 10px;
+  font-size: 0.8rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #2c6e5f;
 }
 
-.card h1 {
-  margin: 0.5rem 0 1rem;
+.hero-card h1,
+.login-header h2,
+.dashboard-header h2,
+.panel h3 {
+  margin: 0;
   color: #153c33;
+}
+
+.hero-card h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin-bottom: 16px;
+}
+
+.hero-card p,
+.dashboard-card p {
+  color: #315349;
+  line-height: 1.6;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(150px, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.stats div {
+  padding: 18px;
+  background: #f1faf7;
+  border: 1px solid #d6ece5;
+  border-radius: 14px;
+}
+
+.stats strong {
+  display: block;
+  font-size: 1.5rem;
+  color: #0f766e;
+  margin-bottom: 6px;
+}
+
+.stats span {
+  color: #456861;
+}
+
+.login-header {
+  margin-bottom: 18px;
+}
+
+.login-form,
+.product-form {
+  display: grid;
+  gap: 18px;
+}
+
+.login-form label,
+.product-form label {
+  display: grid;
+  gap: 8px;
+  color: #1d433d;
+  font-weight: 600;
+}
+
+.login-form input,
+.product-form input,
+.product-form select {
+  border: 1px solid #cfe1dc;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 1rem;
+}
+
+.login-form button,
+.dashboard-header button,
+.product-form button {
+  background: #0f766e;
+  color: white;
+  width: fit-content;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 18px;
+  margin-bottom: 26px;
+}
+
+.metric-card {
+  background: #f4fbf8;
+  border: 1px solid #d8efe7;
+  border-radius: 18px;
+  padding: 20px 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.metric-card.accent {
+  background: linear-gradient(135deg, #0f766e, #0d9488);
+  color: white;
+}
+
+.metric-card span,
+.metric-card small {
+  color: inherit;
+  opacity: 0.9;
+}
+
+.metric-card strong {
   font-size: clamp(1.6rem, 3vw, 2.2rem);
 }
 
-.card p {
+.dashboard-panels,
+.product-section {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.panel {
+  background: #f8faf9;
+  border: 1px solid #dfece8;
+  border-radius: 18px;
+  padding: 20px;
+}
+
+.panel ul {
+  margin: 18px 0 0;
+  padding-left: 18px;
+  color: #32564f;
+  line-height: 2;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #e2efeb;
+  color: #365f58;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+.checkbox-row {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  flex-direction: row !important;
+}
+
+.checkbox-row input {
+  width: 18px;
+  height: 18px;
+}
+
+.product-list {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 0;
+  display: grid;
+  gap: 12px;
+}
+
+.product-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #edf8f5;
+  border: 1px solid #d9efea;
+}
+
+.product-list li div {
+  display: grid;
+  gap: 4px;
+}
+
+.product-actions {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.inline-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.product-list span {
+  color: #3c5f58;
+}
+
+.product-form-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.secondary-button,
+.mini-button {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.secondary-button {
+  background: #e3efec;
+  color: #1b4d46;
+}
+
+.mini-button {
+  background: #dff7f3;
+  color: #0f766e;
+}
+
+.mini-button.danger {
+  background: #ffe4e1;
+  color: #b42318;
+}
+
+.secondary {
+  background: #0b3b36 !important;
+}
+
+.error-message {
   margin: 0;
-  color: #315349;
-  line-height: 1.5;
+  color: #b42318;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .topbar,
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hero-card,
+  .login-card,
+  .dashboard-card {
+    padding: 22px 18px;
+  }
+
+  .stats,
+  .dashboard-grid,
+  .dashboard-panels,
+  .product-section {
+    grid-template-columns: 1fr;
+  }
 }
