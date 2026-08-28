@@ -1,0 +1,48 @@
+.lista-restaurantes {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.lista-restaurantes h2 {
+  margin-bottom: 20px;
+}
+
+.restaurantes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+
+  max-height: 500px;
+  overflow-y: auto;
+
+  padding: 5px 10px 5px 5px;
+}
+
+.restaurante-card {
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background-color: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.restaurante-card h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.restaurante-card p {
+  margin: 8px 0;
+}
+
+.estado-abierto {
+  color: green;
+  font-weight: bold;
+}
+
+.estado-cerrado {
+  color: red;
+  font-weight: bold;
+}
+

@@ -53,12 +53,12 @@ Servicios:
 
 Con los contenedores levantados, crea una nueva conexión de tipo **PostgreSQL** en DataGrip usando:
 
-| Campo | Valor |
-|---|---|
-| Host | `localhost` |
-| Port | `5432` |
-| Database | `upbfood` |
-| User | `upbfood` |
+| Campo    | Valor          |
+| -------- | -------------- |
+| Host     | `localhost`  |
+| Port     | `5432`       |
+| Database | `upbfood`    |
+| User     | `upbfood`    |
 | Password | `upbfood123` |
 
 La URL JDBC equivalente es:
