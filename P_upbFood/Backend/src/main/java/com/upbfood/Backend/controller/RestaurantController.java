@@ -20,7 +20,7 @@ public class RestaurantController {
         this.restaurantRepository = restaurantRepository;
     }
 
-    @GetMapping("/restaurants")
+    @GetMapping("/restaurantes")
     public ResponseEntity<List<Restaurant>> listRestaurants() {
         List<Restaurant> restaurants = restaurantRepository.findAll();
         return ResponseEntity.ok(restaurants);
