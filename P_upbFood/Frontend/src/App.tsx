@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import ListaRestaurantes from './components/ListaRestaurantes'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import './App.css'
 
@@ -122,23 +123,29 @@ function App() {
 
 function HomePage() {
   return (
-    <section className="hero-card">
-      <p className="eyebrow">Comedor UPB</p>
-      <h1>Haz tu pedido antes de llegar</h1>
-      <p>
-        Explora cafeterías, revisa el menú y prepara tu pedido desde cualquier dispositivo.
-      </p>
-      <div className="stats">
-        <div>
-          <strong>3 min</strong>
-          <span>tiempo estimado de entrega</span>
+    <>
+      <section className="hero-card">
+        <p className="eyebrow">Comedor UPB</p>
+        <h1>Haz tu pedido antes de llegar</h1>
+        <p>
+          Explora cafeterías, revisa el menú y prepara tu pedido desde cualquier dispositivo.
+        </p>
+
+        <div className="stats">
+          <div>
+            <strong>3 min</strong>
+            <span>tiempo estimado de entrega</span>
+          </div>
+
+          <div>
+            <strong>4</strong>
+            <span>cafeterías disponibles</span>
+          </div>
         </div>
-        <div>
-          <strong>4</strong>
-          <span>cafeterías disponibles</span>
-        </div>
-      </div>
-    </section>
+      </section>
+
+      <ListaRestaurantes />
+    </>
   )
 }
 
