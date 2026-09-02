@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import ListaRestaurantes from './components/ListaRestaurantes'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import ListaRestaurantes from './components/ListaRestaurantes'
+import { CardProducto } from './components/CardProducto'
+import type { Producto } from './types/Producto'
 import './App.css'
 
 type LoginResponse = {
@@ -21,7 +23,34 @@ type ProductItem = {
 
 const STORAGE_KEY = 'upbfood-admin-auth'
 
-function App() {
+const PRODUCTOS_CATALOGO: Producto[] = [
+  {
+    id: 1,
+    nombre: 'Empanada de Carne',
+    descripcion: 'Deliciosa empanada crujiente llena de carne desmechada y papa.',
+    precio: 3500,
+    imagenUrl: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=400',
+    disponible: true,
+  },
+  {
+    id: 2,
+    nombre: 'Jugo Natural en Agua',
+    descripcion: 'Jugo natural de mora, maracuyá o lulo (400ml).',
+    precio: 5000,
+    imagenUrl: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400',
+    disponible: true,
+  },
+  {
+    id: 3,
+    nombre: 'Combo Almuerzo Ejecutivo',
+    descripcion: 'Proteína, arroz, ensalada, principio del día y sobremesa.',
+    precio: 14500,
+    imagenUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
+    disponible: true,
+  },
+]
+
+export function App() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
   const [adminName, setAdminName] = useState('')
   const [restauranteId, setRestauranteId] = useState<number | null>(null)
@@ -145,6 +174,19 @@ function HomePage() {
       </section>
 
       <ListaRestaurantes />
+
+      <section className="menu-destacado" style={{ marginTop: '2.5rem' }}>
+        <h2 style={{ fontSize: '1.5rem', color: '#0f3d3e', marginBottom: '1.2rem' }}>Menú UPB Food</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
+          {PRODUCTOS_CATALOGO.map((prod) => (
+            <CardProducto
+              key={prod.id}
+              producto={prod}
+              onAgregar={(p) => alert(`Agregado al carrito: ${p.nombre}`)}
+            />
+          ))}
+        </div>
+      </section>
     </>
   )
 }
@@ -228,6 +270,7 @@ function AdminDashboardPage({
   const [productError, setProductError] = useState('')
   const [loadingProducts, setLoadingProducts] = useState(false)
   const [editingProductId, setEditingProductId] = useState<number | null>(null)
+
   const resetProductForm = () => {
     setProductName('')
     setProductPrice('')
