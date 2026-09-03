@@ -13,6 +13,8 @@ export interface Restaurante {
 
 type CardRestauranteProps = {
   restaurante: Restaurante
+  seleccionado?: boolean
+  onClick?: () => void
 }
 
 const DEFAULT_IMAGE =
@@ -21,7 +23,7 @@ const DEFAULT_IMAGE =
 const MONTANA_IMAGE =
   'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=900&q=80'
 
-function CardRestaurante({ restaurante }: CardRestauranteProps) {
+function CardRestaurante({ restaurante, seleccionado, onClick }: CardRestauranteProps) {
   const estadoClass = restaurante.estado.toLowerCase().replace(' ', '-')
   const imagenUrl = restaurante.imagen
     ? restaurante.imagen
@@ -30,7 +32,13 @@ function CardRestaurante({ restaurante }: CardRestauranteProps) {
       : DEFAULT_IMAGE
 
   return (
-    <article className="restaurant-card">
+    <article 
+      className={`restaurant-card ${seleccionado ? 'restaurant-card--selected' : ''}`}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onClick && onClick()}
+    >
       <img
         className="restaurant-card__image"
         src={imagenUrl}

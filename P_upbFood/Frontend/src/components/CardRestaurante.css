@@ -3,10 +3,24 @@
   grid-template-columns: 180px 1fr;
   overflow: hidden;
   background: #ffffff;
-  border: 1px solid #d9e7e2;
+  border: 2px solid #d9e7e2;
   border-radius: 18px;
   box-shadow: 0 12px 28px -24px rgba(15, 118, 110, 0.6);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
+
+.restaurant-card:hover {
+  transform: translateY(-2px);
+  border-color: #0d7377;
+  box-shadow: 0 8px 24px rgba(13, 115, 119, 0.18);
+}
+
+.restaurant-card--selected {
+  border-color: #0d7377;
+  box-shadow: 0 0 0 3px rgba(13, 115, 119, 0.25), 0 8px 24px rgba(13, 115, 119, 0.15);
+}
+
 
 .restaurant-card__image {
   width: 100%;

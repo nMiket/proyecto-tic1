@@ -21,6 +21,14 @@ type ProductItem = {
   restauranteId: number
 }
 
+type RestauranteItem = {
+  id: number
+  nombre: string
+  ubicacion: string
+  estado?: string
+  tiempoEstimadoMin?: number
+}
+
 const STORAGE_KEY = 'upbfood-admin-auth'
 
 const PRODUCTOS_CATALOGO: Producto[] = [
@@ -54,10 +62,10 @@ function getImagenPorCategoria(categoriaId: number, nombre: string): string {
   const n = nombre.toLowerCase()
   if (n.includes('empanada')) return 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=400'
   if (n.includes('jugo') || n.includes('bebida') || n.includes('gaseosa') || n.includes('agua')) return 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400'
-  if (n.includes('cafe') || n.includes('café') || n.includes('cappuccino')) return 'https://images.unsplash.com/photo-1572442388796-11668ba67e53?w=400'
+  if (n.includes('cafe') || n.includes('café') || n.includes('cappuccino') || n.includes('latte')) return 'https://images.unsplash.com/photo-1572442388796-11668ba67e53?w=400'
   if (n.includes('almuerzo') || n.includes('ejecutivo') || n.includes('carne') || n.includes('pollo')) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'
   if (n.includes('hamburguesa') || n.includes('burger')) return 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400'
-  if (n.includes('dedo') || n.includes('queso') || n.includes('pan') || n.includes('sandwich')) return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400'
+  if (n.includes('dedo') || n.includes('queso') || n.includes('pan') || n.includes('sandwich') || n.includes('sándwich')) return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400'
 
   if (categoriaId === 1) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400' // Almuerzos
   if (categoriaId === 2) return 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400' // Bebidas
@@ -171,11 +179,16 @@ export function App() {
 }
 
 function HomePage() {
+  const [restauranteSeleccionado, setRestauranteSeleccionado] = useState<{ id: number; nombre: string }>({
+    id: 1,
+    nombre: 'Cafetería Central - Bloque 11',
+  })
   const [productos, setProductos] = useState<Producto[]>(PRODUCTOS_CATALOGO)
   const [cargando, setCargando] = useState<boolean>(true)
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/products?restauranteId=1')
+    setCargando(true)
+    fetch(`http://localhost:8080/api/products?restauranteId=${restauranteSeleccionado.id}`)
       .then((res) => {
         if (!res.ok) throw new Error('Error al cargar productos')
         return res.json()
@@ -191,15 +204,23 @@ function HomePage() {
             imagenUrl: getImagenPorCategoria(item.categoriaId, item.nombre),
           }))
           setProductos(adaptados)
+        } else {
+          // Si esta cafetería no tiene productos todavía
+          setProductos([])
         }
       })
       .catch(() => {
-        // En caso de que el backend no responda, conserva la lista estática
+        // En caso de que el backend no responda, solo en la cafetería 1 mostramos la plantilla estática
+        if (restauranteSeleccionado.id === 1) {
+          setProductos(PRODUCTOS_CATALOGO)
+        } else {
+          setProductos([])
+        }
       })
       .finally(() => {
         setCargando(false)
       })
-  }, [])
+  }, [restauranteSeleccionado.id])
 
   return (
     <>
@@ -223,25 +244,46 @@ function HomePage() {
         </div>
       </section>
 
-      <ListaRestaurantes />
+      <ListaRestaurantes
+        restauranteSeleccionadoId={restauranteSeleccionado.id}
+        onSelectRestaurante={(r) => setRestauranteSeleccionado({ id: r.id, nombre: r.nombre })}
+      />
 
       <section className="menu-destacado" style={{ marginTop: '2.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
-          <h2 style={{ fontSize: '1.5rem', color: '#0f3d3e', margin: 0 }}>Menú UPB Food</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.2rem', flexWrap: 'wrap', gap: '8px' }}>
+          <div>
+            <span style={{ fontSize: '0.8rem', color: '#0d7377', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
+              Menú específico
+            </span>
+            <h2 style={{ fontSize: '1.6rem', color: '#0f3d3e', margin: '4px 0 0' }}>
+              Menú de {restauranteSeleccionado.nombre}
+            </h2>
+          </div>
           <span style={{ fontSize: '0.85rem', color: '#6c757d' }}>
             {cargando ? 'Cargando productos...' : `${productos.length} producto${productos.length !== 1 ? 's' : ''} en carta`}
           </span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
-          {productos.map((prod) => (
-            <CardProducto
-              key={prod.id}
-              producto={prod}
-              onAgregar={(p) => alert(`Agregado al carrito: ${p.nombre}`)}
-            />
-          ))}
-        </div>
+        {cargando ? (
+          <p style={{ color: '#557571' }}>Cargando menú de la cafetería...</p>
+        ) : productos.length === 0 ? (
+          <div style={{ padding: '36px 20px', backgroundColor: '#fff', borderRadius: '14px', textAlign: 'center', border: '1px dashed #b2ded6' }}>
+            <h3 style={{ margin: '0 0 8px', color: '#0f3d3e' }}>Sin productos en este momento</h3>
+            <p style={{ color: '#557571', margin: 0, fontSize: '0.95rem' }}>
+              Esta cafetería aún no tiene productos registrados en su carta. Puedes agregarlos desde el panel administrativo.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
+            {productos.map((prod) => (
+              <CardProducto
+                key={prod.id}
+                producto={prod}
+                onAgregar={(p) => alert(`Agregado al carrito: ${p.nombre}`)}
+              />
+            ))}
+          </div>
+        )}
       </section>
     </>
   )
@@ -311,13 +353,15 @@ function AdminLoginPage({ onLogin }: { onLogin: (email: string, password: string
 
 function AdminDashboardPage({
   adminName,
-  restauranteId,
+  restauranteId: initialRestauranteId,
   onLogout,
 }: {
   adminName: string
   restauranteId: number
   onLogout: () => void
 }) {
+  const [selectedRestauranteId, setSelectedRestauranteId] = useState<number>(initialRestauranteId)
+  const [listaRestaurantes, setListaRestaurantes] = useState<RestauranteItem[]>([])
   const [products, setProducts] = useState<ProductItem[]>([])
   const [productName, setProductName] = useState('')
   const [productPrice, setProductPrice] = useState('')
@@ -335,10 +379,19 @@ function AdminDashboardPage({
     setEditingProductId(null)
   }
 
+  useEffect(() => {
+    fetch('http://localhost:8080/api/restaurantes')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: RestauranteItem[]) => {
+        setListaRestaurantes(data)
+      })
+      .catch(() => {})
+  }, [])
+
   const fetchProducts = async () => {
     setLoadingProducts(true)
     try {
-      const response = await fetch(`http://localhost:8080/api/products?restauranteId=${restauranteId}`)
+      const response = await fetch(`http://localhost:8080/api/products?restauranteId=${selectedRestauranteId}`)
       if (!response.ok) {
         throw new Error('No se pudo cargar el menú.')
       }
@@ -354,7 +407,7 @@ function AdminDashboardPage({
 
   useEffect(() => {
     void fetchProducts()
-  }, [restauranteId])
+  }, [selectedRestauranteId])
 
   const handleCreateProduct = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -375,7 +428,7 @@ function AdminDashboardPage({
           nombre: productName.trim(),
           precio: productPrice,
           categoriaId: Number(categoriaId),
-          restauranteId,
+          restauranteId: selectedRestauranteId,
           disponible,
         }),
       })
@@ -423,7 +476,7 @@ function AdminDashboardPage({
           nombre: productName.trim(),
           precio: productPrice,
           categoriaId: Number(categoriaId),
-          restauranteId,
+          restauranteId: selectedRestauranteId,
           disponible,
         }),
       })
@@ -469,6 +522,29 @@ function AdminDashboardPage({
         <button className="secondary" onClick={onLogout}>
           Cerrar sesión
         </button>
+      </div>
+
+      {/* Selector de Cafetería a Administrar */}
+      <div style={{ margin: '0 0 24px', padding: '16px 20px', backgroundColor: '#f0f8f8', borderRadius: '12px', border: '1px solid #d3ebe7', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ fontWeight: 700, color: '#0f3d3e', fontSize: '1rem' }}>
+            Cafetería en gestión:
+          </span>
+          <select
+            value={selectedRestauranteId}
+            onChange={(e) => setSelectedRestauranteId(Number(e.target.value))}
+            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #0d7377', fontWeight: 600, color: '#0d7377', backgroundColor: '#fff', fontSize: '0.95rem', cursor: 'pointer' }}
+          >
+            {listaRestaurantes.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.nombre} ({r.ubicacion})
+              </option>
+            ))}
+          </select>
+        </div>
+        <span style={{ fontSize: '0.85rem', color: '#557571' }}>
+          Los cambios se aplican al menú de esta cafetería
+        </span>
       </div>
 
       <div className="dashboard-grid">
@@ -563,7 +639,7 @@ function AdminDashboardPage({
           {loadingProducts ? (
             <p>Cargando productos...</p>
           ) : products.length === 0 ? (
-            <p>No hay productos registrados.</p>
+            <p>No hay productos registrados para esta cafetería.</p>
           ) : (
             <ul className="product-list">
               {products.map((product) => (
