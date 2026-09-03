@@ -733,8 +733,13 @@ function AdminDashboardPage({
           ) : (
             <ul className="product-list">
               {products.map((product) => (
-                <li key={product.id}>
-                  <div>
+                <li key={product.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <img 
+                    src={getImagenPorCategoria(product.categoriaId, product.nombre)} 
+                    alt="" 
+                    style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} 
+                  />
+                  <div style={{ flex: 1 }}>
                     <strong>{product.nombre}</strong>
                     <span>{product.disponible ? 'Disponible' : 'Sin stock'}</span>
                   </div>
