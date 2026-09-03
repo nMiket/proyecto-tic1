@@ -13,19 +13,35 @@ export interface Restaurante {
 
 type CardRestauranteProps = {
   restaurante: Restaurante
+  seleccionado?: boolean
+  onClick?: () => void
 }
 
 const DEFAULT_IMAGE =
   'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=900&q=80'
 
-function CardRestaurante({ restaurante }: CardRestauranteProps) {
+const MONTANA_IMAGE =
+  'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=900&q=80'
+
+function CardRestaurante({ restaurante, seleccionado, onClick }: CardRestauranteProps) {
   const estadoClass = restaurante.estado.toLowerCase().replace(' ', '-')
+  const imagenUrl = restaurante.imagen
+    ? restaurante.imagen
+    : restaurante.nombre.toLowerCase().includes('monta') || restaurante.nombre.toLowerCase().includes('boulevard')
+      ? MONTANA_IMAGE
+      : DEFAULT_IMAGE
 
   return (
-    <article className="restaurant-card">
+    <article 
+      className={`restaurant-card ${seleccionado ? 'restaurant-card--selected' : ''}`}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onClick && onClick()}
+    >
       <img
         className="restaurant-card__image"
-        src={restaurante.imagen || DEFAULT_IMAGE}
+        src={imagenUrl}
         alt={`Imagen de ${restaurante.nombre}`}
       />
 
@@ -37,10 +53,40 @@ function CardRestaurante({ restaurante }: CardRestauranteProps) {
           </span>
         </div>
 
-        <p className="restaurant-card__location">{restaurante.ubicacion}</p>
+        <p className="restaurant-card__location">📍 Ubicación: <strong>{restaurante.ubicacion}</strong></p>
         <p className="restaurant-card__time">
-          Tiempo estimado: <strong>{restaurante.tiempoEstimadoMin} min</strong>
+          ⏱️ Tiempo estimado: <strong>{restaurante.tiempoEstimadoMin} min</strong>
         </p>
+
+        <div style={{ marginTop: '6px' }}>
+          {seleccionado ? (
+            <span style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '6px', 
+              backgroundColor: '#0d7377', 
+              color: '#ffffff', 
+              padding: '6px 12px', 
+              borderRadius: '8px', 
+              fontSize: '0.8rem', 
+              fontWeight: 700 
+            }}>
+              ✓ Menú activo abajo
+            </span>
+          ) : (
+            <span style={{ 
+              display: 'inline-block',
+              color: '#0d7377', 
+              backgroundColor: '#e6f4f2',
+              padding: '6px 12px', 
+              borderRadius: '8px', 
+              fontSize: '0.8rem', 
+              fontWeight: 600 
+            }}>
+              👆 Clic para ver este menú
+            </span>
+          )}
+        </div>
       </div>
     </article>
   )
