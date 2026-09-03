@@ -380,12 +380,16 @@ $$ LANGUAGE plpgsql;
 -- 4. INSERCIÓN DE DATOS INICIALES USANDO EXCLUSIVAMENTE LAS FUNCIONES
 -- ----------------------------------------------------------------------------
 SELECT fn_restaurante_crear('Cafetería Central - Bloque 11', 'Bloque 11', 'Abierto', 15);
+SELECT fn_restaurante_crear('Cafetería Montaña del Boulevard', 'Boulevard', 'Abierto', 10);
 SELECT fn_categoria_crear('Almuerzos');
 SELECT fn_categoria_crear('Bebidas');
 SELECT fn_categoria_crear('Snacks');
 
 SELECT fn_producto_crear(1, 1, 'Ejecutivo de Carne', 15000.00, TRUE);
 SELECT fn_producto_crear(1, 2, 'Jugo Natural 16oz', 4500.00, TRUE);
+SELECT fn_producto_crear(2, 3, 'Sandwich Gourmet Boulevard', 12500.00, TRUE);
+SELECT fn_producto_crear(2, 2, 'Café Latte Montaña', 5500.00, TRUE);
 
 -- Usuario administrativo de demostración para el login del panel administrativo
 SELECT fn_usuario_admin_crear(1, 'admin@upb.edu.co', 'admin123');
+

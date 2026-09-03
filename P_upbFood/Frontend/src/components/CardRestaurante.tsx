@@ -18,14 +18,22 @@ type CardRestauranteProps = {
 const DEFAULT_IMAGE =
   'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=900&q=80'
 
+const MONTANA_IMAGE =
+  'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=900&q=80'
+
 function CardRestaurante({ restaurante }: CardRestauranteProps) {
   const estadoClass = restaurante.estado.toLowerCase().replace(' ', '-')
+  const imagenUrl = restaurante.imagen
+    ? restaurante.imagen
+    : restaurante.nombre.toLowerCase().includes('monta') || restaurante.nombre.toLowerCase().includes('boulevard')
+      ? MONTANA_IMAGE
+      : DEFAULT_IMAGE
 
   return (
     <article className="restaurant-card">
       <img
         className="restaurant-card__image"
-        src={restaurante.imagen || DEFAULT_IMAGE}
+        src={imagenUrl}
         alt={`Imagen de ${restaurante.nombre}`}
       />
 
