@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import ListaRestaurantes from './components/ListaRestaurantes'
 import { CardProducto } from './components/CardProducto'
 import type { Producto } from './types/Producto'
@@ -138,10 +138,30 @@ export function App() {
         <Link to="/" className="brand">
           UPB Food
         </Link>
+
         <div className="nav-actions">
-          <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
-            Vista pública
-          </Link>
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) => (isActive ? 'active' : '')}
+          >
+            Servicios
+          </NavLink>
+
+          <NavLink
+            to="/pedido"
+            className={({ isActive }) => (isActive ? 'active' : '')}
+          >
+            Pedido
+          </NavLink>
+
+          <NavLink
+            to="/historial"
+            className={({ isActive }) => (isActive ? 'active' : '')}
+          >
+            Historial
+          </NavLink>
+
           <Link
             to={isLoggedIn ? '/admin/dashboard' : '/admin'}
             className={location.pathname.startsWith('/admin') ? 'active' : ''}
@@ -173,6 +193,10 @@ export function App() {
             )
           }
         />
+
+        <Route 
+        path="/pedido" element={<PedidoPage />} />
+        <Route path="/historial" element={<HistorialPage />} />
       </Routes>
     </main>
   )
@@ -388,6 +412,25 @@ function AdminLoginPage({ onLogin }: { onLogin: (email: string, password: string
           {loading ? 'Validando...' : 'Ingresar'}
         </button>
       </form>
+    </section>
+  )
+}
+
+
+function PedidoPage() {
+  return (
+    <section className="hero-card">
+      <h1>Mi Pedido</h1>
+      <p>Aquí aparecerán los productos de tu pedido.</p>
+    </section>
+  )
+}
+
+function HistorialPage() {
+  return (
+    <section className="hero-card">
+      <h1>Historial</h1>
+      <p>Aquí aparecerán tus pedidos anteriores.</p>
     </section>
   )
 }
