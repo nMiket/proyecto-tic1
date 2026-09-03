@@ -380,6 +380,7 @@ $$ LANGUAGE plpgsql;
 -- 4. INSERCIÓN DE DATOS INICIALES USANDO EXCLUSIVAMENTE LAS FUNCIONES
 -- ----------------------------------------------------------------------------
 SELECT fn_restaurante_crear('Cafetería Central - Bloque 11', 'Bloque 11', 'Abierto', 15);
+SELECT fn_restaurante_crear('Asados - Bulevar', 'Bulevar', 'Abierto', 15);
 SELECT fn_categoria_crear('Almuerzos');
 SELECT fn_categoria_crear('Bebidas');
 SELECT fn_categoria_crear('Snacks');
