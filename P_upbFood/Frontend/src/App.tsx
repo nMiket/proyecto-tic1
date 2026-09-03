@@ -50,6 +50,26 @@ const PRODUCTOS_CATALOGO: Producto[] = [
   },
 ]
 
+function getImagenPorCategoria(categoriaId: number, nombre: string): string {
+  const n = nombre.toLowerCase()
+  if (n.includes('empanada')) return 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=400'
+  if (n.includes('jugo') || n.includes('bebida') || n.includes('gaseosa') || n.includes('agua')) return 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400'
+  if (n.includes('cafe') || n.includes('café') || n.includes('cappuccino')) return 'https://images.unsplash.com/photo-1572442388796-11668ba67e53?w=400'
+  if (n.includes('almuerzo') || n.includes('ejecutivo') || n.includes('carne') || n.includes('pollo')) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'
+  if (n.includes('hamburguesa') || n.includes('burger')) return 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400'
+  if (n.includes('dedo') || n.includes('queso') || n.includes('pan') || n.includes('sandwich')) return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400'
+
+  if (categoriaId === 1) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400' // Almuerzos
+  if (categoriaId === 2) return 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400' // Bebidas
+  return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400' // Snacks
+}
+
+function getDescripcionPorCategoria(categoriaId: number, _nombre: string): string {
+  if (categoriaId === 1) return 'Plato del día preparado fresco con proteína, acompañamientos y sazón casera.'
+  if (categoriaId === 2) return 'Bebida refrescante preparada al instante para acompañar tu menú.'
+  return 'Snack recién horneado y delicioso, ideal para disfrutar entre clases.'
+}
+
 export function App() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
   const [adminName, setAdminName] = useState('')
@@ -151,6 +171,36 @@ export function App() {
 }
 
 function HomePage() {
+  const [productos, setProductos] = useState<Producto[]>(PRODUCTOS_CATALOGO)
+  const [cargando, setCargando] = useState<boolean>(true)
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/products?restauranteId=1')
+      .then((res) => {
+        if (!res.ok) throw new Error('Error al cargar productos')
+        return res.json()
+      })
+      .then((data: ProductItem[]) => {
+        if (data && data.length > 0) {
+          const adaptados: Producto[] = data.map((item) => ({
+            id: item.id,
+            nombre: item.nombre,
+            precio: Number(item.precio),
+            disponible: item.disponible,
+            descripcion: getDescripcionPorCategoria(item.categoriaId, item.nombre),
+            imagenUrl: getImagenPorCategoria(item.categoriaId, item.nombre),
+          }))
+          setProductos(adaptados)
+        }
+      })
+      .catch(() => {
+        // En caso de que el backend no responda, conserva la lista estática
+      })
+      .finally(() => {
+        setCargando(false)
+      })
+  }, [])
+
   return (
     <>
       <section className="hero-card">
@@ -176,9 +226,15 @@ function HomePage() {
       <ListaRestaurantes />
 
       <section className="menu-destacado" style={{ marginTop: '2.5rem' }}>
-        <h2 style={{ fontSize: '1.5rem', color: '#0f3d3e', marginBottom: '1.2rem' }}>Menú UPB Food</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
+          <h2 style={{ fontSize: '1.5rem', color: '#0f3d3e', margin: 0 }}>Menú UPB Food</h2>
+          <span style={{ fontSize: '0.85rem', color: '#6c757d' }}>
+            {cargando ? 'Cargando productos...' : `${productos.length} producto${productos.length !== 1 ? 's' : ''} en carta`}
+          </span>
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
-          {PRODUCTOS_CATALOGO.map((prod) => (
+          {productos.map((prod) => (
             <CardProducto
               key={prod.id}
               producto={prod}

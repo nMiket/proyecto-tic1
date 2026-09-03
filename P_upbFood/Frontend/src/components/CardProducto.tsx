@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import type { Producto } from '../types/Producto';
 
 interface CardProductoProps {
@@ -16,21 +16,34 @@ export const CardProducto: React.FC<CardProductoProps> = ({ producto, onAgregar 
     }).format(valor);
   };
 
+  const disponible = producto.disponible !== false;
+
   return (
-    <div style={styles.card}>
-      <img 
-        src={producto.imagenUrl} 
-        alt={producto.nombre} 
-        style={styles.imagen} 
-      />
+    <div style={{ ...styles.card, opacity: disponible ? 1 : 0.75 }}>
+      <div style={{ position: 'relative' }}>
+        <img 
+          src={producto.imagenUrl} 
+          alt={producto.nombre} 
+          style={styles.imagen} 
+        />
+        {!disponible && (
+          <span style={styles.badgeAgotado}>
+            Agotado
+          </span>
+        )}
+      </div>
       <div style={styles.contenido}>
         <h3 style={styles.titulo}>{producto.nombre}</h3>
         <p style={styles.descripcion}>{producto.descripcion}</p>
         <div style={styles.footer}>
           <span style={styles.precio}>{formatearCOP(producto.precio)}</span>
           {onAgregar && (
-            <button style={styles.boton} onClick={() => onAgregar(producto)}>
-              Agregar
+            <button 
+              style={{ ...styles.boton, ...(disponible ? {} : styles.botonDeshabilitado) }} 
+              onClick={() => disponible && onAgregar(producto)}
+              disabled={!disponible}
+            >
+              {disponible ? 'Agregar' : 'Sin stock'}
             </button>
           )}
         </div>
@@ -50,11 +63,25 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: 'column',
     width: '100%',
     boxSizing: 'border-box',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
   },
   imagen: {
     width: '100%',
-    height: '130px',
+    height: '140px',
     objectFit: 'cover',
+  },
+  badgeAgotado: {
+    position: 'absolute',
+    top: '8px',
+    right: '8px',
+    backgroundColor: '#c0392b',
+    color: '#fff',
+    fontSize: '0.7rem',
+    fontWeight: 'bold',
+    padding: '3px 8px',
+    borderRadius: '4px',
+    textTransform: 'uppercase',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
   },
   contenido: {
     padding: '12px',
@@ -91,5 +118,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: '6px',
     cursor: 'pointer',
     fontSize: '0.8rem',
+    fontWeight: 500,
+  },
+  botonDeshabilitado: {
+    backgroundColor: '#95a5a6',
+    cursor: 'not-allowed',
   },
 };
