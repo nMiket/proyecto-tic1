@@ -1,48 +1,22 @@
 .lista-restaurantes {
   width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
 }
 
 .lista-restaurantes h2 {
-  margin-bottom: 20px;
+  margin: 0;
+  color: #0f3d3e;
+  font-size: 1.5rem;
 }
 
 .restaurantes-container {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-
-  max-height: 500px;
-  overflow-y: auto;
-
-  padding: 5px 10px 5px 5px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 20px;
+  margin-top: 16px;
 }
 
-.restaurante-card {
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  background-color: white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+@media (max-width: 768px) {
+  .restaurantes-container {
+    grid-template-columns: 1fr;
+  }
 }
-
-.restaurante-card h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-}
-
-.restaurante-card p {
-  margin: 8px 0;
-}
-
-.estado-abierto {
-  color: green;
-  font-weight: bold;
-}
-
-.estado-cerrado {
-  color: red;
-  font-weight: bold;
-}
-

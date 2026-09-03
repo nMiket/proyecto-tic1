@@ -183,8 +183,20 @@ function HomePage() {
     id: 1,
     nombre: 'Cafetería Central - Bloque 11',
   })
+  const [listaRestaurantes, setListaRestaurantes] = useState<RestauranteItem[]>([])
   const [productos, setProductos] = useState<Producto[]>(PRODUCTOS_CATALOGO)
   const [cargando, setCargando] = useState<boolean>(true)
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/restaurantes')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: RestauranteItem[]) => {
+        if (data && data.length > 0) {
+          setListaRestaurantes(data)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     setCargando(true)
@@ -205,12 +217,10 @@ function HomePage() {
           }))
           setProductos(adaptados)
         } else {
-          // Si esta cafetería no tiene productos todavía
           setProductos([])
         }
       })
       .catch(() => {
-        // En caso de que el backend no responda, solo en la cafetería 1 mostramos la plantilla estática
         if (restauranteSeleccionado.id === 1) {
           setProductos(PRODUCTOS_CATALOGO)
         } else {
@@ -238,7 +248,7 @@ function HomePage() {
           </div>
 
           <div>
-            <strong>4</strong>
+            <strong>{listaRestaurantes.length || 2}</strong>
             <span>cafeterías disponibles</span>
           </div>
         </div>
@@ -250,19 +260,50 @@ function HomePage() {
       />
 
       <section className="menu-destacado" style={{ marginTop: '2.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.2rem', flexWrap: 'wrap', gap: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <span style={{ fontSize: '0.8rem', color: '#0d7377', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
-              Menú específico
+              Menú de la cafetería
             </span>
             <h2 style={{ fontSize: '1.6rem', color: '#0f3d3e', margin: '4px 0 0' }}>
-              Menú de {restauranteSeleccionado.nombre}
+              {restauranteSeleccionado.nombre}
             </h2>
           </div>
-          <span style={{ fontSize: '0.85rem', color: '#6c757d' }}>
+          <span style={{ fontSize: '0.9rem', color: '#557571', fontWeight: 500, backgroundColor: '#eef6f5', padding: '6px 14px', borderRadius: '20px' }}>
             {cargando ? 'Cargando productos...' : `${productos.length} producto${productos.length !== 1 ? 's' : ''} en carta`}
           </span>
         </div>
+
+        {listaRestaurantes.length > 1 && (
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+            {listaRestaurantes.map((r) => {
+              const active = restauranteSeleccionado.id === r.id
+              return (
+                <button
+                  key={r.id}
+                  onClick={() => setRestauranteSeleccionado({ id: r.id, nombre: r.nombre })}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '24px',
+                    border: active ? '2px solid #0d7377' : '1px solid #c2ded9',
+                    backgroundColor: active ? '#0d7377' : '#ffffff',
+                    color: active ? '#ffffff' : '#0f3d3e',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: active ? '0 2px 6px rgba(13, 115, 119, 0.2)' : 'none',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  📍 {r.nombre}
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         {cargando ? (
           <p style={{ color: '#557571' }}>Cargando menú de la cafetería...</p>
