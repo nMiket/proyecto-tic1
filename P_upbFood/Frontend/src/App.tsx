@@ -2,6 +2,9 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import ListaRestaurantes from './components/ListaRestaurantes'
 import { CardProducto } from './components/CardProducto'
+import ResumenPedido from './components/ResumenPedido'
+import { CartProvider } from './context/CartContext'
+import { useCart } from './context/useCart'
 import type { Producto } from './types/Producto'
 import './App.css'
 
@@ -61,11 +64,17 @@ const PRODUCTOS_CATALOGO: Producto[] = [
 function getImagenPorCategoria(categoriaId: number, nombre: string): string {
   const n = nombre.toLowerCase()
   if (n.includes('empanada')) return 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=400'
+  if (n.includes('pizza')) return 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400'
+  if (n.includes('perro') || n.includes('hot dog')) return 'https://images.unsplash.com/photo-1599599811450-2c59409af2c0?w=400'
+  if (n.includes('gatorade') || n.includes('energ') || n.includes('sport')) return 'https://images.unsplash.com/photo-1525397053281-a37d8a2ff7ce?w=400'
   if (n.includes('jugo') || n.includes('bebida') || n.includes('gaseosa') || n.includes('agua')) return 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400'
   if (n.includes('cafe') || n.includes('café') || n.includes('cappuccino') || n.includes('latte')) return 'https://images.unsplash.com/photo-1572442388796-11668ba67e53?w=400'
-  if (n.includes('almuerzo') || n.includes('ejecutivo') || n.includes('carne') || n.includes('pollo')) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'
+  if (n.includes('asado') || n.includes('res') || n.includes('carne') || n.includes('parrilla') || n.includes('cerdo') || n.includes('chuleta') || n.includes('bbq') || n.includes('costilla')) return 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=400'
+  if (n.includes('almuerzo') || n.includes('ejecutivo') || n.includes('pollo') || n.includes('pescado')) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'
   if (n.includes('hamburguesa') || n.includes('burger')) return 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400'
   if (n.includes('dedo') || n.includes('queso') || n.includes('pan') || n.includes('sandwich') || n.includes('sándwich')) return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400'
+  if (n.includes('postre') || n.includes('torta') || n.includes('dulce') || n.includes('brownie')) return 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400'
+  if (n.includes('ensalada') || n.includes('saludable') || n.includes('vegetariano')) return 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400'
 
   if (categoriaId === 1) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400' // Almuerzos
   if (categoriaId === 2) return 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400' // Bebidas
@@ -171,7 +180,8 @@ export function App() {
         </div>
       </nav>
 
-      <Routes>
+      <CartProvider>
+        <Routes>
         <Route path="/" element={<HomePage />} />
         <Route
           path="/admin"
@@ -197,12 +207,14 @@ export function App() {
         <Route 
         path="/pedido" element={<PedidoPage />} />
         <Route path="/historial" element={<HistorialPage />} />
-      </Routes>
+        </Routes>
+      </CartProvider>
     </main>
   )
 }
 
 function HomePage() {
+  const { agregarProducto, totalItems, total } = useCart()
   const [restauranteSeleccionado, setRestauranteSeleccionado] = useState<{ id: number; nombre: string }>({
     id: 1,
     nombre: 'Cafetería Central - Bloque 11',
@@ -339,17 +351,30 @@ function HomePage() {
             </p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
-            {productos.map((prod) => (
-              <CardProducto
-                key={prod.id}
-                producto={prod}
-                onAgregar={(p) => alert(`Agregado al carrito: ${p.nombre}`)}
-              />
-            ))}
+          <div className="ordering-layout">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
+              {productos.map((prod) => (
+                <CardProducto
+                  key={prod.id}
+                  producto={prod}
+                  onAgregar={(product) => agregarProducto({ ...product, id: Number(product.id), restauranteId: restauranteSeleccionado.id })}
+                />
+              ))}
+            </div>
+            <div id="resumen-pedido">
+              <ResumenPedido />
+            </div>
           </div>
         )}
       </section>
+      <button
+        className="floating-cart-button"
+        type="button"
+        onClick={() => document.getElementById('resumen-pedido')?.scrollIntoView({ behavior: 'smooth' })}
+      >
+        <span>Carrito ({totalItems})</span>
+        <strong>${total.toLocaleString('es-CO')}</strong>
+      </button>
     </>
   )
 }
@@ -419,9 +444,11 @@ function AdminLoginPage({ onLogin }: { onLogin: (email: string, password: string
 
 function PedidoPage() {
   return (
-    <section className="hero-card">
-      <h1>Mi Pedido</h1>
-      <p>Aquí aparecerán los productos de tu pedido.</p>
+    <section className="hero-card order-page">
+      <p className="eyebrow">Lista de pedidos</p>
+      <h1>Mi pedido</h1>
+      <p>Revisa los productos seleccionados antes de confirmar la compra.</p>
+      <ResumenPedido />
     </section>
   )
 }
@@ -727,8 +754,13 @@ function AdminDashboardPage({
           ) : (
             <ul className="product-list">
               {products.map((product) => (
-                <li key={product.id}>
-                  <div>
+                <li key={product.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <img 
+                    src={getImagenPorCategoria(product.categoriaId, product.nombre)} 
+                    alt="" 
+                    style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} 
+                  />
+                  <div style={{ flex: 1 }}>
                     <strong>{product.nombre}</strong>
                     <span>{product.disponible ? 'Disponible' : 'Sin stock'}</span>
                   </div>
