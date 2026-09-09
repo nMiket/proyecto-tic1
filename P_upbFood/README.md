@@ -1,4 +1,4 @@
-# UPB Food Monorepo
+# UPB Food
 
 Estructura base profesional para un proyecto web con:
 
@@ -62,13 +62,13 @@ Servicios:
 
 Con los contenedores levantados, crea una nueva conexión de tipo **PostgreSQL** en DataGrip usando:
 
-| Campo    | Valor          |
-| -------- | -------------- |
-| Host     | `localhost`  |
-| Port     | `5432`       |
-| Database | `upbfood`    |
-| User     | `upbfood`    |
-| Password | El valor de `POSTGRES_PASSWORD` en `.env` |
+| Campo    | Valor                                        |
+| -------- | -------------------------------------------- |
+| Host     | `localhost`                                |
+| Port     | `5432`                                     |
+| Database | `upbfood`                                  |
+| User     | `upbfood`                                  |
+| Password | El valor de`POSTGRES_PASSWORD` en `.env` |
 
 La URL JDBC equivalente es:
 

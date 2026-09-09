@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { startTransition, useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import ListaRestaurantes from './components/ListaRestaurantes'
 import { CardProducto } from './components/CardProducto'
@@ -6,7 +6,7 @@ import ResumenPedido from './components/ResumenPedido'
 import { CartProvider } from './context/CartContext'
 import { useCart } from './context/useCart'
 import type { Producto } from './types/Producto'
-import { apiFetch, login as authenticate, logout as endSession, refreshSession } from './auth'
+import { apiFetch, getApiBaseUrl, login as authenticate, logout as endSession, refreshSession } from './auth'
 import './App.css'
 
 type ProductItem = {
@@ -73,7 +73,7 @@ function getImagenPorCategoria(categoriaId: number, nombre: string): string {
   return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400' // Snacks
 }
 
-function getDescripcionPorCategoria(categoriaId: number, _nombre: string): string {
+function getDescripcionPorCategoria(categoriaId: number): string {
   if (categoriaId === 1) return 'Plato del día preparado fresco con proteína, acompañamientos y sazón casera.'
   if (categoriaId === 2) return 'Bebida refrescante preparada al instante para acompañar tu menú.'
   return 'Snack recién horneado y delicioso, ideal para disfrutar entre clases.'
@@ -198,7 +198,7 @@ function HomePage() {
   const [cargando, setCargando] = useState<boolean>(true)
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/restaurantes')
+    apiFetch(`${getApiBaseUrl()}/api/restaurantes`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data: RestauranteItem[]) => {
         if (data && data.length > 0) {
@@ -209,8 +209,7 @@ function HomePage() {
   }, [])
 
   useEffect(() => {
-    setCargando(true)
-    fetch(`http://localhost:8080/api/products?restauranteId=${restauranteSeleccionado.id}`)
+    apiFetch(`${getApiBaseUrl()}/api/products?restauranteId=${restauranteSeleccionado.id}`)
       .then((res) => {
         if (!res.ok) throw new Error('Error al cargar productos')
         return res.json()
@@ -222,7 +221,7 @@ function HomePage() {
             nombre: item.nombre,
             precio: Number(item.precio),
             disponible: item.disponible,
-            descripcion: getDescripcionPorCategoria(item.categoriaId, item.nombre),
+            descripcion: getDescripcionPorCategoria(item.categoriaId),
             imagenUrl: getImagenPorCategoria(item.categoriaId, item.nombre),
           }))
           setProductos(adaptados)
@@ -266,7 +265,10 @@ function HomePage() {
 
       <ListaRestaurantes
         restauranteSeleccionadoId={restauranteSeleccionado.id}
-        onSelectRestaurante={(r) => setRestauranteSeleccionado({ id: r.id, nombre: r.nombre })}
+        onSelectRestaurante={(r) => {
+          setCargando(true)
+          setRestauranteSeleccionado({ id: r.id, nombre: r.nombre })
+        }}
       />
 
       <section className="menu-destacado" style={{ marginTop: '2.5rem' }}>
@@ -465,7 +467,7 @@ function AdminDashboardPage({
   }
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/restaurantes')
+    apiFetch(`${getApiBaseUrl()}/api/restaurantes`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data: RestauranteItem[]) => {
         setListaRestaurantes(data)
@@ -473,10 +475,10 @@ function AdminDashboardPage({
       .catch(() => {})
   }, [])
 
-  const fetchProducts = async () => {
-    setLoadingProducts(true)
+  const fetchProducts = useCallback(async () => {
+    startTransition(() => setLoadingProducts(true))
     try {
-      const response = await fetch(`http://localhost:8080/api/products?restauranteId=${selectedRestauranteId}`)
+      const response = await apiFetch(`${getApiBaseUrl()}/api/products?restauranteId=${selectedRestauranteId}`)
       if (!response.ok) {
         throw new Error('No se pudo cargar el menú.')
       }
@@ -488,11 +490,11 @@ function AdminDashboardPage({
     } finally {
       setLoadingProducts(false)
     }
-  }
+  }, [selectedRestauranteId])
 
   useEffect(() => {
-    void fetchProducts()
-  }, [selectedRestauranteId])
+    void Promise.resolve().then(() => fetchProducts())
+  }, [fetchProducts])
 
   const handleCreateProduct = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -504,7 +506,7 @@ function AdminDashboardPage({
     }
 
     try {
-      const response = await apiFetch('http://localhost:8080/api/products', {
+      const response = await apiFetch(`${getApiBaseUrl()}/api/products`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -552,7 +554,7 @@ function AdminDashboardPage({
     }
 
     try {
-      const response = await apiFetch(`http://localhost:8080/api/products/${editingProductId}`, {
+      const response = await apiFetch(`${getApiBaseUrl()}/api/products/${editingProductId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -582,7 +584,7 @@ function AdminDashboardPage({
     setProductError('')
 
     try {
-      const response = await apiFetch(`http://localhost:8080/api/products/${productId}`, {
+      const response = await apiFetch(`${getApiBaseUrl()}/api/products/${productId}`, {
         method: 'DELETE',
       })
 

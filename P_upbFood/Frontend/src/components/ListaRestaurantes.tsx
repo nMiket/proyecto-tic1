@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import CardRestaurante, { type Restaurante } from "./CardRestaurante";
+import { apiFetch, getApiBaseUrl } from "../auth";
 import "./ListaRestaurantes.css";
 
 type ListaRestaurantesProps = {
@@ -13,7 +14,7 @@ function ListaRestaurantes({ restauranteSeleccionadoId, onSelectRestaurante }: L
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/restaurantes")
+    apiFetch(`${getApiBaseUrl()}/api/restaurantes`)
       .then((response) => {
         if (!response.ok) {
           throw new Error("Error en la respuesta del servidor");
@@ -32,7 +33,7 @@ function ListaRestaurantes({ restauranteSeleccionadoId, onSelectRestaurante }: L
         setError(true);
         setCargando(false);
       });
-  }, []);
+  }, [onSelectRestaurante, restauranteSeleccionadoId]);
 
   if (cargando) {
     return <p>Cargando restaurantes...</p>;

@@ -37,6 +37,8 @@ Las contraseñas se almacenan en `usuarios_admin.password_hash` como hashes BCry
 | `GET` | `/api/restaurantes` | Público | Consulta las cafeterías. |
 | `POST`, `PUT`, `DELETE` | `/api/products/**` | JWT requerido | Administra productos. |
 
+Las operaciones administrativas también validan el `restauranteId` del administrador autenticado. Cambiar el ID enviado por el frontend no permite acceder a otra cafetería; el backend responde `403 Forbidden`.
+
 ## Configuración
 
 Configura las variables en `P_upbFood/.env`, usando [`P_upbFood/.env.example`](P_upbFood/.env.example) como plantilla:
