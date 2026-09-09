@@ -15,6 +15,7 @@
   - [Método 3: Con la extensión de Docker](#método-3-con-la-extensión-de-docker-en-vs-code)
 - [Ejecución Local sin Docker (Modo Desarrollo)](#-ejecución-local-sin-docker-modo-desarrollo)
 - [Credenciales y URLs de Prueba](#-credenciales-y-urls-de-prueba)
+- [Documentación del Proyecto](#-documentación-del-proyecto)
 - [Ejecución de Pruebas Automatizadas](#-ejecución-de-pruebas-automatizadas)
 - [Equipo de Trabajo](#-equipo-de-trabajo)
 - [Metodología de Desarrollo](#-metodología-de-desarrollo)
@@ -32,7 +33,7 @@ En horas pico, los estudiantes, docentes y colaboradores de la UPB enfrentan fil
 El sistema está construido bajo una arquitectura de monorepo moderno y desacoplado:
 
 - **Frontend:** React 19 + TypeScript + Vite + React Router DOM + CSS modular.
-- **Backend:** Spring Boot 4 + Java 25 + Spring Data JPA + Spring Security + Maven.
+- **Backend:** Spring Boot 4 + Java 21+ + Spring Data JPA + Spring Security + JWT + Maven.
 - **Base de Datos:** PostgreSQL 16 con scripts de inicialización y funciones almacenadas (3FN).
 - **Contenedores:** Docker y Docker Compose para orquestación de servicios en local.
 
@@ -49,6 +50,8 @@ proyecto-tic1/
 │   ├── Frontend/            # Aplicación React + TypeScript (componentes, vistas, tipos)
 │   ├── docker-compose.yml   # Orquestador multi-contenedor (db, backend, frontend)
 │   └── README.md            # Documentación técnica del módulo
+├── PLAN_PROYECTO.md         # Estado general, alcance y próximos pasos
+├── AUTENTICACION_Y_SESION.md # Diseño y uso del login tokenizado
 └── README.md                # Documentación general y guía de uso
 ```
 
@@ -91,12 +94,17 @@ El repositorio incluye tareas preconfiguradas para VS Code:
    ```powershell
    cd P_upbFood
    ```
-3. Construye y levanta los servicios:
+3. Crea tu archivo local de variables desde la plantilla:
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+   Edita `.env` y reemplaza los valores de ejemplo. El archivo `.env` está excluido de Git.
+4. Construye y levanta los servicios:
    ```powershell
    docker compose up --build
    ```
    *(Para levantarlo en segundo plano y liberar tu terminal, agrega `-d`: `docker compose up --build -d`)*.
-4. Para detener los contenedores cuando termines:
+5. Para detener los contenedores cuando termines:
    ```powershell
    docker compose down
    ```
@@ -155,6 +163,19 @@ Una vez levantados los servicios, accede desde tu navegador web:
 ### Datos de Inicio de Sesión (Sembrados)
 - **Correo:** `admin@upb.edu.co`
 - **Contraseña:** `admin123`
+- **Correo:** `admin2@upb.edu.co`
+- **Contraseña:** `admin456`
+
+La contraseña se almacena como hash BCrypt. El login entrega un JWT de acceso y administra la renovación mediante un refresh token `HttpOnly`.
+
+Las credenciales de PostgreSQL y el secreto JWT se configuran en `P_upbFood/.env`. Usa [`P_upbFood/.env.example`](P_upbFood/.env.example) como plantilla; nunca subas el archivo `.env` real.
+
+---
+
+## 📚 Documentación del Proyecto
+
+- [Plan general del proyecto](PLAN_PROYECTO.md): alcance, funcionalidades terminadas, trabajo en curso y próximos pasos.
+- [Autenticación y sesión](AUTENTICACION_Y_SESION.md): arquitectura JWT, BCrypt, refresh tokens, endpoints y configuración.
 
 ---
 
@@ -163,7 +184,7 @@ Una vez levantados los servicios, accede desde tu navegador web:
 El proyecto cuenta con suite de pruebas automáticas para garantizar la calidad del software:
 
 ### Pruebas Unitarias del Backend (Spring Boot + JUnit / Mockito)
-Ejecuta los 7 tests unitarios (autenticación, controladores y contexto JPA):
+Ejecuta las pruebas de autenticación, controladores y contexto JPA:
 ```powershell
 cd P_upbFood/Backend
 .\mvnw test

@@ -117,6 +117,15 @@ CREATE TABLE usuarios_admin (
     password_hash VARCHAR(255) NOT NULL
 );
 
+CREATE TABLE refresh_tokens (
+    id BIGSERIAL PRIMARY KEY,
+    admin_user_id INT NOT NULL CONSTRAINT fk_refresh_admin REFERENCES usuarios_admin(id) ON DELETE CASCADE,
+    token_hash VARCHAR(64) UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    revoked_at TIMESTAMP
+);
+
 
 -- ----------------------------------------------------------------------------
 -- 3. FUNCIONES CRUD STORED PROCEDURES (PL/pgSQL)
@@ -391,5 +400,6 @@ SELECT fn_producto_crear(2, 3, 'Sandwich Gourmet Boulevard', 12500.00, TRUE);
 SELECT fn_producto_crear(2, 2, 'Café Latte Montana', 5500.00, TRUE);
 
 -- Usuario administrativo de demostración para el login del panel administrativo
-SELECT fn_usuario_admin_crear(1, 'admin@upb.edu.co', 'admin123');
+SELECT fn_usuario_admin_crear(1, 'admin@upb.edu.co', '$2a$10$tyIhSPUO.tPXDrUKklBiJef3B9OlrWZeazp5iJT0v3LQ6h0Zq7SnS');
+SELECT fn_usuario_admin_crear(2, 'admin2@upb.edu.co', '$2a$10$0gCFeH/1cEHW30aS1ehcJ.HtLbZvFpBYTmaRXYcgkOWdetsasSQDO');
 

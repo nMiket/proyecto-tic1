@@ -6,14 +6,8 @@ import ResumenPedido from './components/ResumenPedido'
 import { CartProvider } from './context/CartContext'
 import { useCart } from './context/useCart'
 import type { Producto } from './types/Producto'
+import { apiFetch, login as authenticate, logout as endSession, refreshSession } from './auth'
 import './App.css'
-
-type LoginResponse = {
-  success: boolean
-  message?: string
-  email?: string
-  restauranteId?: number
-}
 
 type ProductItem = {
   id: number
@@ -31,8 +25,6 @@ type RestauranteItem = {
   estado?: string
   tiempoEstimadoMin?: number
 }
-
-const STORAGE_KEY = 'upbfood-admin-auth'
 
 const PRODUCTOS_CATALOGO: Producto[] = [
   {
@@ -94,51 +86,33 @@ export function App() {
   const location = useLocation()
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as { email?: string; restauranteId?: number }
-        if (parsed.email) {
-          setAdminName(parsed.email)
-          setRestauranteId(parsed.restauranteId ?? 1)
-          setIsLoggedIn(true)
-        }
-      } catch {
-        localStorage.removeItem(STORAGE_KEY)
+    let cancelled = false
+    void refreshSession().then((session) => {
+      if (!cancelled && session) {
+        setAdminName(session.email)
+        setRestauranteId(session.restauranteId)
+        setIsLoggedIn(true)
       }
+    })
+
+    return () => {
+      cancelled = true
     }
   }, [])
 
   const handleLogin = async (email: string, password: string) => {
-    const response = await fetch('http://localhost:8080/api/admin/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    })
-
-    const data = (await response.json()) as LoginResponse
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.message ?? 'Credenciales inválidas.')
-    }
-
-    const nextEmail = data.email ?? email
-    const nextRestauranteId = data.restauranteId ?? 1
-    setAdminName(nextEmail)
-    setRestauranteId(nextRestauranteId)
+    const session = await authenticate(email, password)
+    setAdminName(session.email)
+    setRestauranteId(session.restauranteId)
     setIsLoggedIn(true)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ email: nextEmail, restauranteId: nextRestauranteId }))
-    return nextEmail
+    return session.email
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await endSession()
     setIsLoggedIn(false)
     setAdminName('')
     setRestauranteId(null)
-    localStorage.removeItem(STORAGE_KEY)
   }
 
   return (
@@ -530,7 +504,7 @@ function AdminDashboardPage({
     }
 
     try {
-      const response = await fetch('http://localhost:8080/api/products', {
+      const response = await apiFetch('http://localhost:8080/api/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -578,7 +552,7 @@ function AdminDashboardPage({
     }
 
     try {
-      const response = await fetch(`http://localhost:8080/api/products/${editingProductId}`, {
+      const response = await apiFetch(`http://localhost:8080/api/products/${editingProductId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -608,7 +582,7 @@ function AdminDashboardPage({
     setProductError('')
 
     try {
-      const response = await fetch(`http://localhost:8080/api/products/${productId}`, {
+      const response = await apiFetch(`http://localhost:8080/api/products/${productId}`, {
         method: 'DELETE',
       })
 

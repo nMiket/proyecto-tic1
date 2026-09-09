@@ -4,9 +4,9 @@ services:
     container_name: upbfood-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: upbfood
-      POSTGRES_USER: upbfood
-      POSTGRES_PASSWORD: upbfood123
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -29,11 +29,15 @@ services:
         condition: service_healthy
     environment:
       SERVER_PORT: 8080
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/upbfood
-      SPRING_DATASOURCE_USERNAME: upbfood
-      SPRING_DATASOURCE_PASSWORD: upbfood123
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "true"
+      APP_JWT_SECRET: ${APP_JWT_SECRET}
+      APP_JWT_ACCESS_TOKEN_MINUTES: ${APP_JWT_ACCESS_TOKEN_MINUTES}
+      APP_JWT_REFRESH_TOKEN_DAYS: ${APP_JWT_REFRESH_TOKEN_DAYS}
+      APP_AUTH_COOKIE_SECURE: ${APP_AUTH_COOKIE_SECURE}
     ports:
       - "8080:8080"
 
