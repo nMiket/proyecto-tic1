@@ -333,7 +333,7 @@ function HomePage() {
                 <CardProducto
                   key={prod.id}
                   producto={prod}
-                  onAgregar={(product) => agregarProducto({ ...product, id: Number(product.id), restauranteId: restauranteSeleccionado.id })}
+                  onAgregar={(product) => agregarProducto({ ...product, id: Number(product.id), restauranteId: restauranteSeleccionado.id, imagenUrl: product.imagenUrl })}
                 />
               ))}
             </div>

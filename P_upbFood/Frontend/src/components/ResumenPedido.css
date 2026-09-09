@@ -6,12 +6,21 @@
 .empty-order { margin: 0; color: #c5d9d2; line-height: 1.5; }
 .order-items { display: grid; gap: 15px; }
 .order-item { display: grid; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,.16); }
-.order-item > div:first-child { display: flex; justify-content: space-between; gap: 12px; }
+.order-item__main { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.order-item__image { width: 54px; height: 54px; flex: 0 0 54px; object-fit: cover; border-radius: 8px; background: #2a5b4e; }
+.order-item__details { min-width: 0; flex: 1; }
+.order-item__title-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .order-item strong { font-size: .92rem; }
 .order-item span { color: #c5d9d2; font-size: .88rem; }
+.order-item__unit-price { display: block; margin-top: 3px; font-size: .76rem !important; }
 .quantity-controls { display: flex; align-items: center; gap: 9px; }
-.quantity-controls button { width: 26px; height: 26px; border: 1px solid #7ab9a8; border-radius: 6px; background: transparent; color: #fff; cursor: pointer; }
-.quantity-controls .remove-item { margin-left: auto; border-color: #d98980; color: #ffb8af; }
+.quantity-controls button { min-width: 30px; height: 30px; border: 1px solid #7ab9a8; border-radius: 6px; background: transparent; color: #fff; cursor: pointer; }
+.quantity-controls button:focus-visible, .order-item__notes textarea:focus-visible { outline: 2px solid #f2c14e; outline-offset: 2px; }
+.quantity-controls .remove-item { width: auto; margin-left: auto; padding: 0 8px; border-color: #d98980; color: #ffb8af; font-size: .74rem; }
+.order-item__notes { display: grid; gap: 5px; }
+.order-item__notes span { font-size: .76rem; color: #b8e3d4; }
+.order-item__notes textarea { width: 100%; min-height: 48px; box-sizing: border-box; resize: vertical; border: 1px solid #477c6d; border-radius: 7px; padding: 8px; background: #204c40; color: #fff; font: inherit; font-size: .8rem; }
+.order-item__notes textarea::placeholder { color: #a6c9be; }
 .order-total { display: flex; justify-content: space-between; padding: 18px 0; font-size: 1.05rem; }
 .order-total strong { color: #f2c14e; font-size: 1.25rem; }
 .order-actions { display: grid; gap: 8px; }

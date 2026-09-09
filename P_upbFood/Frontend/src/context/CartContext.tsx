@@ -5,9 +5,13 @@ export type CartProduct = {
   nombre: string
   precio: number | string
   restauranteId: number
+  imagenUrl?: string
 }
 
-export type CartItem = CartProduct & { cantidad: number }
+export type CartItem = CartProduct & {
+  cantidad: number
+  observaciones: string
+}
 
 type CartContextValue = {
   items: CartItem[]
@@ -16,6 +20,7 @@ type CartContextValue = {
   agregarProducto: (product: CartProduct) => void
   quitarProducto: (productId: number) => void
   eliminarProducto: (productId: number) => void
+  actualizarObservaciones: (productId: number, observaciones: string) => void
   vaciarCarrito: () => void
 }
 
@@ -38,9 +43,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
           if (existing) {
             return current.map((item) => item.id === product.id ? { ...item, cantidad: item.cantidad + 1 } : item)
           }
-          return [...current, { ...product, cantidad: 1 }]
+          return [...current, { ...product, cantidad: 1, observaciones: '' }]
         })
       },
+        actualizarObservaciones: (productId, observaciones) => setItems((current) => current.map((item) => (
+          item.id === productId ? { ...item, observaciones } : item
+        ))),
       quitarProducto: (productId) => {
         setItems((current) => current.flatMap((item) => {
           if (item.id !== productId) return [item]

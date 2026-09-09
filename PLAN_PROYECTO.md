@@ -17,6 +17,7 @@ UPB Food es una plataforma web para consultar cafeterías, explorar sus producto
 | Autorización por cafetería | Completado | Cada administrador solo puede crear, editar o eliminar productos de su restaurante. |
 | Validación de API | Completado | DTOs tipados, validación de productos y respuestas de error centralizadas. |
 | Carrito | Completado | Agregar productos, modificar cantidades y calcular totales. |
+| HU008 tarjeta de producto pedido | Completado | Imagen, precio unitario, subtotal, cantidades, eliminación y observaciones editables. |
 | Resumen del pedido | En progreso | Interfaz disponible; falta cerrar el flujo persistente contra el backend. |
 | Gestión de pedidos | Pendiente | Persistir pedidos, detalles, cliente, estado y seguimiento. |
 

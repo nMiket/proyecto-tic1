@@ -2,7 +2,7 @@ import { useCart } from '../context/useCart'
 import './ResumenPedido.css'
 
 function ResumenPedido() {
-  const { items, totalItems, total, agregarProducto, quitarProducto, eliminarProducto, vaciarCarrito } = useCart()
+  const { items, totalItems, total, agregarProducto, quitarProducto, eliminarProducto, actualizarObservaciones, vaciarCarrito } = useCart()
 
   return (
     <aside className="order-summary" aria-label="Resumen del pedido">
@@ -20,16 +20,31 @@ function ResumenPedido() {
           <div className="order-items">
             {items.map((item) => (
               <div className="order-item" key={item.id}>
-                <div>
-                  <strong>{item.nombre}</strong>
-                  <span>${(Number(item.precio) * item.cantidad).toLocaleString('es-CO')}</span>
+                <div className="order-item__main">
+                  <img className="order-item__image" src={item.imagenUrl} alt="" />
+                  <div className="order-item__details">
+                    <div className="order-item__title-row">
+                      <strong>{item.nombre}</strong>
+                      <span>${(Number(item.precio) * item.cantidad).toLocaleString('es-CO')}</span>
+                    </div>
+                    <span className="order-item__unit-price">${Number(item.precio).toLocaleString('es-CO')} unidad</span>
+                  </div>
                 </div>
                 <div className="quantity-controls">
-                  <button type="button" aria-label={`Quitar una unidad de ${item.nombre}`} onClick={() => quitarProducto(item.id)}>-</button>
+                  <button type="button" aria-label={`Quitar una unidad de ${item.nombre}`} onClick={() => quitarProducto(item.id)}>−</button>
                   <span>{item.cantidad}</span>
                   <button type="button" aria-label={`Agregar una unidad de ${item.nombre}`} onClick={() => agregarProducto(item)}>+</button>
-                  <button className="remove-item" type="button" aria-label={`Eliminar ${item.nombre}`} onClick={() => eliminarProducto(item.id)}>x</button>
+                  <button className="remove-item" type="button" aria-label={`Eliminar ${item.nombre}`} onClick={() => eliminarProducto(item.id)}>Eliminar</button>
                 </div>
+                <label className="order-item__notes">
+                  <span>Observaciones</span>
+                  <textarea
+                    value={item.observaciones}
+                    maxLength={160}
+                    placeholder="Ej. Sin cebolla"
+                    onChange={(event) => actualizarObservaciones(item.id, event.target.value)}
+                  />
+                </label>
               </div>
             ))}
           </div>
