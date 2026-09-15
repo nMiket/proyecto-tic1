@@ -36,7 +36,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/admin/login", "/api/admin/refresh", "/api/admin/logout").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/products", "/api/restaurantes").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/products", "/api/productos", "/api/restaurantes").permitAll()
                 .anyRequest().authenticated())
             .httpBasic(httpBasic -> httpBasic.disable())
             .formLogin(formLogin -> formLogin.disable())

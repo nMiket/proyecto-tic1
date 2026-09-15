@@ -32,6 +32,12 @@ public class Product {
     @Column(nullable = false)
     private Boolean disponible = true;
 
+   @Column(nullable = false)
+    private String descripcion;
+
+    @Column(name = "imagen_url")
+    private String imagenUrl;
+
     public Long getId() {
         return id;
     }
@@ -78,5 +84,20 @@ public class Product {
 
     public void setDisponible(Boolean disponible) {
         this.disponible = disponible;
+    }
+    public String getDescripcion() {
+    return descripcion;
+    }   
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public String getImagenUrl() {
+        return imagenUrl;
+    }
+
+    public void setImagenUrl(String imagenUrl) {
+        this.imagenUrl = imagenUrl;
     }
 }

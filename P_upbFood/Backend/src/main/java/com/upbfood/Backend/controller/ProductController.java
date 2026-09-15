@@ -36,9 +36,20 @@ public class ProductController {
 
     @GetMapping("/products")
     public ResponseEntity<List<Map<String, Object>>> listProducts(@RequestParam Long restauranteId) {
+        return getProductsByRestaurant(restauranteId);
+    }
+
+    @GetMapping("/productos")
+    public ResponseEntity<List<Map<String, Object>>> listProductos(@RequestParam Long restauranteId) {
+        return getProductsByRestaurant(restauranteId);
+    }
+
+    private ResponseEntity<List<Map<String, Object>>> getProductsByRestaurant(Long restauranteId) {
         List<Product> products = productRepository.findByRestauranteIdOrderByIdAsc(restauranteId);
+
         List<Map<String, Object>> response = new ArrayList<>();
         products.forEach(product -> response.add(toResponse(product)));
+
         return ResponseEntity.ok(response);
     }
 
@@ -48,6 +59,8 @@ public class ProductController {
 
         Product product = new Product();
         product.setNombre(request.getNombre().trim());
+        product.setDescripcion(request.getDescripcion().trim());
+        product.setImagenUrl(request.getImagenUrl());
         product.setPrecio(request.getPrecio());
         product.setRestauranteId(request.getRestauranteId());
         product.setCategoriaId(request.getCategoriaId());
@@ -71,6 +84,8 @@ public class ProductController {
         authorizationService.requireAdminForRestaurant(request.getRestauranteId());
 
         product.setNombre(request.getNombre().trim());
+        product.setDescripcion(request.getDescripcion().trim());
+        product.setImagenUrl(request.getImagenUrl());
         product.setPrecio(request.getPrecio());
         product.setCategoriaId(request.getCategoriaId());
         product.setDisponible(request.getDisponible());
@@ -103,6 +118,8 @@ public class ProductController {
         response.put("disponible", product.getDisponible());
         response.put("restauranteId", product.getRestauranteId());
         response.put("categoriaId", product.getCategoriaId());
+        response.put("descripcion", product.getDescripcion());
+        response.put("imagenUrl", product.getImagenUrl());
         return response;
     }
 }

@@ -23,6 +23,10 @@ public class CreateProductRequest {
     @Positive(message = "El restaurante debe ser válido.")
     private Long restauranteId;
 
+    @NotBlank(message = "La descripción es obligatoria.")
+    private String descripcion;
+    private String imagenUrl;
+
     private Boolean disponible = true;
 
     public String getNombre() { return nombre; }
@@ -35,4 +39,9 @@ public class CreateProductRequest {
     public void setRestauranteId(Long restauranteId) { this.restauranteId = restauranteId; }
     public Boolean getDisponible() { return disponible; }
     public void setDisponible(Boolean disponible) { this.disponible = disponible; }
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
+    
 }

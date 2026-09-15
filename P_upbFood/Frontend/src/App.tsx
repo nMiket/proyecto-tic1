@@ -1,17 +1,17 @@
 import { startTransition, useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import ListaRestaurantes from './components/ListaRestaurantes'
-import { CardProducto } from './components/CardProducto'
+import ListaProductos from './components/ListaProductos'
 import ResumenPedido from './components/ResumenPedido'
 import { CartProvider } from './context/CartContext'
 import { useCart } from './context/useCart'
-import type { Producto } from './types/Producto'
 import { apiFetch, getApiBaseUrl, login as authenticate, logout as endSession, refreshSession } from './auth'
 import './App.css'
 
 type ProductItem = {
   id: number
   nombre: string
+  descripcion: string
   precio: number | string
   disponible: boolean
   categoriaId: number
@@ -25,33 +25,6 @@ type RestauranteItem = {
   estado?: string
   tiempoEstimadoMin?: number
 }
-
-const PRODUCTOS_CATALOGO: Producto[] = [
-  {
-    id: 1,
-    nombre: 'Empanada de Carne',
-    descripcion: 'Deliciosa empanada crujiente llena de carne desmechada y papa.',
-    precio: 3500,
-    imagenUrl: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=400',
-    disponible: true,
-  },
-  {
-    id: 2,
-    nombre: 'Jugo Natural en Agua',
-    descripcion: 'Jugo natural de mora, maracuyá o lulo (400ml).',
-    precio: 5000,
-    imagenUrl: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400',
-    disponible: true,
-  },
-  {
-    id: 3,
-    nombre: 'Combo Almuerzo Ejecutivo',
-    descripcion: 'Proteína, arroz, ensalada, principio del día y sobremesa.',
-    precio: 14500,
-    imagenUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
-    disponible: true,
-  },
-]
 
 function getImagenPorCategoria(categoriaId: number, nombre: string): string {
   const n = nombre.toLowerCase()
@@ -71,12 +44,6 @@ function getImagenPorCategoria(categoriaId: number, nombre: string): string {
   if (categoriaId === 1) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400' // Almuerzos
   if (categoriaId === 2) return 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400' // Bebidas
   return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400' // Snacks
-}
-
-function getDescripcionPorCategoria(categoriaId: number): string {
-  if (categoriaId === 1) return 'Plato del día preparado fresco con proteína, acompañamientos y sazón casera.'
-  if (categoriaId === 2) return 'Bebida refrescante preparada al instante para acompañar tu menú.'
-  return 'Snack recién horneado y delicioso, ideal para disfrutar entre clases.'
 }
 
 export function App() {
@@ -189,13 +156,16 @@ export function App() {
 
 function HomePage() {
   const { agregarProducto, totalItems, total } = useCart()
-  const [restauranteSeleccionado, setRestauranteSeleccionado] = useState<{ id: number; nombre: string }>({
+
+  const [restauranteSeleccionado, setRestauranteSeleccionado] = useState<{
+    id: number
+    nombre: string
+  }>({
     id: 1,
     nombre: 'Cafetería Central - Bloque 11',
   })
+
   const [listaRestaurantes, setListaRestaurantes] = useState<RestauranteItem[]>([])
-  const [productos, setProductos] = useState<Producto[]>(PRODUCTOS_CATALOGO)
-  const [cargando, setCargando] = useState<boolean>(true)
 
   useEffect(() => {
     apiFetch(`${getApiBaseUrl()}/api/restaurantes`)
@@ -208,44 +178,13 @@ function HomePage() {
       .catch(() => {})
   }, [])
 
-  useEffect(() => {
-    apiFetch(`${getApiBaseUrl()}/api/products?restauranteId=${restauranteSeleccionado.id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error('Error al cargar productos')
-        return res.json()
-      })
-      .then((data: ProductItem[]) => {
-        if (data && data.length > 0) {
-          const adaptados: Producto[] = data.map((item) => ({
-            id: item.id,
-            nombre: item.nombre,
-            precio: Number(item.precio),
-            disponible: item.disponible,
-            descripcion: getDescripcionPorCategoria(item.categoriaId),
-            imagenUrl: getImagenPorCategoria(item.categoriaId, item.nombre),
-          }))
-          setProductos(adaptados)
-        } else {
-          setProductos([])
-        }
-      })
-      .catch(() => {
-        if (restauranteSeleccionado.id === 1) {
-          setProductos(PRODUCTOS_CATALOGO)
-        } else {
-          setProductos([])
-        }
-      })
-      .finally(() => {
-        setCargando(false)
-      })
-  }, [restauranteSeleccionado.id])
-
   return (
     <>
       <section className="hero-card">
         <p className="eyebrow">Comedor UPB</p>
+
         <h1>Haz tu pedido antes de llegar</h1>
+
         <p>
           Explora cafeterías, revisa el menú y prepara tu pedido desde cualquier dispositivo.
         </p>
@@ -266,38 +205,79 @@ function HomePage() {
       <ListaRestaurantes
         restauranteSeleccionadoId={restauranteSeleccionado.id}
         onSelectRestaurante={(r) => {
-          setCargando(true)
-          setRestauranteSeleccionado({ id: r.id, nombre: r.nombre })
+          setRestauranteSeleccionado({
+            id: r.id,
+            nombre: r.nombre,
+          })
         }}
       />
 
-      <section className="menu-destacado" style={{ marginTop: '2.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '12px' }}>
+      <section
+        className="menu-destacado"
+        style={{ marginTop: '2.5rem' }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: '1rem',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
           <div>
-            <span style={{ fontSize: '0.8rem', color: '#0d7377', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
+            <span
+              style={{
+                fontSize: '0.8rem',
+                color: '#0d7377',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                fontWeight: 700,
+              }}
+            >
               Menú de la cafetería
             </span>
-            <h2 style={{ fontSize: '1.6rem', color: '#0f3d3e', margin: '4px 0 0' }}>
+
+            <h2
+              style={{
+                fontSize: '1.6rem',
+                color: '#0f3d3e',
+                margin: '4px 0 0',
+              }}
+            >
               {restauranteSeleccionado.nombre}
             </h2>
           </div>
-          <span style={{ fontSize: '0.9rem', color: '#557571', fontWeight: 500, backgroundColor: '#eef6f5', padding: '6px 14px', borderRadius: '20px' }}>
-            {cargando ? 'Cargando productos...' : `${productos.length} producto${productos.length !== 1 ? 's' : ''} en carta`}
-          </span>
         </div>
 
         {listaRestaurantes.length > 1 && (
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '10px',
+              marginBottom: '20px',
+              flexWrap: 'wrap',
+            }}
+          >
             {listaRestaurantes.map((r) => {
               const active = restauranteSeleccionado.id === r.id
+
               return (
                 <button
                   key={r.id}
-                  onClick={() => setRestauranteSeleccionado({ id: r.id, nombre: r.nombre })}
+                  onClick={() =>
+                    setRestauranteSeleccionado({
+                      id: r.id,
+                      nombre: r.nombre,
+                    })
+                  }
                   style={{
                     padding: '8px 16px',
                     borderRadius: '24px',
-                    border: active ? '2px solid #0d7377' : '1px solid #c2ded9',
+                    border: active
+                      ? '2px solid #0d7377'
+                      : '1px solid #c2ded9',
                     backgroundColor: active ? '#0d7377' : '#ffffff',
                     color: active ? '#ffffff' : '#0f3d3e',
                     fontWeight: 600,
@@ -306,7 +286,9 @@ function HomePage() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
-                    boxShadow: active ? '0 2px 6px rgba(13, 115, 119, 0.2)' : 'none',
+                    boxShadow: active
+                      ? '0 2px 6px rgba(13, 115, 119, 0.2)'
+                      : 'none',
                     transition: 'all 0.2s ease',
                   }}
                 >
@@ -317,36 +299,27 @@ function HomePage() {
           </div>
         )}
 
-        {cargando ? (
-          <p style={{ color: '#557571' }}>Cargando menú de la cafetería...</p>
-        ) : productos.length === 0 ? (
-          <div style={{ padding: '36px 20px', backgroundColor: '#fff', borderRadius: '14px', textAlign: 'center', border: '1px dashed #b2ded6' }}>
-            <h3 style={{ margin: '0 0 8px', color: '#0f3d3e' }}>Sin productos en este momento</h3>
-            <p style={{ color: '#557571', margin: 0, fontSize: '0.95rem' }}>
-              Esta cafetería aún no tiene productos registrados en su carta. Puedes agregarlos desde el panel administrativo.
-            </p>
-          </div>
-        ) : (
-          <div className="ordering-layout">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
-              {productos.map((prod) => (
-                <CardProducto
-                  key={prod.id}
-                  producto={prod}
-                  onAgregar={(product) => agregarProducto({ ...product, id: Number(product.id), restauranteId: restauranteSeleccionado.id, imagenUrl: product.imagenUrl })}
-                />
-              ))}
-            </div>
-            <div id="resumen-pedido">
-              <ResumenPedido />
-            </div>
-          </div>
-        )}
+        <ListaProductos
+          restauranteId={restauranteSeleccionado.id}
+          onAgregar={(product) =>
+            agregarProducto({
+              ...product,
+              id: Number(product.id),
+              restauranteId: restauranteSeleccionado.id,
+              imagenUrl: product.imagenUrl,
+            })
+          }
+        />
       </section>
+
       <button
         className="floating-cart-button"
         type="button"
-        onClick={() => document.getElementById('resumen-pedido')?.scrollIntoView({ behavior: 'smooth' })}
+        onClick={() =>
+          document
+            .getElementById('resumen-pedido')
+            ?.scrollIntoView({ behavior: 'smooth' })
+        }
       >
         <span>Carrito ({totalItems})</span>
         <strong>${total.toLocaleString('es-CO')}</strong>
@@ -449,6 +422,7 @@ function AdminDashboardPage({
 }) {
   const [selectedRestauranteId, setSelectedRestauranteId] = useState<number>(initialRestauranteId)
   const [listaRestaurantes, setListaRestaurantes] = useState<RestauranteItem[]>([])
+  const [productDescription, setProductDescription] = useState('')
   const [products, setProducts] = useState<ProductItem[]>([])
   const [productName, setProductName] = useState('')
   const [productPrice, setProductPrice] = useState('')
@@ -460,6 +434,7 @@ function AdminDashboardPage({
 
   const resetProductForm = () => {
     setProductName('')
+    setProductDescription('')
     setProductPrice('')
     setCategoriaId('1')
     setDisponible(true)
@@ -513,6 +488,7 @@ function AdminDashboardPage({
         },
         body: JSON.stringify({
           nombre: productName.trim(),
+          descripcion: productDescription.trim(),
           precio: productPrice,
           categoriaId: Number(categoriaId),
           restauranteId: selectedRestauranteId,
@@ -538,6 +514,7 @@ function AdminDashboardPage({
     setProductPrice(String(product.precio))
     setCategoriaId(String(product.categoriaId))
     setDisponible(Boolean(product.disponible))
+    setProductDescription(product.descripcion)
   }
 
   const handleUpdateProduct = async (event: FormEvent<HTMLFormElement>) => {
@@ -561,6 +538,7 @@ function AdminDashboardPage({
         },
         body: JSON.stringify({
           nombre: productName.trim(),
+          descripcion: productDescription.trim(),
           precio: productPrice,
           categoriaId: Number(categoriaId),
           restauranteId: selectedRestauranteId,
@@ -687,6 +665,11 @@ function AdminDashboardPage({
             <label>
               Nombre
               <input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="Ej: Café Americano" required />
+            </label>
+
+            <label>
+              Descripción
+                <textarea value={productDescription} onChange={(e) => setProductDescription(e.target.value)} placeholder="Ej: Café preparado con leche..." required />
             </label>
 
             <label>

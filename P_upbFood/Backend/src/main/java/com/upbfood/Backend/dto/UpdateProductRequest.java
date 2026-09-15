@@ -26,6 +26,10 @@ public class UpdateProductRequest {
     @NotNull(message = "La disponibilidad es obligatoria.")
     private Boolean disponible;
 
+    @NotBlank(message = "La descripción es obligatoria.")
+    private String descripcion;
+    private String imagenUrl;
+
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
     public BigDecimal getPrecio() { return precio; }
@@ -36,4 +40,8 @@ public class UpdateProductRequest {
     public void setRestauranteId(Long restauranteId) { this.restauranteId = restauranteId; }
     public Boolean getDisponible() { return disponible; }
     public void setDisponible(Boolean disponible) { this.disponible = disponible; }
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl;}
 }

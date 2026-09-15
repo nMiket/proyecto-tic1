@@ -77,7 +77,9 @@ CREATE TABLE productos (
     restaurante_id INT NOT NULL CONSTRAINT fk_prod_rest REFERENCES restaurantes(id) ON DELETE CASCADE,
     categoria_id INT NOT NULL CONSTRAINT fk_prod_cat REFERENCES categorias(id),
     nombre VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(255) NOT NULL,
     precio NUMERIC(10,2) NOT NULL CONSTRAINT chk_precio_pos CHECK (precio >= 0),
+    imagen_url VARCHAR(500),
     disponible BOOLEAN DEFAULT TRUE
 );
 
@@ -203,25 +205,18 @@ $$ LANGUAGE plpgsql;
 -- =========================================================
 -- CRUD: PRODUCTOS
 -- =========================================================
-CREATE OR REPLACE FUNCTION fn_producto_crear(
-    p_restaurante_id INT, p_categoria_id INT, p_nombre VARCHAR, p_precio NUMERIC, p_disponible BOOLEAN DEFAULT TRUE
+CREATE OR REPLACE FUNCTION fn_producto_crear(p_restaurante_id INT, p_categoria_id INT, p_nombre VARCHAR, p_descripcion VARCHAR,
+    p_precio NUMERIC, p_imagen_url VARCHAR DEFAULT NULL, p_disponible BOOLEAN DEFAULT TRUE
 ) RETURNS INT AS $$
 DECLARE v_id INT;
 BEGIN
-    INSERT INTO productos (restaurante_id, categoria_id, nombre, precio, disponible)
-    VALUES (p_restaurante_id, p_categoria_id, p_nombre, p_precio, p_disponible) RETURNING id INTO v_id;
-    RETURN v_id;
-END;
-$$ LANGUAGE plpgsql;
+    INSERT INTO productos (restaurante_id, categoria_id, nombre, descripcion, precio, imagen_url, disponible
+    )
+    VALUES (p_restaurante_id, p_categoria_id, p_nombre, p_descripcion, p_precio, p_imagen_url, p_disponible
+    )
+    RETURNING id INTO v_id;
 
-CREATE OR REPLACE FUNCTION fn_producto_obtener_todos()
-RETURNS TABLE(id INT, producto VARCHAR, precio NUMERIC, disponible BOOLEAN, restaurante VARCHAR, categoria VARCHAR) AS $$
-BEGIN
-    RETURN QUERY 
-    SELECT p.id, p.nombre, p.precio, p.disponible, r.nombre, c.nombre
-    FROM productos p
-    JOIN restaurantes r ON p.restaurante_id = r.id
-    JOIN categorias c ON p.categoria_id = c.id;
+    RETURN v_id;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -394,12 +389,15 @@ SELECT fn_categoria_crear('Almuerzos');
 SELECT fn_categoria_crear('Bebidas');
 SELECT fn_categoria_crear('Snacks');
 
-SELECT fn_producto_crear(1, 1, 'Ejecutivo de Carne', 15000.00, TRUE);
-SELECT fn_producto_crear(1, 2, 'Jugo Natural 16oz', 4500.00, TRUE);
-SELECT fn_producto_crear(2, 3, 'Sandwich Gourmet Boulevard', 12500.00, TRUE);
-SELECT fn_producto_crear(2, 2, 'Café Latte Montana', 5500.00, TRUE);
+SELECT fn_producto_crear(1, 1,'Ejecutivo de Carne', 'Carne acompañada de arroz, ensalada y papas.', 15000.00, 
+'https://images.unsplash.com/photo-1547592180-85f173990554', TRUE);
+SELECT fn_producto_crear(1, 2,'Jugo Natural 16oz','Jugo natural de fruta preparado al momento.',4500.00, 
+'https://images.unsplash.com/photo-1600271886742-f049cd451bba', TRUE);
+SELECT fn_producto_crear(2, 3,'Sandwich Gourmet Boulevard','Sandwich gourmet preparado con ingredientes frescos.',12500.00,
+'https://images.unsplash.com/photo-1528735602780-2552fd46c7af',TRUE);
+SELECT fn_producto_crear(2, 2,'Café Latte Montana','Café latte preparado con espresso y leche.',5500.00,
+'https://images.unsplash.com/photo-1509042239860-f550ce710b93',TRUE);
 
 -- Usuario administrativo de demostración para el login del panel administrativo
 SELECT fn_usuario_admin_crear(1, 'admin@upb.edu.co', '$2a$10$tyIhSPUO.tPXDrUKklBiJef3B9OlrWZeazp5iJT0v3LQ6h0Zq7SnS');
 SELECT fn_usuario_admin_crear(2, 'admin2@upb.edu.co', '$2a$10$0gCFeH/1cEHW30aS1ehcJ.HtLbZvFpBYTmaRXYcgkOWdetsasSQDO');
-
