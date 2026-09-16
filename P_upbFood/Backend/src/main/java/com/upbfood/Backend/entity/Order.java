@@ -1,9 +1,9 @@
 package com.upbfood.Backend.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,9 +11,9 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "pedidos")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+
+
+
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,4 +39,21 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<OrderDetail> details;
-}
+
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Restaurant getRestaurant() { return restaurant; }
+    public void setRestaurant(Restaurant restaurant) { this.restaurant = restaurant; }
+    public Client getClient() { return client; }
+    public void setClient(Client client) { this.client = client; }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
+    public BigDecimal getTotal() { return total; }
+    public void setTotal(BigDecimal total) { this.total = total; }
+    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
+    public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+    public List<OrderDetail> getDetails() { return details; }
+    public void setDetails(List<OrderDetail> details) { this.details = details; }
+
+

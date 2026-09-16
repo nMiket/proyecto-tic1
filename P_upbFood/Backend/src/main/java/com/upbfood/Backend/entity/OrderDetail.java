@@ -1,17 +1,17 @@
 package com.upbfood.Backend.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+
+
 import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "detalle_pedidos")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+
+
+
 public class OrderDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,4 +31,17 @@ public class OrderDetail {
 
     @Column(name = "precio_unitario", nullable = false, precision = 10, scale = 2)
     private BigDecimal precioUnitario;
-}
+
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Order getOrder() { return order; }
+    public void setOrder(Order order) { this.order = order; }
+    public Product getProduct() { return product; }
+    public void setProduct(Product product) { this.product = product; }
+    public Integer getCantidad() { return cantidad; }
+    public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }
+    public BigDecimal getPrecioUnitario() { return precioUnitario; }
+    public void setPrecioUnitario(BigDecimal precioUnitario) { this.precioUnitario = precioUnitario; }
+
+
