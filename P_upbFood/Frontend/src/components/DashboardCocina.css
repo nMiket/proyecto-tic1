@@ -1,0 +1,66 @@
+.cocina-dashboard {
+  padding: 2rem;
+}
+
+.kanban-board {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.kanban-column {
+  flex: 1;
+  background-color: #f4f6f8;
+  padding: 1.5rem;
+  border-radius: 8px;
+  min-height: 500px;
+}
+
+.kanban-column h2 {
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.pedido-card {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border-left: 4px solid #3b82f6;
+}
+
+.pedido-card.en-preparacion {
+  border-left-color: #f59e0b;
+}
+
+.pedido-card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+}
+
+.pedido-card p {
+  margin: 0 0 0.5rem 0;
+  color: #555;
+}
+
+.pedido-card ul {
+  margin: 0 0 1rem 0;
+  padding-left: 1.25rem;
+  color: #444;
+}
+
+.pedido-card button {
+  width: 100%;
+  padding: 0.5rem;
+  background-color: #1f2937;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pedido-card button:hover {
+  background-color: #374151;
+}

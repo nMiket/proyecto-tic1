@@ -1,3 +1,4 @@
+import { DashboardCocina } from './components/DashboardCocina'
 import { startTransition, useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import ListaRestaurantes from './components/ListaRestaurantes'
@@ -147,7 +148,7 @@ export function App() {
 
         <Route 
         path="/pedido" element={<PedidoPage />} />
-        <Route path="/historial" element={<HistorialPage />} />
+        <Route path="/historial" element={<HistorialPage />} /><Route path="/cocina" element={<DashboardCocina />} />
         </Routes>
       </CartProvider>
     </main>

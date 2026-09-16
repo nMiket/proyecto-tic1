@@ -50,7 +50,27 @@ function ResumenPedido() {
           </div>
           <div className="order-total"><span>Total</span><strong>${total.toLocaleString('es-CO')}</strong></div>
           <div className="order-actions">
-            <button type="button" className="checkout-button" disabled>Continuar al pago</button>
+            <button type="button" className="checkout-button" onClick={async () => {
+              if (items.length === 0) return
+              try {
+                const req = {
+                  restauranteId: 1, // default or get from somewhere
+                  clienteCorreo: "cliente@upb.edu.co",
+                  clienteNombre: "Cliente Prueba",
+                  clienteTelefono: "1234567890",
+                  items: items.map(i => ({ productoId: i.id, cantidad: i.cantidad }))
+                }
+                const res = await fetch("http://localhost:8080/api/pedidos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(req) })
+                if (res.ok) {
+                  alert("Pedido enviado a la cocina con exito!")
+                  vaciarCarrito()
+                } else {
+                  alert("Error al enviar el pedido")
+                }
+              } catch (e) {
+                alert("Error al enviar el pedido")
+              }
+            }}>Continuar al pago</button>
             <button type="button" className="clear-button" onClick={vaciarCarrito}>Vaciar carrito</button>
           </div>
         </>
