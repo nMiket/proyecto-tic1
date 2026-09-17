@@ -35,3 +35,4 @@ public class Client {
     public void setTelefono(String telefono) { this.telefono = telefono; }
 
 
+}

@@ -24,3 +24,4 @@ public class CreateOrderRequest {
     public void setItems(List<CreateOrderItemRequest> items) { this.items = items; }
 
 
+}
