@@ -156,6 +156,7 @@ Una vez levantados los servicios, accede desde tu navegador web:
 | Servicio / Vista | URL | Descripción |
 | :--- | :--- | :--- |
 | **Vista Pública** | [http://localhost:5173](http://localhost:5173) | Explora las cafeterías (`CardRestaurante`) y el catálogo de productos con formato de moneda en COP (`CardProducto`). |
+| **Dashboard de Cocina** | [http://localhost:5173/cocina](http://localhost:5173/cocina) | Visualización en tiempo real de los pedidos entrantes para el personal operativo de cocina (Lista de pedidos). |
 | **Login Administrativo** | [http://localhost:5173/admin](http://localhost:5173/admin) | Inicio de sesión para administradores de restaurante. |
 | **Dashboard Admin** | [http://localhost:5173/admin/dashboard](http://localhost:5173/admin/dashboard) | Métricas activas, resumen del día y CRUD completo de productos (crear, editar, eliminar y cambiar disponibilidad). |
 | **Backend REST API** | [http://localhost:8080](http://localhost:8080) | Endpoints REST (`/api/restaurantes`, `/api/products`, `/api/admin/login`). |
