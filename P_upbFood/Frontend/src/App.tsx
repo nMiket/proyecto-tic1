@@ -156,6 +156,7 @@ export function App() {
 
 function HomePage() {
   const { agregarProducto, totalItems, total } = useCart()
+  const navigate = useNavigate()
 
   const [restauranteSeleccionado, setRestauranteSeleccionado] = useState<{
     id: number
@@ -311,19 +312,15 @@ function HomePage() {
           }
         />
       </section>
-
+          
       <button
-        className="floating-cart-button"
-        type="button"
-        onClick={() =>
-          document
-            .getElementById('resumen-pedido')
-            ?.scrollIntoView({ behavior: 'smooth' })
-        }
-      >
-        <span>Carrito ({totalItems})</span>
-        <strong>${total.toLocaleString('es-CO')}</strong>
-      </button>
+      className="floating-cart-button"
+      type="button"
+      onClick={() => navigate('/pedido')}
+    >
+      <span>Carrito ({totalItems})</span>
+      <strong>${total.toLocaleString('es-CO')}</strong>
+    </button>
     </>
   )
 }
