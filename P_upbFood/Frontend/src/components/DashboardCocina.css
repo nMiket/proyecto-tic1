@@ -1,0 +1,154 @@
+.cocina-dashboard {
+  padding: 2rem;
+}
+
+.cocina-dashboard__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.cocina-dashboard__header h1 {
+  margin: 0.3rem 0 0;
+  color: #0f3d3e;
+}
+
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.kanban-column {
+  background-color: #f4f6f8;
+  padding: 1.5rem;
+  border-radius: 16px;
+  min-height: 500px;
+  border: 1px solid #dfe7ea;
+}
+
+.kanban-column h2 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  color: #173d3f;
+}
+
+.empty-column {
+  margin: 0;
+  padding: 1rem;
+  border: 1px dashed #9db8be;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.5);
+  color: #45686b;
+}
+
+.pedido-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 8px 18px rgba(17, 24, 39, 0.06);
+  border-left: 4px solid #3b82f6;
+}
+
+.pedido-card.en-preparacion {
+  border-left-color: #f59e0b;
+}
+
+.pedido-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.pedido-card__eyebrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #0d7377;
+  font-weight: 700;
+}
+
+.pedido-card__header h3 {
+  margin: 0.25rem 0 0;
+  font-size: 1.15rem;
+  color: #0f3d3e;
+}
+
+.pedido-card__badge {
+  background: #e8f2ff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 0.32rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.pedido-card__meta,
+.pedido-card__productos,
+.pedido-card__observaciones {
+  margin-top: 0.85rem;
+}
+
+.pedido-card__meta p,
+.pedido-card__observaciones p {
+  margin: 0;
+  color: #465a5f;
+  line-height: 1.5;
+}
+
+.pedido-card__productos strong,
+.pedido-card__observaciones strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #173d3f;
+}
+
+.pedido-card__productos ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: #333;
+}
+
+.pedido-card__productos li,
+.pedido-card__observaciones p {
+  margin-bottom: 0.25rem;
+}
+
+.pedido-card__acciones {
+  margin-top: 1rem;
+}
+
+.pedido-card button {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0d7377, #1a969d);
+  color: white;
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.pedido-card button:hover {
+  transform: translateY(-1px);
+}
+
+.pedido-card__secondary {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+}
+
+@media (max-width: 700px) {
+  .cocina-dashboard {
+    padding: 1rem;
+  }
+
+  .kanban-board {
+    grid-template-columns: 1fr;
+  }
+}
