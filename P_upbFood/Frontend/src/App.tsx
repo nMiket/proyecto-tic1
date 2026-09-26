@@ -6,6 +6,7 @@ import ResumenPedido from './components/ResumenPedido'
 import { CartProvider } from './context/CartContext'
 import { useCart } from './context/useCart'
 import { apiFetch, getApiBaseUrl, login as authenticate, logout as endSession, refreshSession } from './auth'
+import FormularioCliente from "./components/FormularioCliente";
 import './App.css'
 
 type ProductItem = {
@@ -148,7 +149,10 @@ export function App() {
         <Route 
         path="/pedido" element={<PedidoPage />} />
         <Route path="/historial" element={<HistorialPage />} />
+        <Route path="/cliente" element={<FormularioCliente />} />
         </Routes>
+        
+
       </CartProvider>
     </main>
   )
