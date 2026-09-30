@@ -97,7 +97,7 @@ CREATE TABLE pedidos (
     restaurante_id INT NOT NULL CONSTRAINT fk_ped_rest REFERENCES restaurantes(id) ON DELETE RESTRICT,
     cliente_id INT NOT NULL CONSTRAINT fk_ped_cli REFERENCES clientes(id),
     estado VARCHAR(30) DEFAULT 'NUEVO' 
-        CONSTRAINT chk_estado_ped CHECK (estado IN ('NUEVO', 'EN_PREPARACION', 'ENTREGADO')),
+        CONSTRAINT chk_estado_ped CHECK (estado IN ('NUEVO', 'EN_PAGO', 'EN_PREPARACION', 'ENTREGADO')),
     total NUMERIC(10,2) NOT NULL CONSTRAINT chk_total_pos CHECK (total >= 0),
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

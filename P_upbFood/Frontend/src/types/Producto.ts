@@ -3,6 +3,7 @@
   nombre: string;
   descripcion: string;
   precio: number;
-  imagenUrl: string;
+  imagenUrl?: string;
+  categoriaId?: number;
   disponible?: boolean;
 }

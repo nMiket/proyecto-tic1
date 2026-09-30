@@ -1,8 +1,10 @@
 import { useCart } from '../context/useCart'
+import { useNavigate } from 'react-router-dom'
 import './ResumenPedido.css'
 
 function ResumenPedido() {
   const { items, totalItems, total, agregarProducto, quitarProducto, eliminarProducto, actualizarObservaciones, vaciarCarrito } = useCart()
+  const navigate = useNavigate()
 
   return (
     <aside className="order-summary" aria-label="Resumen del pedido">
@@ -49,12 +51,21 @@ function ResumenPedido() {
             ))}
           </div>
           <div className="order-total"><span>Total</span><strong>${total.toLocaleString('es-CO')}</strong></div>
-          <div className="order-actions">
-            <button type="button" className="checkout-button" disabled>Continuar al pago</button>
-            <button type="button" className="clear-button" onClick={vaciarCarrito}>Vaciar carrito</button>
-          </div>
         </>
       )}
+      <div className="order-actions">
+        <button
+          type="button"
+          className="checkout-button"
+          disabled={items.length === 0}
+          onClick={() => navigate('/cliente')}
+        >
+          Confirmar pedido
+        </button>
+        {items.length > 0 && (
+          <button type="button" className="clear-button" onClick={vaciarCarrito}>Vaciar carrito</button>
+        )}
+      </div>
     </aside>
   )
 }

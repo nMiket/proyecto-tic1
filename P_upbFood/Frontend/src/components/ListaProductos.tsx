@@ -8,6 +8,20 @@ type ListaProductosProps = {
   onAgregar?: (producto: Producto) => void;
 };
 
+function imagenFallback(producto: Producto): string {
+  const nombre = producto.nombre.toLowerCase();
+  if (nombre.includes("carne") || nombre.includes("asado") || nombre.includes("res")) {
+    return "https://images.unsplash.com/photo-1600891964092-4316c288032e?w=400";
+  }
+  if (nombre.includes("jugo") || nombre.includes("bebida") || nombre.includes("agua")) {
+    return "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400";
+  }
+  if (producto.categoriaId === 2) {
+    return "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400";
+  }
+  return "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400";
+}
+
 function ListaProductos({
   restauranteId,
   onAgregar,
@@ -31,7 +45,10 @@ function ListaProductos({
         return response.json();
       })
       .then((data: Producto[]) => {
-        setProductos(data);
+        setProductos(data.map((producto) => ({
+          ...producto,
+          imagenUrl: producto.imagenUrl || imagenFallback(producto),
+        })));
         setCargando(false);
       })
       .catch(() => {

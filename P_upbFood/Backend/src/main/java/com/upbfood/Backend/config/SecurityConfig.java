@@ -36,8 +36,10 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/admin/login", "/api/admin/refresh", "/api/admin/logout").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/products", "/api/productos", "/api/restaurantes").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**", "/api/productos", "/api/productos/**", "/api/restaurantes").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/clientes").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/pedidos").permitAll()
+                .requestMatchers(HttpMethod.PUT, "/api/pedidos/*/pago").permitAll()
                 .anyRequest().authenticated())
             .httpBasic(httpBasic -> httpBasic.disable())
             .formLogin(formLogin -> formLogin.disable())

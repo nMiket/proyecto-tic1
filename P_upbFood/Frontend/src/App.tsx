@@ -7,6 +7,7 @@ import { CartProvider } from './context/CartContext'
 import { useCart } from './context/useCart'
 import { apiFetch, getApiBaseUrl, login as authenticate, logout as endSession, refreshSession } from './auth'
 import FormularioCliente from "./components/FormularioCliente";
+import PagoPage from "./components/PagoPage";
 import './App.css'
 
 type ProductItem = {
@@ -150,6 +151,7 @@ export function App() {
         path="/pedido" element={<PedidoPage />} />
         <Route path="/historial" element={<HistorialPage />} />
         <Route path="/cliente" element={<FormularioCliente />} />
+        <Route path="/pago" element={<PagoPage />} />
         </Routes>
         
 

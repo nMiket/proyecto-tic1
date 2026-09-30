@@ -23,8 +23,9 @@
 .order-item__notes textarea::placeholder { color: #a6c9be; }
 .order-total { display: flex; justify-content: space-between; padding: 18px 0; font-size: 1.05rem; }
 .order-total strong { color: #f2c14e; font-size: 1.25rem; }
-.order-actions { display: grid; gap: 8px; }
+.order-actions { display: grid; gap: 8px; padding-bottom: 76px; }
 .checkout-button, .clear-button { border: 0; border-radius: 8px; padding: 11px; font-weight: 700; cursor: pointer; }
-.checkout-button { background: #f2c14e; color: #153c33; }
+.checkout-button { position: fixed; left: 50%; bottom: 18px; z-index: 10; width: min(360px, calc(100vw - 32px)); transform: translateX(-50%); background: #f2c14e; color: #153c33; box-shadow: 0 8px 22px rgba(21, 60, 51, .28); }
+.checkout-button:disabled { cursor: not-allowed; opacity: .55; }
 .checkout-button:disabled { opacity: .65; cursor: not-allowed; }
 .clear-button { background: transparent; color: #c5d9d2; }

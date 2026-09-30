@@ -1,3 +1,5 @@
+bu
+
 # 🍔 Plataforma Web para la Gestión de Pedidos en Cafeterías y Restaurantes UPB
 
 ¡Bienvenido al repositorio oficial del proyecto **UPB Food**! Esta solución tecnológica nace para transformar la experiencia gastronómica en el campus de la **Universidad Pontificia Bolivariana (UPB)**, optimizando los tiempos de atención y digitalizando el proceso de compra.
@@ -5,6 +7,7 @@
 ---
 
 ## 📋 Tabla de Contenidos
+
 - [Misión del Proyecto](#-misión-del-proyecto)
 - [Arquitectura y Tecnologías](#-arquitectura-y-tecnologías)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
@@ -60,6 +63,7 @@ proyecto-tic1/
 ## ⚙️ Requisitos Previos
 
 Para ejecutar el proyecto de la forma más rápida y recomendada:
+
 - **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** instalado y en ejecución en tu equipo.
 - **[Git](https://git-scm.com/)**.
 - **[Visual Studio Code](https://code.visualstudio.com/)** (opcional pero recomendado).
@@ -80,6 +84,7 @@ El repositorio incluye tareas preconfiguradas para VS Code:
    ```text
    Ctrl + Shift + B
    ```
+
    *(O ve al menú superior: **Terminal** > **Run Build Task...**)*.
 3. Se abrirá la terminal integrada de VS Code compilando las imágenes y levantando los 3 servicios (`upbfood-db`, `upbfood-backend`, `upbfood-frontend`).
 
@@ -98,11 +103,13 @@ El repositorio incluye tareas preconfiguradas para VS Code:
    ```powershell
    Copy-Item .env.example .env
    ```
+
    Edita `.env` y reemplaza los valores de ejemplo. El archivo `.env` está excluido de Git.
 4. Construye y levanta los servicios:
    ```powershell
    docker compose up --build
    ```
+
    *(Para levantarlo en segundo plano y liberar tu terminal, agrega `-d`: `docker compose up --build -d`)*.
 5. Para detener los contenedores cuando termines:
    ```powershell
@@ -125,26 +132,33 @@ El repositorio incluye tareas preconfiguradas para VS Code:
 Si prefieres ejecutar los componentes de forma individual sin Docker:
 
 ### 1. Base de Datos (PostgreSQL)
+
 - Instala y abre PostgreSQL localmente en el puerto `5432`.
 - Crea la base de datos `upbfood` con usuario `upbfood` y clave `upbfood123`.
 - Ejecuta el script SQL ubicado en [`P_upbFood/DataBase/init.sql`](P_upbFood/DataBase/init.sql) para cargar el esquema y los datos semilla.
 
 ### 2. Backend (Spring Boot)
+
 Desde la terminal:
+
 ```powershell
 cd P_upbFood/Backend
 .\mvnw spring-boot:run
 ```
-*(En Linux/Mac: `./mvnw spring-boot:run`)*.  
+
+*(En Linux/Mac: `./mvnw spring-boot:run`)*.
 El backend iniciará en: `http://localhost:8080`.
 
 ### 3. Frontend (React + Vite)
+
 En otra terminal:
+
 ```powershell
 cd P_upbFood/Frontend
 npm install
 npm run dev
 ```
+
 El frontend iniciará en: `http://localhost:5173`.
 
 ---
@@ -153,14 +167,15 @@ El frontend iniciará en: `http://localhost:5173`.
 
 Una vez levantados los servicios, accede desde tu navegador web:
 
-| Servicio / Vista | URL | Descripción |
-| :--- | :--- | :--- |
-| **Vista Pública** | [http://localhost:5173](http://localhost:5173) | Explora las cafeterías (`CardRestaurante`) y el catálogo de productos con formato de moneda en COP (`CardProducto`). |
-| **Login Administrativo** | [http://localhost:5173/admin](http://localhost:5173/admin) | Inicio de sesión para administradores de restaurante. |
-| **Dashboard Admin** | [http://localhost:5173/admin/dashboard](http://localhost:5173/admin/dashboard) | Métricas activas, resumen del día y CRUD completo de productos (crear, editar, eliminar y cambiar disponibilidad). |
-| **Backend REST API** | [http://localhost:8080](http://localhost:8080) | Endpoints REST (`/api/restaurantes`, `/api/products`, `/api/admin/login`). |
+| Servicio / Vista               | URL                                                                           | Descripción                                                                                                               |
+| :----------------------------- | :---------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------- |
+| **Vista Pública**       | [http://localhost:5173](http://localhost:5173)                                 | Explora las cafeterías (`CardRestaurante`) y el catálogo de productos con formato de moneda en COP (`CardProducto`). |
+| **Login Administrativo** | [http://localhost:5173/admin](http://localhost:5173/admin)                     | Inicio de sesión para administradores de restaurante.                                                                     |
+| **Dashboard Admin**      | [http://localhost:5173/admin/dashboard](http://localhost:5173/admin/dashboard) | Métricas activas, resumen del día y CRUD completo de productos (crear, editar, eliminar y cambiar disponibilidad).       |
+| **Backend REST API**     | [http://localhost:8080](http://localhost:8080)                                 | Endpoints REST (`/api/restaurantes`, `/api/products`, `/api/admin/login`).                                           |
 
 ### Datos de Inicio de Sesión (Sembrados)
+
 - **Correo:** `admin@upb.edu.co`
 - **Contraseña:** `admin123`
 - **Correo:** `admin2@upb.edu.co`
@@ -184,14 +199,18 @@ Las credenciales de PostgreSQL y el secreto JWT se configuran en `P_upbFood/.env
 El proyecto cuenta con suite de pruebas automáticas para garantizar la calidad del software:
 
 ### Pruebas Unitarias del Backend (Spring Boot + JUnit / Mockito)
+
 Ejecuta las pruebas de autenticación, controladores y contexto JPA:
+
 ```powershell
 cd P_upbFood/Backend
 .\mvnw test
 ```
 
 ### Verificación de Tipos y Compilación del Frontend (TypeScript)
+
 Verifica que no existan errores de tipos ni dependencias faltantes:
+
 ```powershell
 cd P_upbFood/Frontend
 npm run build
@@ -203,18 +222,19 @@ npm run build
 
 Este proyecto es desarrollado en el marco de la asignatura **Proyecto Aplicado en TIC 1**, guiado por la docente **Yuri Marcela Escobar**:
 
-| Nombre | Carrera | Rol en el Proyecto |
-| :--- | :--- | :--- |
-| 👩‍💻 **Valeria Gómez Arcila** | Ing. de Sistemas e Informática | **Scrum Master & UI/UX Designer** *(Líder)* |
-| 👨‍💻 **Andrés Felipe Martínez Taborda** | Ing. de Sistemas e Informática | **Tech Lead & Backend Engineer & Product Owner** |
-| 👨‍💻 **Julián Eduardo Miranda Salazar** | Ing. de Sistemas e Informática | **Frontend Developer** |
-| 👨‍💻 **Ismael López Cardozo** | Ing. en Ciencia de Datos | **Data Scientist & QA Manager** |
+| Nombre                                           | Carrera                         | Rol en el Proyecto                                     |
+| :----------------------------------------------- | :------------------------------ | :----------------------------------------------------- |
+| 👩‍💻**Valeria Gómez Arcila**            | Ing. de Sistemas e Informática | **Scrum Master & UI/UX Designer** *(Líder)*   |
+| 👨‍💻**Andrés Felipe Martínez Taborda** | Ing. de Sistemas e Informática | **Tech Lead & Backend Engineer & Product Owner** |
+| 👨‍💻**Julián Eduardo Miranda Salazar**  | Ing. de Sistemas e Informática | **Frontend Developer**                           |
+| 👨‍💻**Ismael López Cardozo**            | Ing. en Ciencia de Datos        | **Data Scientist & QA Manager**                  |
 
 ---
 
 ## 📈 Metodología de Desarrollo
 
 Trabajamos con un **enfoque híbrido Scrum + Kanban**:
+
 * **Scrum:** Planificación incremental en **4 Sprints** de 2 semanas (8 semanas totales, 72 Puntos de Historia).
 * **Kanban:** Gestión del flujo de trabajo visualizado mediante **GitHub Projects**.
 

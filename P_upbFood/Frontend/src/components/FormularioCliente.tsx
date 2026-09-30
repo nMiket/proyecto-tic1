@@ -1,7 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { apiFetch, getApiBaseUrl } from "../auth";
+import { useCart } from "../context/useCart";
 import "./FormularioCliente.css";
 
 export default function FormularioCliente() {
+    const navigate = useNavigate();
+    const { items, vaciarCarrito } = useCart();
     const [nombre, setNombre] = useState("");
     const [telefono, setTelefono] = useState("");
     const [correo, setCorreo] = useState("");
@@ -13,6 +18,10 @@ export default function FormularioCliente() {
     });
 
     const [mensaje, setMensaje] = useState("");
+    const [enviando, setEnviando] = useState(false);
+    const formularioValido = nombre.trim().length > 0
+        && /^[0-9]{7,10}$/.test(telefono.trim())
+        && /^[^\s@]+@upb\.edu\.co$/.test(correo.trim());
 
     const guardarCliente = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -50,30 +59,56 @@ export default function FormularioCliente() {
             return;
         }
 
+        if (items.length === 0) {
+            setMensaje("Agrega al menos un producto antes de confirmar el pedido.");
+            return;
+        }
+
+        setEnviando(true);
         try {
-            const respuesta = await fetch("http://localhost:8080/api/clientes", {
+            const respuesta = await apiFetch(`${getApiBaseUrl()}/api/pedidos`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    nombre,
-                    telefono,
-                    correo,
+                    restauranteId: items[0].restauranteId,
+                    clienteNombre: nombre.trim(),
+                    clienteTelefono: telefono.trim(),
+                    clienteCorreo: correo.trim(),
+                    items: items.map((item) => ({
+                        productoId: item.id,
+                        cantidad: item.cantidad,
+                        observaciones: item.observaciones.trim(),
+                    })),
                 }),
             });
 
             if (respuesta.ok) {
-                const cliente = await respuesta.json();
+                const pedido = await respuesta.json() as { id: number };
+                const pago = await apiFetch(`${getApiBaseUrl()}/api/pedidos/${pedido.id}/pago`, {
+                    method: "PUT",
+                });
+                if (!pago.ok) {
+                    const error = await pago.json().catch(() => null) as { message?: string } | null;
+                    setMensaje(error?.message ?? "No se pudo iniciar el pago.");
+                    return;
+                }
 
-                console.log("Cliente guardado:", cliente);
-                setMensaje("Datos registrados correctamente");
+                const pedidoEnPago = await pago.json() as { id: number; total: number };
+                vaciarCarrito();
+                navigate("/pago", {
+                    state: { pedidoId: pedidoEnPago.id, total: pedidoEnPago.total },
+                });
             } else {
-                setMensaje("No se pudieron registrar los datos");
+                const error = await respuesta.json().catch(() => null) as { message?: string } | null;
+                setMensaje(error?.message ?? "No se pudo registrar el pedido.");
             }
         } catch (error) {
             console.error(error);
             setMensaje("No se pudo conectar con el servidor");
+        } finally {
+            setEnviando(false);
         }
     };
 
@@ -133,12 +168,12 @@ export default function FormularioCliente() {
                         )}
                     </div>
 
-                    <button type="submit">
-                        Continuar
+                    <button type="submit" disabled={enviando || items.length === 0 || !formularioValido}>
+                        {enviando ? "Abriendo pago..." : "Continuar al pago"}
                     </button>
 
                     {mensaje && (
-                        <p className="mensaje-exito">
+                        <p className="mensaje-exito" aria-live="polite">
                             {mensaje}
                         </p>
                     )}
