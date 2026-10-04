@@ -44,6 +44,11 @@ public class ProductController {
         return getProductsByRestaurant(restauranteId);
     }
 
+    @GetMapping("/productos/admin")
+    public ResponseEntity<List<Map<String, Object>>> listProductosAdmin(@RequestParam Long restauranteId) {
+        return getProductsByRestaurant(restauranteId);
+    }
+
     private ResponseEntity<List<Map<String, Object>>> getProductsByRestaurant(Long restauranteId) {
         List<Product> products = productRepository.findByRestauranteIdOrderByIdAsc(restauranteId);
 
@@ -53,7 +58,7 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/products")
+    @PostMapping({"/products", "/productos"})
     public ResponseEntity<Map<String, Object>> createProduct(@Valid @RequestBody CreateProductRequest request) {
         authorizationService.requireAdminForRestaurant(request.getRestauranteId());
 

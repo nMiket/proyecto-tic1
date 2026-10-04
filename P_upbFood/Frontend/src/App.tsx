@@ -1,4 +1,4 @@
-import { DashboardCocina } from './components/DashboardCocina'
+﻿import { DashboardCocina } from './components/DashboardCocina'
 import { startTransition, useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import ListaRestaurantes from './components/ListaRestaurantes'
@@ -15,6 +15,7 @@ type ProductItem = {
   descripcion: string
   precio: number | string
   disponible: boolean
+  imagenUrl?: string
   categoriaId: number
   restauranteId: number
 }
@@ -428,16 +429,21 @@ function AdminDashboardPage({
   const [productName, setProductName] = useState('')
   const [productPrice, setProductPrice] = useState('')
   const [categoriaId, setCategoriaId] = useState('1')
+    const [imagenUrl, setImagenUrl] = useState('')
+    const [tamano, setTamano] = useState('')
   const [disponible, setDisponible] = useState(true)
   const [productError, setProductError] = useState('')
   const [loadingProducts, setLoadingProducts] = useState(false)
   const [editingProductId, setEditingProductId] = useState<number | null>(null)
+  const [filterCategoria, setFilterCategoria] = useState('0')
 
   const resetProductForm = () => {
     setProductName('')
     setProductDescription('')
     setProductPrice('')
     setCategoriaId('1')
+      setImagenUrl('')
+      setTamano('')
     setDisponible(true)
     setEditingProductId(null)
   }
@@ -489,7 +495,8 @@ function AdminDashboardPage({
         },
         body: JSON.stringify({
           nombre: productName.trim(),
-          descripcion: productDescription.trim(),
+          descripcion: tamano ? productDescription.trim() + ' (Tama�o: ' + tamano + ')' : productDescription.trim(),
+            imagenUrl: imagenUrl.trim() || undefined,
           precio: productPrice,
           categoriaId: Number(categoriaId),
           restauranteId: selectedRestauranteId,
@@ -516,6 +523,7 @@ function AdminDashboardPage({
     setCategoriaId(String(product.categoriaId))
     setDisponible(Boolean(product.disponible))
     setProductDescription(product.descripcion)
+      setImagenUrl(product.imagenUrl || '')
   }
 
   const handleUpdateProduct = async (event: FormEvent<HTMLFormElement>) => {
@@ -539,7 +547,8 @@ function AdminDashboardPage({
         },
         body: JSON.stringify({
           nombre: productName.trim(),
-          descripcion: productDescription.trim(),
+          descripcion: tamano ? productDescription.trim() + ' (Tama�o: ' + tamano + ')' : productDescription.trim(),
+            imagenUrl: imagenUrl.trim() || undefined,
           precio: productPrice,
           categoriaId: Number(categoriaId),
           restauranteId: selectedRestauranteId,
@@ -687,7 +696,15 @@ function AdminDashboardPage({
               </select>
             </label>
 
-            <label className="checkbox-row">
+            <label>
+                URL de la Imagen (opcional)
+                <input value={imagenUrl} onChange={(e) => setImagenUrl(e.target.value)} placeholder="Ej: https://..." />
+              </label>
+              <label>
+                Tamaño (opcional)
+                <input value={tamano} onChange={(e) => setTamano(e.target.value)} placeholder="Ej: Pequeño, Mediano, Grande" />
+              </label>
+              <label className="checkbox-row">
               <input type="checkbox" checked={disponible} onChange={(e) => setDisponible(e.target.checked)} />
               Disponible
             </label>
@@ -707,16 +724,25 @@ function AdminDashboardPage({
 
         <div className="panel">
           <h3>Catálogo actual</h3>
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={{ fontSize: "0.85rem", color: "#557571", marginRight: "8px" }}>Filtrar por categoría:</label>
+            <select value={filterCategoria} onChange={(e) => setFilterCategoria(e.target.value)} style={{ padding: "4px 8px", borderRadius: "4px" }}>
+              <option value="0">Todas</option>
+              <option value="1">Almuerzos</option>
+              <option value="2">Bebidas</option>
+              <option value="3">Snacks</option>
+            </select>
+          </div>
           {loadingProducts ? (
             <p>Cargando productos...</p>
           ) : products.length === 0 ? (
             <p>No hay productos registrados para esta cafetería.</p>
           ) : (
             <ul className="product-list">
-              {products.map((product) => (
+              {products.filter(p => filterCategoria === '0' || String(p.categoriaId) === filterCategoria).map((product) => (
                 <li key={product.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <img 
-                    src={getImagenPorCategoria(product.categoriaId, product.nombre)} 
+                    src={product.imagenUrl ? product.imagenUrl : getImagenPorCategoria(product.categoriaId, product.nombre)}
                     alt="" 
                     style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} 
                   />
