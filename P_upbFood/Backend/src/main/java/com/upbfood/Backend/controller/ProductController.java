@@ -59,7 +59,7 @@ public class ProductController {
 
         Product product = new Product();
         product.setNombre(request.getNombre().trim());
-        product.setDescripcion(request.getDescripcion().trim());
+        product.setDescripcion(request.getDescripcion() == null ? "" : request.getDescripcion().trim());
         product.setImagenUrl(request.getImagenUrl());
         product.setPrecio(request.getPrecio());
         product.setRestauranteId(request.getRestauranteId());
@@ -84,7 +84,7 @@ public class ProductController {
         authorizationService.requireAdminForRestaurant(request.getRestauranteId());
 
         product.setNombre(request.getNombre().trim());
-        product.setDescripcion(request.getDescripcion().trim());
+        product.setDescripcion(request.getDescripcion() == null ? "" : request.getDescripcion().trim());
         product.setImagenUrl(request.getImagenUrl());
         product.setPrecio(request.getPrecio());
         product.setCategoriaId(request.getCategoriaId());

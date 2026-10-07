@@ -96,10 +96,12 @@ CREATE TABLE pedidos (
     id SERIAL PRIMARY KEY,
     restaurante_id INT NOT NULL CONSTRAINT fk_ped_rest REFERENCES restaurantes(id) ON DELETE RESTRICT,
     cliente_id INT NOT NULL CONSTRAINT fk_ped_cli REFERENCES clientes(id),
-    estado VARCHAR(30) DEFAULT 'NUEVO' 
-        CONSTRAINT chk_estado_ped CHECK (estado IN ('NUEVO', 'EN_PAGO', 'EN_PREPARACION', 'ENTREGADO')),
+    estado VARCHAR(30) DEFAULT 'PENDIENTE'
+        CONSTRAINT chk_estado_ped CHECK (estado IN ('PENDIENTE', 'EN_PAGO', 'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO', 'CANCELADO')),
     total NUMERIC(10,2) NOT NULL CONSTRAINT chk_total_pos CHECK (total >= 0),
-    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    codigo_seguimiento UUID NOT NULL UNIQUE,
+    hora_recogida TIMESTAMP
 );
 
 -- Tabla 6: Detalle del Pedido (HU008)
@@ -109,6 +111,15 @@ CREATE TABLE detalle_pedidos (
     producto_id INT NOT NULL CONSTRAINT fk_det_prod REFERENCES productos(id),
     cantidad INT NOT NULL CONSTRAINT chk_cant_pos CHECK (cantidad > 0),
     precio_unitario NUMERIC(10,2) NOT NULL
+);
+
+CREATE TABLE pedido_eventos (
+    id BIGSERIAL PRIMARY KEY,
+    pedido_id BIGINT NOT NULL CONSTRAINT fk_evento_pedido REFERENCES pedidos(id) ON DELETE CASCADE,
+    estado_anterior VARCHAR(30),
+    estado_nuevo VARCHAR(30) NOT NULL,
+    actor VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Tabla 7: Usuarios de Administración de Cocina (HU012, HU013)
@@ -275,8 +286,9 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION fn_pedido_crear(p_restaurante_id INT, p_cliente_id INT, p_total NUMERIC) RETURNS INT AS $$
 DECLARE v_id INT;
 BEGIN
-    INSERT INTO pedidos (restaurante_id, cliente_id, total)
-    VALUES (p_restaurante_id, p_cliente_id, p_total) RETURNING id INTO v_id;
+    INSERT INTO pedidos (restaurante_id, cliente_id, total, codigo_seguimiento)
+    VALUES (p_restaurante_id, p_cliente_id, p_total, md5(random()::text || clock_timestamp()::text)::uuid)
+    RETURNING id INTO v_id;
     RETURN v_id;
 END;
 $$ LANGUAGE plpgsql;
@@ -288,7 +300,7 @@ BEGIN
     SELECT p.id, c.nombre, p.estado, p.total, p.fecha_creacion
     FROM pedidos p
     JOIN clientes c ON p.cliente_id = c.id
-    WHERE p.estado IN ('NUEVO', 'EN_PREPARACION')
+    WHERE p.estado IN ('PAGADO', 'EN_PREPARACION', 'LISTO')
     ORDER BY p.fecha_creacion ASC;
 END;
 $$ LANGUAGE plpgsql;

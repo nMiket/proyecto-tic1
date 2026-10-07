@@ -17,19 +17,22 @@ public class AdminAuthorizationService {
     }
 
     public AdminUser requireAdminForRestaurant(Long restauranteId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AccessDeniedException("Se requiere autenticación.");
-        }
-
-        AdminUser admin = adminUserRepository.findByEmail(authentication.getName()).orElseThrow(
-            () -> new AccessDeniedException("Administrador no encontrado.")
-        );
+        AdminUser admin = getAuthenticatedAdmin();
 
         if (!admin.getRestauranteId().equals(restauranteId)) {
             throw new AccessDeniedException("No tienes permisos para esta cafetería.");
         }
 
         return admin;
+    }
+
+    public AdminUser getAuthenticatedAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AccessDeniedException("Se requiere autenticación.");
+        }
+        return adminUserRepository.findByEmail(authentication.getName()).orElseThrow(
+            () -> new AccessDeniedException("Administrador no encontrado.")
+        );
     }
 }

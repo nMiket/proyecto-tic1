@@ -1,19 +1,25 @@
 import { useEffect, useState } from 'react'
 import './DashboardCocina.css'
 import { CardPedido, type Pedido } from './CardPedido'
+import { apiFetch, getApiBaseUrl } from '../auth'
 
 export function DashboardCocina() {
   const [pedidos, setPedidos] = useState<Pedido[]>([])
+  const [error, setError] = useState('')
 
   const fetchPedidos = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/pedidos/cocina')
+      const res = await apiFetch(`${getApiBaseUrl()}/api/admin/pedidos`)
       if (res.ok) {
         const data = await res.json()
         setPedidos(data)
+        setError('')
+      } else {
+        setError('No se pudieron cargar los pedidos de cocina.')
       }
     } catch (error) {
       console.error('Error fetching pedidos:', error)
+      setError('No se pudo conectar con el servidor.')
     }
   }
 
@@ -25,13 +31,16 @@ export function DashboardCocina() {
 
   const handleMoverEstado = async (id: number, nuevoEstado: string) => {
     try {
-      const res = await fetch(`http://localhost:8080/api/pedidos/${id}/estado`, {
-        method: 'PUT',
+      const res = await apiFetch(`${getApiBaseUrl()}/api/admin/pedidos/${id}/estado`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estado: nuevoEstado }),
       })
 
       if (res.ok) {
+        await fetchPedidos()
+      } else {
+        setError('El pedido cambió en otra sesión. Se actualizará la lista.')
         await fetchPedidos()
       }
     } catch (err) {
@@ -39,8 +48,9 @@ export function DashboardCocina() {
     }
   }
 
-  const nuevos = pedidos.filter((p) => p.estado === 'NUEVO')
+  const pagados = pedidos.filter((p) => p.estado === 'PAGADO')
   const enPreparacion = pedidos.filter((p) => p.estado === 'EN_PREPARACION')
+  const listos = pedidos.filter((p) => p.estado === 'LISTO')
 
   return (
     <div className="cocina-dashboard">
@@ -51,13 +61,15 @@ export function DashboardCocina() {
         </div>
       </header>
 
+      {error && <p className="empty-column">{error}</p>}
+
       <div className="kanban-board">
         <div className="kanban-column">
-          <h2>Nuevos ({nuevos.length})</h2>
-          {nuevos.length === 0 ? (
+          <h2>Nuevos ({pagados.length})</h2>
+          {pagados.length === 0 ? (
             <p className="empty-column">No hay pedidos nuevos.</p>
           ) : (
-            nuevos.map((p) => (
+            pagados.map((p) => (
               <CardPedido
                 key={p.id}
                 pedido={p}
@@ -78,6 +90,22 @@ export function DashboardCocina() {
                 key={p.id}
                 pedido={p}
                 tipo="preparacion"
+                onListo={(id) => handleMoverEstado(id, 'LISTO')}
+              />
+            ))
+          )}
+        </div>
+
+        <div className="kanban-column">
+          <h2>Listos ({listos.length})</h2>
+          {listos.length === 0 ? (
+            <p className="empty-column">No hay pedidos listos.</p>
+          ) : (
+            listos.map((p) => (
+              <CardPedido
+                key={p.id}
+                pedido={p}
+                tipo="listo"
                 onEntregar={(id) => handleMoverEstado(id, 'ENTREGADO')}
               />
             ))

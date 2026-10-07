@@ -10,6 +10,7 @@ export default function FormularioCliente() {
     const [nombre, setNombre] = useState("");
     const [telefono, setTelefono] = useState("");
     const [correo, setCorreo] = useState("");
+    const [horaRecogida, setHoraRecogida] = useState("");
 
     const [errores, setErrores] = useState({
         nombre: "",
@@ -20,7 +21,7 @@ export default function FormularioCliente() {
     const [mensaje, setMensaje] = useState("");
     const [enviando, setEnviando] = useState(false);
     const formularioValido = nombre.trim().length > 0
-        && /^[0-9]{7,10}$/.test(telefono.trim())
+        && /^3[0-9]{9}$/.test(telefono.trim())
         && /^[^\s@]+@upb\.edu\.co$/.test(correo.trim());
 
     const guardarCliente = async (e: React.FormEvent) => {
@@ -38,8 +39,8 @@ export default function FormularioCliente() {
 
         if (!telefono.trim()) {
             nuevosErrores.telefono = "El teléfono es obligatorio";
-        } else if (!/^[0-9]{7,10}$/.test(telefono)) {
-            nuevosErrores.telefono = "Ingresa un número de teléfono válido";
+        } else if (!/^3[0-9]{9}$/.test(telefono.trim())) {
+            nuevosErrores.telefono = "Ingresa un celular colombiano de 10 dígitos";
         }
 
         if (!correo.trim()) {
@@ -76,6 +77,7 @@ export default function FormularioCliente() {
                     clienteNombre: nombre.trim(),
                     clienteTelefono: telefono.trim(),
                     clienteCorreo: correo.trim(),
+                    horaRecogida: horaRecogida || null,
                     items: items.map((item) => ({
                         productoId: item.id,
                         cantidad: item.cantidad,
@@ -85,8 +87,8 @@ export default function FormularioCliente() {
             });
 
             if (respuesta.ok) {
-                const pedido = await respuesta.json() as { id: number };
-                const pago = await apiFetch(`${getApiBaseUrl()}/api/pedidos/${pedido.id}/pago`, {
+                const pedido = await respuesta.json() as { id: number; codigoSeguimiento: string };
+                const pago = await apiFetch(`${getApiBaseUrl()}/api/pedidos/seguimiento/${pedido.codigoSeguimiento}/pago`, {
                     method: "PUT",
                 });
                 if (!pago.ok) {
@@ -98,7 +100,11 @@ export default function FormularioCliente() {
                 const pedidoEnPago = await pago.json() as { id: number; total: number };
                 vaciarCarrito();
                 navigate("/pago", {
-                    state: { pedidoId: pedidoEnPago.id, total: pedidoEnPago.total },
+                    state: {
+                        pedidoId: pedidoEnPago.id,
+                        codigoSeguimiento: pedido.codigoSeguimiento,
+                        total: pedidoEnPago.total,
+                    },
                 });
             } else {
                 const error = await respuesta.json().catch(() => null) as { message?: string } | null;
@@ -166,6 +172,17 @@ export default function FormularioCliente() {
                                 {errores.correo}
                             </span>
                         )}
+                    </div>
+
+                    <div className="campo">
+                        <label htmlFor="hora-recogida">Hora de recogida (opcional)</label>
+                        <input
+                            id="hora-recogida"
+                            type="datetime-local"
+                            value={horaRecogida}
+                            onChange={(e) => setHoraRecogida(e.target.value)}
+                        />
+                        <small>Si no eliges una hora, se usará el tiempo estimado de la cafetería.</small>
                     </div>
 
                     <button type="submit" disabled={enviando || items.length === 0 || !formularioValido}>

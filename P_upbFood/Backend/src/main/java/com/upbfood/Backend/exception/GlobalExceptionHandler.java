@@ -36,6 +36,11 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiError> handleIllegalState(IllegalStateException exception) {
+        return error(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
     private ResponseEntity<ApiError> error(HttpStatus status, String message) {
         return ResponseEntity.status(status)
             .body(new ApiError(status.value(), message, Instant.now()));

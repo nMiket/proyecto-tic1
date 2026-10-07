@@ -8,6 +8,7 @@ import { useCart } from './context/useCart'
 import { apiFetch, getApiBaseUrl, login as authenticate, logout as endSession, refreshSession } from './auth'
 import FormularioCliente from "./components/FormularioCliente";
 import PagoPage from "./components/PagoPage";
+import { DashboardCocina } from './components/DashboardCocina'
 import './App.css'
 
 type ProductItem = {
@@ -145,6 +146,10 @@ export function App() {
               <Navigate to="/admin" replace />
             )
           }
+        />
+        <Route
+          path="/admin/cocina"
+          element={isLoggedIn ? <DashboardCocina /> : <Navigate to="/admin" replace />}
         />
 
         <Route 
@@ -590,6 +595,9 @@ function AdminDashboardPage({
         <button className="secondary" onClick={onLogout}>
           Cerrar sesión
         </button>
+        <Link className="secondary" to="/admin/cocina">
+          Cocina
+        </Link>
       </div>
 
       {/* Selector de Cafetería a Administrar */}

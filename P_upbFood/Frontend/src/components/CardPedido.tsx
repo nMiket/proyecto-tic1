@@ -17,8 +17,9 @@ export type Pedido = {
 
 type CardPedidoProps = {
   pedido: Pedido
-  tipo: 'nuevo' | 'preparacion'
+  tipo: 'nuevo' | 'preparacion' | 'listo'
   onAceptar?: (id: number) => void
+  onListo?: (id: number) => void
   onEntregar?: (id: number) => void
 }
 
@@ -36,7 +37,7 @@ function formatearHora(valor?: string | null) {
   })
 }
 
-export function CardPedido({ pedido, tipo, onAceptar, onEntregar }: CardPedidoProps) {
+export function CardPedido({ pedido, tipo, onAceptar, onListo, onEntregar }: CardPedidoProps) {
   const horaRecogida = formatearHora(pedido.horaRecogida ?? pedido.fechaCreacion)
 
   return (
@@ -80,7 +81,13 @@ export function CardPedido({ pedido, tipo, onAceptar, onEntregar }: CardPedidoPr
           </button>
         ) : null}
 
-        {tipo === 'preparacion' && onEntregar ? (
+        {tipo === 'preparacion' && onListo ? (
+          <button type="button" className="pedido-card__secondary" onClick={() => onListo?.(pedido.id)}>
+            Marcar como listo
+          </button>
+        ) : null}
+
+        {tipo === 'listo' && onEntregar ? (
           <button type="button" className="pedido-card__secondary" onClick={() => onEntregar(pedido.id)}>
             Marcar como entregado
           </button>

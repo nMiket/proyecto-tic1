@@ -2,6 +2,7 @@ package com.upbfood.Backend.controller;
 
 import com.upbfood.Backend.dto.CreateOrderRequest;
 import com.upbfood.Backend.entity.Client;
+import com.upbfood.Backend.entity.EstadoPedido;
 import com.upbfood.Backend.entity.Order;
 import com.upbfood.Backend.entity.OrderDetail;
 import com.upbfood.Backend.entity.Product;
@@ -10,6 +11,7 @@ import com.upbfood.Backend.repository.ClientRepository;
 import com.upbfood.Backend.repository.OrderRepository;
 import com.upbfood.Backend.repository.ProductRepository;
 import com.upbfood.Backend.repository.RestaurantRepository;
+import com.upbfood.Backend.service.PedidoService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -23,8 +25,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/pedidos")
@@ -34,17 +38,20 @@ public class OrderController {
     private final ClientRepository clientRepository;
     private final ProductRepository productRepository;
     private final RestaurantRepository restaurantRepository;
+    private final PedidoService pedidoService;
 
     public OrderController(
             OrderRepository orderRepository,
             ClientRepository clientRepository,
             ProductRepository productRepository,
-            RestaurantRepository restaurantRepository
+            RestaurantRepository restaurantRepository,
+            PedidoService pedidoService
     ) {
         this.orderRepository = orderRepository;
         this.clientRepository = clientRepository;
         this.productRepository = productRepository;
         this.restaurantRepository = restaurantRepository;
+        this.pedidoService = pedidoService;
     }
 
     @PostMapping
@@ -52,6 +59,17 @@ public class OrderController {
     public ResponseEntity<?> crearPedido(@Valid @RequestBody CreateOrderRequest request) {
         Restaurant restaurant = restaurantRepository.findById(request.restauranteId())
                 .orElseThrow(() -> new IllegalArgumentException("La cafetería no existe."));
+        if ("Cerrado".equalsIgnoreCase(restaurant.getEstado())) {
+            throw new IllegalStateException("La cafetería está cerrada.");
+        }
+        LocalDateTime horaMinima = LocalDateTime.now()
+            .plusMinutes(restaurant.getTiempoEstimadoMin() == null ? 0 : restaurant.getTiempoEstimadoMin());
+        LocalDateTime horaRecogida = request.horaRecogida() == null
+            ? horaMinima
+            : request.horaRecogida();
+        if (horaRecogida.isBefore(horaMinima)) {
+            throw new IllegalStateException("La hora de recogida debe respetar el tiempo estimado.");
+        }
 
         Client client = clientRepository.findByCorreo(request.clienteCorreo().trim())
                 .orElseGet(Client::new);
@@ -63,7 +81,9 @@ public class OrderController {
         Order order = new Order();
         order.setRestaurant(restaurant);
         order.setClient(client);
-        order.setEstado("NUEVO");
+        order.setEstado(EstadoPedido.PENDIENTE);
+        order.setCodigoSeguimiento(UUID.randomUUID());
+        order.setHoraRecogida(horaRecogida);
 
         BigDecimal total = BigDecimal.ZERO;
         java.util.List<OrderDetail> details = new java.util.ArrayList<>();
@@ -89,29 +109,41 @@ public class OrderController {
         order.setTotal(total);
         order.setDetails(details);
         Order saved = orderRepository.save(order);
+        pedidoService.registrarCreacion(saved, "ESTUDIANTE");
 
         Map<String, Object> response = new HashMap<>();
         response.put("id", saved.getId());
         response.put("estado", saved.getEstado());
+        response.put("codigoSeguimiento", saved.getCodigoSeguimiento());
         response.put("total", saved.getTotal());
+        response.put("horaRecogida", saved.getHoraRecogida());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PutMapping("/{id}/pago")
+    @PutMapping("/seguimiento/{codigo}/pago")
     @Transactional
-    public ResponseEntity<?> pasarAPago(@PathVariable Long id) {
-        Order order = orderRepository.findById(id)
+    public ResponseEntity<?> pasarAPago(@PathVariable UUID codigo) {
+        Order order = orderRepository.findByCodigoSeguimiento(codigo)
                 .orElseThrow(() -> new IllegalArgumentException("El pedido no existe."));
-        if (!"NUEVO".equals(order.getEstado())) {
-            throw new IllegalArgumentException("El pedido ya no puede pasar a pago.");
-        }
-
-        order.setEstado("EN_PAGO");
-        Order updated = orderRepository.save(order);
+        Order updated = pedidoService.cambiarEstado(order, EstadoPedido.EN_PAGO, "ESTUDIANTE");
         Map<String, Object> response = new HashMap<>();
         response.put("id", updated.getId());
         response.put("estado", updated.getEstado());
         response.put("total", updated.getTotal());
+        return ResponseEntity.ok(response);
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/seguimiento/{codigo}")
+    public ResponseEntity<?> consultarPedido(@PathVariable UUID codigo) {
+        Order order = orderRepository.findByCodigoSeguimiento(codigo)
+                .orElseThrow(() -> new IllegalArgumentException("El pedido no existe."));
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", order.getId());
+        response.put("codigoSeguimiento", order.getCodigoSeguimiento());
+        response.put("estado", order.getEstado());
+        response.put("total", order.getTotal());
+        response.put("horaRecogida", order.getHoraRecogida());
+        response.put("clienteNombre", order.getClient().getNombre());
         return ResponseEntity.ok(response);
     }
 }
