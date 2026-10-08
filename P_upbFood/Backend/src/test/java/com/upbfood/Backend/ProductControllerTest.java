@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
+import com.upbfood.Backend.repository.IngredientExtraRepository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -21,26 +22,32 @@ import static org.mockito.Mockito.when;
 class ProductControllerTest {
 
     @Test
-    void listProductsReturnsSavedProducts() {
-        ProductRepository repository = mock(ProductRepository.class);
-        AdminAuthorizationService authorizationService = mock(AdminAuthorizationService.class);
-        ProductController controller = new ProductController(repository, authorizationService);
-        Product product = product(1L, "Café Especial", "6500", true, 1L, 2L);
-        when(repository.findByRestauranteIdOrderByIdAsc(1L)).thenReturn(List.of(product));
+void listProductsReturnsSavedProducts() {
 
-        ResponseEntity<List<Map<String, Object>>> response = controller.listProducts(1L);
+    ProductRepository repository = mock(ProductRepository.class);
+    IngredientExtraRepository ingredientExtraRepository = mock(IngredientExtraRepository.class);
+    AdminAuthorizationService authorizationService = mock(AdminAuthorizationService.class);
+    ProductController controller = new ProductController(repository, ingredientExtraRepository, authorizationService);
+    Product product = product(1L, "Café Especial", "6500", true, 1L, 2L);
 
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals("Café Especial", response.getBody().get(0).get("nombre"));
-    }
+    when(repository.findByRestauranteIdOrderByIdAsc(1L)).thenReturn(List.of(product));
+
+    ResponseEntity<List<Map<String, Object>>> response = controller.listProducts(1L);
+
+    assertEquals(200, response.getStatusCode().value());
+    assertEquals("Café Especial", response.getBody().get(0).get("nombre"));
+}
 
     @Test
     void createProductRequiresAuthorizationForRequestedRestaurant() {
         ProductRepository repository = mock(ProductRepository.class);
+        IngredientExtraRepository ingredientExtraRepository = mock(IngredientExtraRepository.class);
         AdminAuthorizationService authorizationService = mock(AdminAuthorizationService.class);
-        ProductController controller = new ProductController(repository, authorizationService);
+        ProductController controller = new ProductController(repository, ingredientExtraRepository, authorizationService);
         Product saved = product(3L, "Empanada", "4000", true, 1L, 1L);
         when(repository.save(any(Product.class))).thenReturn(saved);
+        when(ingredientExtraRepository.findByProductoIdOrderByIdAsc(any(Long.class)))
+        .thenReturn(List.of());
 
         CreateProductRequest request = new CreateProductRequest();
         request.setNombre("Empanada");
@@ -59,8 +66,9 @@ class ProductControllerTest {
     @Test
     void updateProductReturnsUpdatedProduct() {
         ProductRepository repository = mock(ProductRepository.class);
+        IngredientExtraRepository ingredientExtraRepository = mock(IngredientExtraRepository.class);
         AdminAuthorizationService authorizationService = mock(AdminAuthorizationService.class);
-        ProductController controller = new ProductController(repository, authorizationService);
+        ProductController controller = new ProductController(repository, ingredientExtraRepository, authorizationService);
         Product existing = product(10L, "Café", "5000", true, 1L, 2L);
         Product updated = product(10L, "Café Especial", "6500", false, 1L, 2L);
         when(repository.findById(10L)).thenReturn(Optional.of(existing));
@@ -83,8 +91,9 @@ class ProductControllerTest {
     @Test
     void deleteProductReturnsSuccessMessage() {
         ProductRepository repository = mock(ProductRepository.class);
+        IngredientExtraRepository ingredientExtraRepository = mock(IngredientExtraRepository.class);
         AdminAuthorizationService authorizationService = mock(AdminAuthorizationService.class);
-        ProductController controller = new ProductController(repository, authorizationService);
+        ProductController controller = new ProductController(repository, ingredientExtraRepository, authorizationService);
         Product product = product(7L, "Producto", "4000", true, 1L, 1L);
         when(repository.findById(7L)).thenReturn(Optional.of(product));
 

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
+import java.util.List;
 
 public class UpdateProductRequest {
 
@@ -29,6 +30,7 @@ public class UpdateProductRequest {
     @NotBlank(message = "La descripción es obligatoria.")
     private String descripcion;
     private String imagenUrl;
+    private List<String> ingredientesExtra;
 
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
@@ -44,4 +46,6 @@ public class UpdateProductRequest {
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
     public String getImagenUrl() { return imagenUrl; }
     public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl;}
+    public List<String> getIngredientesExtra() {return ingredientesExtra;}
+    public void setIngredientesExtra(List<String> ingredientesExtra) {this.ingredientesExtra = ingredientesExtra;}
 }

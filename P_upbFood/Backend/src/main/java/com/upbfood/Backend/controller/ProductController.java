@@ -21,16 +21,25 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.upbfood.Backend.entity.IngredientExtra;
+import com.upbfood.Backend.repository.IngredientExtraRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping("/api")
 public class ProductController {
 
     private final ProductRepository productRepository;
+    private final IngredientExtraRepository ingredientExtraRepository;
     private final AdminAuthorizationService authorizationService;
 
-    public ProductController(ProductRepository productRepository, AdminAuthorizationService authorizationService) {
+    public ProductController(
+        ProductRepository productRepository,
+        IngredientExtraRepository ingredientExtraRepository,
+        AdminAuthorizationService authorizationService
+    ) {
         this.productRepository = productRepository;
+        this.ingredientExtraRepository = ingredientExtraRepository;
         this.authorizationService = authorizationService;
     }
 
@@ -76,7 +85,8 @@ public class ProductController {
         response.put("message", "Producto creado correctamente.");
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-
+    
+    @Transactional
     @PutMapping("/products/{id}")
     public ResponseEntity<Map<String, Object>> updateProduct(
         @PathVariable Long id,
@@ -96,6 +106,19 @@ public class ProductController {
         product.setDisponible(request.getDisponible());
 
         Product updated = productRepository.save(product);
+        ingredientExtraRepository.deleteByProductoId(id);
+
+        if (request.getIngredientesExtra() != null) {
+            for (String nombreIngrediente : request.getIngredientesExtra()) {
+                if (nombreIngrediente != null && !nombreIngrediente.trim().isEmpty()) {
+                    IngredientExtra ingrediente = new IngredientExtra();
+                    ingrediente.setProductoId(id);
+                    ingrediente.setNombre(nombreIngrediente.trim());
+
+                    ingredientExtraRepository.save(ingrediente);
+                }
+            }
+        }
         Map<String, Object> response = toResponse(updated);
         response.put("message", "Producto actualizado correctamente.");
         return ResponseEntity.ok(response);
@@ -125,6 +148,13 @@ public class ProductController {
         response.put("categoriaId", product.getCategoriaId());
         response.put("descripcion", product.getDescripcion());
         response.put("imagenUrl", product.getImagenUrl());
+        List<String> ingredientesExtra = ingredientExtraRepository
+                .findByProductoIdOrderByIdAsc(product.getId())
+                .stream()
+                .map(ingrediente -> ingrediente.getNombre())
+                .toList();
+
+        response.put("ingredientesExtra", ingredientesExtra);
         return response;
     }
 }

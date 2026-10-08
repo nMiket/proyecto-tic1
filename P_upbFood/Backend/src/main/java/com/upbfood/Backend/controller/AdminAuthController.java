@@ -164,7 +164,7 @@ public class AdminAuthController {
             .httpOnly(true)
             .secure(secureCookie)
             .sameSite("Lax")
-            .path("/api/admin")
+            .path("/")
             .maxAge(refreshTokenLifetime)
             .build();
     }
@@ -174,7 +174,7 @@ public class AdminAuthController {
             .httpOnly(true)
             .secure(secureCookie)
             .sameSite("Lax")
-            .path("/api/admin")
+            .path("/")
             .maxAge(Duration.ZERO)
             .build();
     }
