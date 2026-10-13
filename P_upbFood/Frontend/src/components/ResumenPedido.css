@@ -7,6 +7,7 @@
 .empty-order strong { color: #fff; font-size: 1.05rem; }
 .empty-order p { margin: 0; }
 .empty-order button { width: fit-content; margin-top: 6px; border: 0; border-radius: 999px; padding: 10px 14px; background: #c0d901; color: #121212; cursor: pointer; font-weight: 700; }
+.cart-error { margin: 0 0 14px; border: 1px solid rgba(255, 218, 214, .4); border-radius: 10px; padding: 10px 12px; background: rgba(186, 26, 26, .22); color: #ffdad6; font-size: .78rem; line-height: 1.45; }
 .order-items { display: grid; gap: 15px; }
 .order-item { display: grid; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,.16); }
 .order-item__main { display: flex; align-items: center; gap: 11px; min-width: 0; }

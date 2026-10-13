@@ -62,6 +62,11 @@ public class SecurityConfig {
                     HttpMethod.PUT,
                     "/api/pedidos/seguimiento/*/pago"
                 ).permitAll()
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/pedidos/seguimiento/consulta",
+                    "/api/pedidos/**"
+                ).permitAll()
 
                 // El resto requiere autenticación
                 .anyRequest().authenticated()

@@ -6,6 +6,7 @@ import { apiFetch, getApiBaseUrl } from "../auth";
 type ListaProductosProps = {
   restauranteId: number;
   onAgregar?: (producto: Producto) => void;
+  mostrarBuscador?: boolean;
 };
 
 function imagenFallback(producto: Producto): string {
@@ -25,10 +26,12 @@ function imagenFallback(producto: Producto): string {
 function ListaProductos({
   restauranteId,
   onAgregar,
+  mostrarBuscador = false,
 }: ListaProductosProps) {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
 
   useEffect(() => {
     setCargando(true);
@@ -102,8 +105,27 @@ function ListaProductos({
     );
   }
 
+  const productosVisibles = productos.filter((producto) => {
+    const texto = `${producto.nombre} ${producto.descripcion}`.toLowerCase();
+    return texto.includes(busqueda.trim().toLowerCase());
+  });
+
   return (
-    <div
+    <div className="product-catalog">
+      {mostrarBuscador && (
+        <label className="product-search">
+          <span>Buscar en el menú</span>
+          <input
+            type="search"
+            value={busqueda}
+            onChange={(event) => setBusqueda(event.target.value)}
+            placeholder="Busca un plato, bebida o extra"
+          />
+        </label>
+      )}
+
+      <div
+        className="product-catalog__grid"
       style={{
         display: "grid",
         gridTemplateColumns:
@@ -114,13 +136,17 @@ function ListaProductos({
         padding: "8px",
       }}
     >
-      {productos.map((producto) => (
+      {productosVisibles.map((producto) => (
         <CardProducto
           key={producto.id}
           producto={producto}
           onAgregar={onAgregar}
         />
       ))}
+      {productosVisibles.length === 0 && (
+        <p className="product-search__empty">No encontramos productos con esa búsqueda.</p>
+      )}
+      </div>
     </div>
   );
 }

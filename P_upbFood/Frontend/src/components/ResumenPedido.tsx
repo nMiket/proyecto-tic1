@@ -2,8 +2,14 @@ import { useCart } from '../context/useCart'
 import { useNavigate } from 'react-router-dom'
 import './ResumenPedido.css'
 
-function ResumenPedido() {
-  const { items, totalItems, total, agregarProducto, quitarProducto, eliminarProducto, actualizarObservaciones, vaciarCarrito } = useCart()
+function ResumenPedido({
+  checkoutLabel = 'Confirmar pedido',
+  checkoutPath = '/cliente',
+}: {
+  checkoutLabel?: string
+  checkoutPath?: string
+}) {
+  const { items, totalItems, total, cartError, agregarProducto, quitarProducto, eliminarProducto, actualizarObservaciones, vaciarCarrito } = useCart()
   const navigate = useNavigate()
 
   return (
@@ -15,6 +21,7 @@ function ResumenPedido() {
         </div>
         <span className="order-badge">{totalItems}</span>
       </div>
+      {cartError && <p className="cart-error" role="alert">{cartError}</p>}
       {items.length === 0 ? (
         <div className="empty-order">
           <strong>Tu pedido está vacío</strong>
@@ -43,11 +50,11 @@ function ResumenPedido() {
                   <button className="remove-item" type="button" aria-label={`Eliminar ${item.nombre}`} onClick={() => eliminarProducto(item.id)}>Eliminar</button>
                 </div>
                 <label className="order-item__notes">
-                  <span>Observaciones</span>
+                  <span>Personaliza ingredientes</span>
                   <textarea
                     value={item.observaciones}
                     maxLength={160}
-                    placeholder="Ej. Sin cebolla"
+                    placeholder="Ej. Sin cebolla, agregar queso"
                     onChange={(event) => actualizarObservaciones(item.id, event.target.value)}
                   />
                 </label>
@@ -58,14 +65,15 @@ function ResumenPedido() {
         </>
       )}
       <div className="order-actions">
-        <button
-          type="button"
-          className="checkout-button"
-          disabled={items.length === 0}
-          onClick={() => navigate('/cliente')}
-        >
-          Confirmar pedido
-        </button>
+        {items.length > 0 && (
+          <button
+            type="button"
+            className="checkout-button"
+            onClick={() => navigate(checkoutPath)}
+          >
+            {checkoutLabel}
+          </button>
+        )}
         {items.length > 0 && (
           <button type="button" className="clear-button" onClick={vaciarCarrito}>Vaciar carrito</button>
         )}

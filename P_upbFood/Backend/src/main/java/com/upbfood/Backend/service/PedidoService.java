@@ -116,6 +116,45 @@ public class PedidoService {
         );
     }
 
+    public Map<String, Object> buscarPedido(
+            Integer pedidoId,
+            UUID codigo,
+            String correo,
+            String telefono
+    ) {
+        return jdbcTemplate.queryForMap(
+                """
+                SELECT p.pedido_id,
+                       p.codigo_seguimiento,
+                       r.nombre AS nombre_restaurante,
+                       p.estado,
+                       p.total,
+                       p.fecha,
+                       p.hora_recogida,
+                       p.nombre_cliente,
+                       p.telefono_cliente,
+                       p.correo_cliente
+                FROM pedido p
+                JOIN restaurante r ON r.restaurante_id = p.restaurante_id
+                WHERE (? IS NULL OR p.pedido_id = ?)
+                  AND (? IS NULL OR p.codigo_seguimiento = ?)
+                  AND (? IS NULL OR LOWER(TRIM(p.correo_cliente)) = LOWER(TRIM(?)))
+                  AND (? IS NULL OR REGEXP_REPLACE(p.telefono_cliente, '\\D', '', 'g')
+                                  = REGEXP_REPLACE(?, '\\D', '', 'g'))
+                ORDER BY p.fecha DESC
+                LIMIT 1
+                """,
+                pedidoId,
+                pedidoId,
+                codigo,
+                codigo,
+                correo,
+                correo,
+                telefono,
+                telefono
+        );
+    }
+
     public List<Map<String, Object>> obtenerDetalle(Integer pedidoId) {
         return jdbcTemplate.queryForList(
                 """

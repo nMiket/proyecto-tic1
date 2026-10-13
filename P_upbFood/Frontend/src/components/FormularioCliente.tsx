@@ -4,6 +4,33 @@ import { apiFetch, getApiBaseUrl } from "../auth";
 import { useCart } from "../context/useCart";
 import "./FormularioCliente.css";
 
+function crearOpcionesHora() {
+    const ahora = new Date();
+    const minutosSiguiente = Math.ceil((ahora.getMinutes() + 1) / 15) * 15;
+    ahora.setMinutes(minutosSiguiente, 0, 0);
+
+    return Array.from({ length: 6 }, (_, indice) => {
+        const hora = new Date(ahora.getTime() + (indice * 15 * 60 * 1000));
+        const fecha = [
+            hora.getFullYear(),
+            String(hora.getMonth() + 1).padStart(2, "0"),
+            String(hora.getDate()).padStart(2, "0"),
+        ].join("-");
+        const tiempo = [
+            String(hora.getHours()).padStart(2, "0"),
+            String(hora.getMinutes()).padStart(2, "0"),
+        ].join(":");
+
+        return {
+            value: `${fecha}T${tiempo}`,
+            label: hora.toLocaleTimeString("es-CO", {
+                hour: "2-digit",
+                minute: "2-digit",
+            }),
+        };
+    });
+}
+
 export default function FormularioCliente() {
     const navigate = useNavigate();
     const { items, vaciarCarrito } = useCart();
@@ -11,6 +38,7 @@ export default function FormularioCliente() {
     const [telefono, setTelefono] = useState("");
     const [correo, setCorreo] = useState("");
     const [horaRecogida, setHoraRecogida] = useState("");
+    const opcionesHora = crearOpcionesHora();
 
     const [errores, setErrores] = useState({
         nombre: "",
@@ -90,6 +118,13 @@ export default function FormularioCliente() {
                     total: number;
                 };
 
+                localStorage.setItem("upbfood.lastOrder", JSON.stringify({
+                    ...pedido,
+                    clienteNombre: nombre.trim(),
+                    clienteCorreo: correo.trim(),
+                    clienteTelefono: telefono.trim(),
+                }));
+
                 vaciarCarrito();
 
                 navigate("/pago", {
@@ -118,9 +153,10 @@ export default function FormularioCliente() {
         <div className="cliente-container">
             <div className="cliente-card">
                 <div className="cliente-header">
-                    <h2>Datos personales</h2>
+                        <p className="eyebrow">Paso 2 de 3 · Datos y recogida</p>
+                        <h2>Prepara tu recogida</h2>
                     <p>
-                        Ingresa tus datos para continuar con tu pedido.
+                            Cuéntanos quién recoge el pedido y cuándo quieres pasar por él.
                     </p>
                 </div>
 
@@ -156,7 +192,7 @@ export default function FormularioCliente() {
                     </div>
 
                     <div className="campo">
-                        <label>Correo institucional</label>
+                        <label>Correo</label>
                         <input
                             type="email"
                             placeholder="Ej. nombre.apellido@upb.edu.co"
@@ -171,14 +207,32 @@ export default function FormularioCliente() {
                     </div>
 
                     <div className="campo">
-                        <label htmlFor="hora-recogida">Hora de recogida (opcional)</label>
-                        <input
-                            id="hora-recogida"
-                            type="datetime-local"
-                            value={horaRecogida}
-                            onChange={(e) => setHoraRecogida(e.target.value)}
-                        />
-                        <small>Si no eliges una hora, se usará el tiempo estimado de la cafetería.</small>
+                        <label htmlFor="hora-recogida">¿Cuándo quieres recogerlo?</label>
+                        <div className="pickup-options">
+                            <button
+                                type="button"
+                                className={!horaRecogida ? "pickup-option active" : "pickup-option"}
+                                onClick={() => setHoraRecogida("")}
+                            >
+                                <strong>Lo antes posible</strong>
+                                <span>Según el tiempo estimado</span>
+                            </button>
+                            <span className="pickup-or">o elige una hora</span>
+                        </div>
+                        <div className="pickup-time-grid" aria-label="Horarios disponibles">
+                            {opcionesHora.map((opcion) => (
+                                <button
+                                    key={opcion.value}
+                                    type="button"
+                                    className={horaRecogida === opcion.value ? "pickup-time active" : "pickup-time"}
+                                    aria-pressed={horaRecogida === opcion.value}
+                                    onClick={() => setHoraRecogida(opcion.value)}
+                                >
+                                    {opcion.label}
+                                </button>
+                            ))}
+                        </div>
+                        <small>Los horarios mostrados son posteriores a “Lo antes posible”.</small>
                     </div>
 
                     <button type="submit" disabled={enviando || items.length === 0}>

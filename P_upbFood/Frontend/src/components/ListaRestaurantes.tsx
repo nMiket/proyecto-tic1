@@ -26,9 +26,6 @@ function ListaRestaurantes({ restauranteSeleccionadoId, onSelectRestaurante }: L
       .then((data: Restaurante[]) => {
         setRestaurantes(data);
         setCargando(false);
-        if (data.length > 0 && onSelectRestaurante && !restauranteSeleccionadoId) {
-          onSelectRestaurante(data[0]);
-        }
       })
       .catch(() => {
         setError(true);

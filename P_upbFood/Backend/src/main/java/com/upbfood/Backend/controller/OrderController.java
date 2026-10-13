@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -93,6 +94,45 @@ public class OrderController {
         response.put("horaRecogida", pedido.get("hora_recogida"));
         response.put("clienteNombre", pedido.get("nombre_cliente"));
         response.put("tiempoPedido", pedido.get("tiempo_pedido"));
+
+        return ResponseEntity.ok(response);
+    }
+
+        @GetMapping({"/consulta", "/seguimiento/consulta"})
+    public ResponseEntity<?> consultarPedido(
+            @RequestParam(required = false) Integer pedidoId,
+            @RequestParam(required = false) UUID codigo,
+            @RequestParam(required = false) String correo,
+            @RequestParam(required = false) String telefono
+    ) {
+        boolean tieneCodigo = codigo != null;
+        boolean tieneIdentificadorSecundario = correo != null && !correo.isBlank()
+                || telefono != null && !telefono.isBlank();
+
+        if (!tieneCodigo && (pedidoId == null || !tieneIdentificadorSecundario)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Usa el código de seguimiento o el número de pedido con correo o teléfono."
+            );
+        }
+
+        Map<String, Object> pedido = pedidoService.buscarPedido(
+                pedidoId,
+                codigo,
+                correo,
+                telefono
+        );
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("id", pedido.get("pedido_id"));
+        response.put("codigoSeguimiento", pedido.get("codigo_seguimiento"));
+        response.put("nombreRestaurante", pedido.get("nombre_restaurante"));
+        response.put("estado", pedido.get("estado"));
+        response.put("total", pedido.get("total"));
+        response.put("fecha", pedido.get("fecha"));
+        response.put("horaRecogida", pedido.get("hora_recogida"));
+        response.put("clienteNombre", pedido.get("nombre_cliente"));
+        response.put("tiempoPedido", pedido.get("fecha"));
 
         return ResponseEntity.ok(response);
     }

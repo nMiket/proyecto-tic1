@@ -9,13 +9,11 @@ import {
   useNavigate,
 } from 'react-router-dom'
 import ListaRestaurantes from './components/ListaRestaurantes'
-import ListaProductos from './components/ListaProductos'
 import ResumenPedido from './components/ResumenPedido'
+import RestaurantMenuPage from './components/RestaurantMenuPage'
+import SeguimientoPedidoPage from './components/SeguimientoPedidoPage'
 import { CartProvider } from './context/CartContext'
-import { useCart } from './context/useCart'
 import {
-  apiFetch,
-  getApiBaseUrl,
   login as authenticate,
   logout as endSession,
   refreshSession,
@@ -26,14 +24,6 @@ import PagoPage from './components/PagoPage'
 import { DashboardCocina } from './components/DashboardCocina'
 import AdminDashboardPage from './components/AdminDashboardPage'
 import './App.css'
-
-type RestauranteItem = {
-  id: number
-  nombre: string
-  ubicacion: string
-  estado?: string
-  tiempoEstimadoMin?: number
-}
 
 export function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -119,6 +109,13 @@ export function App() {
             >
               Mi pedido
             </NavLink>
+
+            <NavLink
+              to="/seguimiento"
+              className={({ isActive }) => (isActive ? 'active' : '')}
+            >
+              Consultar pedido
+            </NavLink>
           </>
         ) : (
           <>
@@ -147,6 +144,9 @@ export function App() {
       <CartProvider>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/restaurante/:restauranteId" element={<RestaurantMenuPage />} />
+          <Route path="/seguimiento" element={<SeguimientoPedidoPage />} />
+          <Route path="/seguimiento/:codigo" element={<SeguimientoPedidoPage />} />
 
           <Route
             path="/admin"
@@ -200,117 +200,50 @@ export function App() {
 }
 
 function HomePage() {
-  const { agregarProducto, totalItems, total } = useCart()
   const navigate = useNavigate()
-
-  const [restauranteSeleccionado, setRestauranteSeleccionado] = useState<{
-    id: number
-    nombre: string
-  }>({
-    id: 1,
-    nombre: 'Cafetería Central - Bloque 11',
-  })
-
-  const [listaRestaurantes, setListaRestaurantes] = useState<RestauranteItem[]>([])
-
-  useEffect(() => {
-    apiFetch(`${getApiBaseUrl()}/api/restaurantes`)
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data: RestauranteItem[]) => {
-        if (data && data.length > 0) {
-          setListaRestaurantes(data)
-
-          setRestauranteSeleccionado((actual) => {
-            const existe = data.some((r) => r.id === actual.id)
-
-            if (existe) {
-              const restaurante = data.find((r) => r.id === actual.id)!
-              return { id: restaurante.id, nombre: restaurante.nombre }
-            }
-
-            return { id: data[0].id, nombre: data[0].nombre }
-          })
-        }
-      })
-      .catch(() => {})
-  }, [])
 
   return (
     <>
-      <section className="hero-card">
-        <div className="hero-content">
-          <p className="eyebrow">Alimentación en campus</p>
-          <h1>Tu próxima pausa empieza aquí.</h1>
-          <p className="hero-description">
-            Consulta los menús de las cafeterías UPB, arma tu pedido y recógelo
-            cuando estés listo.
-          </p>
-          <a className="hero-cta" href="#cafeterias">Ver cafeterías</a>
+      <section className="restaurant-directory-hero">
+        <div>
+          <p className="section-kicker">UPB Food · Alimentación en campus</p>
+          <h1>¿Dónde quieres comer hoy?</h1>
+          <p>Selecciona una cafetería, descubre su carta y arma tu pedido en pocos pasos.</p>
+          <Link className="directory-tracking-cta" to="/seguimiento">
+            Ya hice un pedido · Consultar estado
+          </Link>
         </div>
-
-        <div className="hero-aside" aria-label="Información del servicio">
-          <div className="identity-placeholders" aria-label="Espacios reservados para logos">
-            <span className="identity-logo-slot">Logo UPB</span>
-            <span className="identity-logo-slot identity-logo-slot--food">Logo Food</span>
-          </div>
-          <span className="hero-aside__label">Hoy en el campus</span>
-          <strong>Menos filas, más tiempo para ti.</strong>
-          <div className="stats">
-            <div>
-              <strong>3 min</strong>
-              <span>tiempo estimado</span>
-            </div>
-            <div>
-              <strong>{listaRestaurantes.length || 2}</strong>
-              <span>cafeterías disponibles</span>
-            </div>
-          </div>
+        <div className="identity-logo-panel" aria-label="Espacios reservados para identidad visual">
+          <span className="identity-logo-slot">/assets/branding/upb-logo.svg</span>
+          <span className="identity-logo-slot identity-logo-slot--food">/assets/branding/upb-food-logo.svg</span>
         </div>
       </section>
 
-      <div id="cafeterias">
-        <ListaRestaurantes
-          restauranteSeleccionadoId={restauranteSeleccionado.id}
-          onSelectRestaurante={(r) => {
-            setRestauranteSeleccionado({
-              id: r.id,
-              nombre: r.nombre,
-            })
-          }}
-        />
-      </div>
+      <ListaRestaurantes
+        onSelectRestaurante={(restaurant) => navigate(`/restaurante/${restaurant.id}`)}
+      />
 
-      <section className="menu-destacado">
-        <div className="menu-heading">
-          <div>
-            <p className="section-kicker">Menú disponible</p>
-            <h2>{restauranteSeleccionado.nombre}</h2>
-          </div>
-          <span className="menu-hint">Selecciona un producto para agregarlo a tu pedido</span>
-        </div>
-
-        <ListaProductos
-          restauranteId={restauranteSeleccionado.id}
-          onAgregar={(product) =>
-            agregarProducto({
-              ...product,
-              id: Number(product.id),
-              restauranteId: restauranteSeleccionado.id,
-              imagenUrl: product.imagenUrl,
-            })
-          }
-        />
-      </section>
-
-      <button
-        className="floating-cart-button"
-        type="button"
-        onClick={() => navigate('/pedido')}
-      >
-        <span>Carrito ({totalItems})</span>
-        <strong>${total.toLocaleString('es-CO')}</strong>
-      </button>
+      <SiteFooter />
     </>
+  )
+}
+
+function SiteFooter() {
+  return (
+    <footer className="site-footer">
+      <div className="site-footer__brand">
+        <div className="footer-logo-placeholder">/assets/branding/upb-logo.svg</div>
+        <div>
+          <strong>UPB Food</strong>
+          <span>Alimentación universitaria, más simple.</span>
+        </div>
+      </div>
+      <div className="site-footer__links">
+        <span>Proyecto académico UPB</span>
+        <span>Campus · Medellín</span>
+        <span>© 2026 UPB Food</span>
+      </div>
+    </footer>
   )
 }
 

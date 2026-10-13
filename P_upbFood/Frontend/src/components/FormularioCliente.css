@@ -90,3 +90,87 @@
     color: #1f8f4c; 
     font-weight: 600;
 }
+
+.cliente-header .eyebrow {
+    margin-bottom: 10px;
+    color: #586400;
+}
+
+.pickup-options {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.pickup-option {
+    display: grid;
+    width: auto !important;
+    min-height: 64px;
+    gap: 3px;
+    border: 1px solid #e5e5e7 !important;
+    border-radius: 12px !important;
+    padding: 10px 14px !important;
+    background: #f5f3ef !important;
+    color: #1b1c1a !important;
+    text-align: left;
+}
+
+.pickup-option.active {
+    border-color: #c0d901 !important;
+    box-shadow: 0 0 0 3px rgba(192, 217, 1, 0.25);
+}
+
+.pickup-option strong {
+    font-size: 0.82rem;
+}
+
+.pickup-option span,
+.pickup-or {
+    color: #767961;
+    font-size: 0.72rem;
+}
+
+.pickup-or {
+    white-space: nowrap;
+}
+
+.pickup-time-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.pickup-time {
+    min-height: 42px !important;
+    border: 1px solid #e5e5e7 !important;
+    border-radius: 10px !important;
+    padding: 8px !important;
+    background: #ffffff !important;
+    color: #464834 !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+}
+
+.pickup-time:hover,
+.pickup-time.active {
+    border-color: #c0d901 !important;
+    background: #c0d901 !important;
+    color: #121212 !important;
+}
+
+@media (max-width: 520px) {
+    .pickup-options {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .pickup-or {
+        text-align: center;
+    }
+
+    .pickup-time-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

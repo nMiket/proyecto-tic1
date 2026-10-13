@@ -17,6 +17,7 @@ type CartContextValue = {
   items: CartItem[]
   totalItems: number
   total: number
+  cartError: string
   agregarProducto: (product: CartProduct) => void
   quitarProducto: (productId: number) => void
   eliminarProducto: (productId: number) => void
@@ -28,6 +29,7 @@ const CartContext = createContext<CartContextValue | undefined>(undefined)
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
+  const [cartError, setCartError] = useState('')
 
   const value = useMemo<CartContextValue>(() => {
     const totalItems = items.reduce((sum, item) => sum + item.cantidad, 0)
@@ -37,7 +39,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       items,
       totalItems,
       total,
+      cartError,
       agregarProducto: (product) => {
+        if (
+          items.length > 0 &&
+          items.some((item) => item.restauranteId !== product.restauranteId)
+        ) {
+          setCartError('Tu pedido solo puede incluir productos de una cafetería.')
+          return
+        }
+
+        setCartError('')
         setItems((current) => {
           const existing = current.find((item) => item.id === product.id)
           if (existing) {
@@ -56,9 +68,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }))
       },
       eliminarProducto: (productId) => setItems((current) => current.filter((item) => item.id !== productId)),
-      vaciarCarrito: () => setItems([]),
+      vaciarCarrito: () => {
+        setItems([])
+        setCartError('')
+      },
     }
-  }, [items])
+  }, [cartError, items])
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }
