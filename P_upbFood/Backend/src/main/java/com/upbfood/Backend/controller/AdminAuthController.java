@@ -1,11 +1,15 @@
+
 package com.upbfood.Backend.controller;
 
 import com.upbfood.Backend.dto.AdminLoginRequest;
 import com.upbfood.Backend.entity.AdminUser;
+import com.upbfood.Backend.entity.AdministradorRestaurante;
 import com.upbfood.Backend.entity.RefreshToken;
 import com.upbfood.Backend.repository.AdminUserRepository;
+import com.upbfood.Backend.repository.AdministradorRestauranteRepository;
 import com.upbfood.Backend.repository.RefreshTokenRepository;
 import com.upbfood.Backend.security.JwtService;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -14,8 +18,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -38,6 +44,7 @@ public class AdminAuthController {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final AdminUserRepository adminUserRepository;
+    private final AdministradorRestauranteRepository administradorRestauranteRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -45,14 +52,17 @@ public class AdminAuthController {
     private final boolean secureCookie;
 
     public AdminAuthController(
-        AdminUserRepository adminUserRepository,
-        RefreshTokenRepository refreshTokenRepository,
-        PasswordEncoder passwordEncoder,
-        JwtService jwtService,
-        @Value("${app.jwt.refresh-token-days:7}") long refreshTokenDays,
-        @Value("${app.auth.cookie-secure:false}") boolean secureCookie
-    ) {
+            AdminUserRepository adminUserRepository,
+            AdministradorRestauranteRepository administradorRestauranteRepository,
+            RefreshTokenRepository refreshTokenRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            @Value("${app.jwt.refresh-token-days:7}") long refreshTokenDays,
+            @Value("${app.auth.cookie-secure:false}") boolean secureCookie) {
+
         this.adminUserRepository = adminUserRepository;
+        this.administradorRestauranteRepository =
+                administradorRestauranteRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -61,15 +71,23 @@ public class AdminAuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody AdminLoginRequest request) {
-        if (request == null || request.getEmail() == null || request.getPassword() == null) {
+    public ResponseEntity<Map<String, Object>> login(
+            @RequestBody AdminLoginRequest request) {
+
+        if (request == null
+                || request.getEmail() == null
+                || request.getPassword() == null) {
             return badRequest("Email y contraseña son obligatorios.");
         }
 
         String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
-        AdminUser admin = adminUserRepository.findByEmail(email).orElse(null);
 
-        if (admin == null || !passwordEncoder.matches(request.getPassword(), admin.getPasswordHash())) {
+        AdminUser admin = adminUserRepository.findByEmail(email)
+                .orElse(null);
+
+        if (admin == null
+                || !passwordEncoder.matches(
+                        request.getPassword(), admin.getPasswordHash())) {
             return unauthorized("Credenciales inválidas.");
         }
 
@@ -78,78 +96,150 @@ public class AdminAuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<Map<String, Object>> refresh(
-        @CookieValue(value = REFRESH_COOKIE, required = false) String rawRefreshToken
-    ) {
+            @CookieValue(
+                    value = REFRESH_COOKIE,
+                    required = false) String rawRefreshToken) {
+
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
             return unauthorized("La sesión expiró.");
         }
 
         RefreshToken storedToken = refreshTokenRepository
-            .findByTokenHashAndRevokedAtIsNull(hashToken(rawRefreshToken))
-            .orElse(null);
-        if (storedToken == null || storedToken.getExpiresAt().isBefore(Instant.now())) {
+                .findByTokenHashAndRevokedAtIsNull(
+                        hashToken(rawRefreshToken))
+                .orElse(null);
+
+        if (storedToken == null
+                || !storedToken.getExpiresAt().isAfter(Instant.now())) {
             return unauthorized("La sesión expiró.");
         }
 
-        AdminUser admin = adminUserRepository.findById(storedToken.getAdminUserId()).orElse(null);
+        AdminUser admin = adminUserRepository
+                .findById(storedToken.getAdministradorId())
+                .orElse(null);
+
         if (admin == null) {
-            return unauthorized("Usuario no encontrado.");
+            return unauthorized("Administrador no encontrado.");
         }
 
         storedToken.setRevokedAt(Instant.now());
         refreshTokenRepository.save(storedToken);
+
         return issueSession(admin, "Sesión renovada.");
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Map<String, Object>> logout(
-        @CookieValue(value = REFRESH_COOKIE, required = false) String rawRefreshToken
-    ) {
+            @CookieValue(
+                    value = REFRESH_COOKIE,
+                    required = false) String rawRefreshToken) {
+
         if (rawRefreshToken != null && !rawRefreshToken.isBlank()) {
-            refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(hashToken(rawRefreshToken))
-                .ifPresent(token -> {
-                    token.setRevokedAt(Instant.now());
-                    refreshTokenRepository.save(token);
-                });
+            refreshTokenRepository
+                    .findByTokenHashAndRevokedAtIsNull(
+                            hashToken(rawRefreshToken))
+                    .ifPresent(token -> {
+                        token.setRevokedAt(Instant.now());
+                        refreshTokenRepository.save(token);
+                    });
         }
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("message", "Sesión cerrada.");
+
         return ResponseEntity.ok()
-            .header(HttpHeaders.SET_COOKIE, expiredRefreshCookie().toString())
-            .body(response);
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        expiredRefreshCookie().toString())
+                .body(response);
     }
 
-    private ResponseEntity<Map<String, Object>> issueSession(AdminUser admin, String message) {
+    private ResponseEntity<Map<String, Object>> issueSession(
+            AdminUser admin, String message) {
+
+        // Solo se incluyen las asignaciones activas.
+        List<AdministradorRestaurante> asociaciones =
+                administradorRestauranteRepository
+                        .findByIdAdministradorId(admin.getId())
+                        .stream()
+                        .filter(asociacion ->
+                                "Activo".equalsIgnoreCase(
+                                        asociacion.getEstado()))
+                        .toList();
+
+        if (asociaciones.isEmpty()) {
+            return unauthorized(
+                    "El administrador no tiene asignaciones activas.");
+        }
+
+        List<Integer> restaurantes = asociaciones.stream()
+                .map(asociacion ->
+                        asociacion.getId().getRestauranteId())
+                .toList();
+
+        // Cada restaurante conserva su propio rol.
+        List<Map<String, Object>> asignaciones = asociaciones.stream()
+                .map(asociacion -> {
+                    Map<String, Object> asignacion = new HashMap<>();
+
+                    asignacion.put(
+                            "restauranteId",
+                            asociacion.getId().getRestauranteId());
+
+                    asignacion.put(
+                            "tipoAdministradorId",
+                            asociacion.getTipoAdministradorId());
+
+                    return asignacion;
+                })
+                .toList();
+
         String rawRefreshToken = generateRefreshToken();
+
         RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setAdminUserId(admin.getId());
+        refreshToken.setAdministradorId(admin.getId());
         refreshToken.setTokenHash(hashToken(rawRefreshToken));
         refreshToken.setCreatedAt(Instant.now());
-        refreshToken.setExpiresAt(Instant.now().plus(refreshTokenLifetime));
+        refreshToken.setExpiresAt(
+                Instant.now().plus(refreshTokenLifetime));
+
         refreshTokenRepository.save(refreshToken);
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("accessToken", jwtService.generateAccessToken(admin));
-        response.put("expiresIn", jwtService.getAccessTokenLifetimeSeconds());
+        response.put(
+                "expiresIn",
+                jwtService.getAccessTokenLifetimeSeconds());
         response.put("id", admin.getId());
         response.put("email", admin.getEmail());
-        response.put("restauranteId", admin.getRestauranteId());
+
+        // Compatibilidad con el frontend existente.
+        response.put("restauranteId", restaurantes.get(0));
+        response.put("restaurantes", restaurantes);
+
+        // Nueva información para controlar las opciones según el rol.
+        response.put("asignaciones", asignaciones);
+
         response.put("message", message);
 
         return ResponseEntity.ok()
-            .header(HttpHeaders.SET_COOKIE, refreshCookie(rawRefreshToken).toString())
-            .body(response);
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        refreshCookie(rawRefreshToken).toString())
+                .body(response);
     }
 
-    private ResponseEntity<Map<String, Object>> badRequest(String message) {
+    private ResponseEntity<Map<String, Object>> badRequest(
+            String message) {
         return ResponseEntity.badRequest().body(errorResponse(message));
     }
 
-    private ResponseEntity<Map<String, Object>> unauthorized(String message) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse(message));
+    private ResponseEntity<Map<String, Object>> unauthorized(
+            String message) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(errorResponse(message));
     }
 
     private Map<String, Object> errorResponse(String message) {
@@ -161,37 +251,45 @@ public class AdminAuthController {
 
     private ResponseCookie refreshCookie(String value) {
         return ResponseCookie.from(REFRESH_COOKIE, value)
-            .httpOnly(true)
-            .secure(secureCookie)
-            .sameSite("Lax")
-            .path("/")
-            .maxAge(refreshTokenLifetime)
-            .build();
+                .httpOnly(true)
+                .secure(secureCookie)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(refreshTokenLifetime)
+                .build();
     }
 
     private ResponseCookie expiredRefreshCookie() {
         return ResponseCookie.from(REFRESH_COOKIE, "")
-            .httpOnly(true)
-            .secure(secureCookie)
-            .sameSite("Lax")
-            .path("/")
-            .maxAge(Duration.ZERO)
-            .build();
+                .httpOnly(true)
+                .secure(secureCookie)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(Duration.ZERO)
+                .build();
     }
 
     private String generateRefreshToken() {
         byte[] bytes = new byte[48];
         SECURE_RANDOM.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+
+        return Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(bytes);
     }
 
     private String hashToken(String token) {
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256")
-                .digest(token.getBytes(StandardCharsets.UTF_8));
-            return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+                    .digest(token.getBytes(StandardCharsets.UTF_8));
+
+            return Base64.getUrlEncoder()
+                    .withoutPadding()
+                    .encodeToString(digest);
+
         } catch (NoSuchAlgorithmException exception) {
-            throw new IllegalStateException("SHA-256 no está disponible.", exception);
+            throw new IllegalStateException(
+                    "SHA-256 no está disponible.", exception);
         }
     }
 }

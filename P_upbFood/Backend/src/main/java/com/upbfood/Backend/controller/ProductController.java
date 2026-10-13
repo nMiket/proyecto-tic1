@@ -1,9 +1,13 @@
+
 package com.upbfood.Backend.controller;
 
 import com.upbfood.Backend.dto.CreateProductRequest;
 import com.upbfood.Backend.dto.UpdateProductRequest;
 import com.upbfood.Backend.entity.Product;
+import com.upbfood.Backend.entity.ProductoRestaurante;
+import com.upbfood.Backend.entity.ProductoRestauranteId;
 import com.upbfood.Backend.repository.ProductRepository;
+import com.upbfood.Backend.repository.ProductoRestauranteRepository;
 import com.upbfood.Backend.security.AdminAuthorizationService;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
@@ -12,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,140 +26,185 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import com.upbfood.Backend.entity.IngredientExtra;
-import com.upbfood.Backend.repository.IngredientExtraRepository;
-import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping("/api")
 public class ProductController {
 
     private final ProductRepository productRepository;
-    private final IngredientExtraRepository ingredientExtraRepository;
+    private final ProductoRestauranteRepository productoRestauranteRepository;
     private final AdminAuthorizationService authorizationService;
 
     public ProductController(
-        ProductRepository productRepository,
-        IngredientExtraRepository ingredientExtraRepository,
-        AdminAuthorizationService authorizationService
-    ) {
+            ProductRepository productRepository,
+            ProductoRestauranteRepository productoRestauranteRepository,
+            AdminAuthorizationService authorizationService) {
         this.productRepository = productRepository;
-        this.ingredientExtraRepository = ingredientExtraRepository;
+        this.productoRestauranteRepository = productoRestauranteRepository;
         this.authorizationService = authorizationService;
     }
 
-    @GetMapping("/products")
-    public ResponseEntity<List<Map<String, Object>>> listProducts(@RequestParam Long restauranteId) {
+    @GetMapping({"/products", "/productos"})
+    public ResponseEntity<List<Map<String, Object>>> listProducts(
+            @RequestParam Integer restauranteId) {
         return getProductsByRestaurant(restauranteId);
     }
 
-    @GetMapping("/productos")
-    public ResponseEntity<List<Map<String, Object>>> listProductos(@RequestParam Long restauranteId) {
-        return getProductsByRestaurant(restauranteId);
-    }
+    
+        @GetMapping("/productos/admin")
+        public ResponseEntity<List<Map<String, Object>>> listProductosAdmin(
+                @RequestParam Integer restauranteId) {
 
-    @GetMapping("/productos/admin")
-    public ResponseEntity<List<Map<String, Object>>> listProductosAdmin(@RequestParam Long restauranteId) {
-        return getProductsByRestaurant(restauranteId);
-    }
+        authorizationService.requireAdminForRestaurant(restauranteId);
 
-    private ResponseEntity<List<Map<String, Object>>> getProductsByRestaurant(Long restauranteId) {
-        List<Product> products = productRepository.findByRestauranteIdOrderByIdAsc(restauranteId);
+        return getProductsByRestaurant(restauranteId);
+        }
+
+
+    private ResponseEntity<List<Map<String, Object>>> getProductsByRestaurant(
+            Integer restauranteId) {
+
+        List<ProductoRestaurante> asociaciones =
+                productoRestauranteRepository
+                        .findByIdRestauranteIdOrderByIdProductoIdAsc(restauranteId);
 
         List<Map<String, Object>> response = new ArrayList<>();
-        products.forEach(product -> response.add(toResponse(product)));
+
+        for (ProductoRestaurante asociacion : asociaciones) {
+            Integer productoId = asociacion.getId().getProductoId();
+
+            Product product = productRepository.findById(productoId)
+                    .orElseThrow(() ->
+                            new IllegalStateException(
+                                    "No se encontró el producto asociado al restaurante."));
+
+            response.add(toResponse(product, asociacion));
+        }
 
         return ResponseEntity.ok(response);
     }
 
+    @Transactional
     @PostMapping({"/products", "/productos"})
-    public ResponseEntity<Map<String, Object>> createProduct(@Valid @RequestBody CreateProductRequest request) {
-        authorizationService.requireAdminForRestaurant(request.getRestauranteId());
+    public ResponseEntity<Map<String, Object>> createProduct(
+            @Valid @RequestBody CreateProductRequest request) {
+
+        authorizationService.requireOwnerForRestaurant(
+                request.restauranteId());
 
         Product product = new Product();
-        product.setNombre(request.getNombre().trim());
-        product.setDescripcion(request.getDescripcion() == null ? "" : request.getDescripcion().trim());
-        product.setImagenUrl(request.getImagenUrl());
-        product.setPrecio(request.getPrecio());
-        product.setRestauranteId(request.getRestauranteId());
-        product.setCategoriaId(request.getCategoriaId());
-        product.setDisponible(request.getDisponible() == null || request.getDisponible());
+        product.setNombre(request.nombre().trim());
+        product.setDescripcion(request.descripcion().trim());
+        product.setTipoProductoId(request.categoriaId());
 
-        Product saved = productRepository.save(product);
-        Map<String, Object> response = toResponse(saved);
+        Product savedProduct = productRepository.save(product);
+
+        ProductoRestaurante asociacion = new ProductoRestaurante();
+        asociacion.setId(new ProductoRestauranteId(
+                request.restauranteId(),
+                savedProduct.getId()));
+        asociacion.setPrecio(request.precio());
+        asociacion.setImagenUrl(request.imagenUrl());
+        asociacion.setDisponible(request.disponible());
+
+        ProductoRestaurante savedAssociation =
+                productoRestauranteRepository.save(asociacion);
+
+        Map<String, Object> response =
+                toResponse(savedProduct, savedAssociation);
         response.put("message", "Producto creado correctamente.");
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-    
+
     @Transactional
     @PutMapping("/products/{id}")
     public ResponseEntity<Map<String, Object>> updateProduct(
-        @PathVariable Long id,
-        @Valid @RequestBody UpdateProductRequest request
-    ) {
-        Product product = productRepository.findById(id).orElseThrow(
-            () -> new IllegalArgumentException("Producto no encontrado.")
-        );
-        authorizationService.requireAdminForRestaurant(product.getRestauranteId());
-        authorizationService.requireAdminForRestaurant(request.getRestauranteId());
+            @PathVariable Integer id,
+            @Valid @RequestBody UpdateProductRequest request) {
 
-        product.setNombre(request.getNombre().trim());
-        product.setDescripcion(request.getDescripcion() == null ? "" : request.getDescripcion().trim());
-        product.setImagenUrl(request.getImagenUrl());
-        product.setPrecio(request.getPrecio());
-        product.setCategoriaId(request.getCategoriaId());
-        product.setDisponible(request.getDisponible());
+        authorizationService.requireOwnerForRestaurant(
+                request.restauranteId());
 
-        Product updated = productRepository.save(product);
-        ingredientExtraRepository.deleteByProductoId(id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Producto no encontrado."));
 
-        if (request.getIngredientesExtra() != null) {
-            for (String nombreIngrediente : request.getIngredientesExtra()) {
-                if (nombreIngrediente != null && !nombreIngrediente.trim().isEmpty()) {
-                    IngredientExtra ingrediente = new IngredientExtra();
-                    ingrediente.setProductoId(id);
-                    ingrediente.setNombre(nombreIngrediente.trim());
+        ProductoRestauranteId associationId =
+                new ProductoRestauranteId(request.restauranteId(), id);
 
-                    ingredientExtraRepository.save(ingrediente);
-                }
-            }
-        }
-        Map<String, Object> response = toResponse(updated);
+        ProductoRestaurante asociacion =
+                productoRestauranteRepository.findById(associationId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "El producto no está asociado a este restaurante."));
+
+        product.setNombre(request.nombre().trim());
+        product.setDescripcion(request.descripcion().trim());
+        product.setTipoProductoId(request.categoriaId());
+
+        asociacion.setPrecio(request.precio());
+        asociacion.setImagenUrl(request.imagenUrl());
+        asociacion.setDisponible(request.disponible());
+
+        Product updatedProduct = productRepository.save(product);
+        ProductoRestaurante updatedAssociation =
+                productoRestauranteRepository.save(asociacion);
+
+        Map<String, Object> response =
+                toResponse(updatedProduct, updatedAssociation);
         response.put("message", "Producto actualizado correctamente.");
+
         return ResponseEntity.ok(response);
     }
 
+    @Transactional
     @DeleteMapping("/products/{id}")
-    public ResponseEntity<Map<String, Object>> deleteProduct(@PathVariable Long id) {
-        Product product = productRepository.findById(id).orElseThrow(
-            () -> new IllegalArgumentException("Producto no encontrado.")
-        );
-        authorizationService.requireAdminForRestaurant(product.getRestauranteId());
-        productRepository.delete(product);
+    public ResponseEntity<Map<String, Object>> deleteProduct(
+            @PathVariable Integer id,
+            @RequestParam Integer restauranteId) {
+
+        authorizationService.requireOwnerForRestaurant(restauranteId);
+
+        ProductoRestauranteId associationId =
+                new ProductoRestauranteId(restauranteId, id);
+
+        ProductoRestaurante asociacion =
+                productoRestauranteRepository.findById(associationId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "El producto no está asociado a este restaurante."));
+
+        productoRestauranteRepository.delete(asociacion);
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
-        response.put("message", "Producto eliminado correctamente.");
+        response.put("message",
+                "Producto retirado del restaurante correctamente.");
+
         return ResponseEntity.ok(response);
     }
 
-    private Map<String, Object> toResponse(Product product) {
+    private Map<String, Object> toResponse(
+            Product product,
+            ProductoRestaurante asociacion) {
+
         Map<String, Object> response = new HashMap<>();
+
         response.put("id", product.getId());
         response.put("nombre", product.getNombre());
-        response.put("precio", product.getPrecio());
-        response.put("disponible", product.getDisponible());
-        response.put("restauranteId", product.getRestauranteId());
-        response.put("categoriaId", product.getCategoriaId());
         response.put("descripcion", product.getDescripcion());
-        response.put("imagenUrl", product.getImagenUrl());
-        List<String> ingredientesExtra = ingredientExtraRepository
-                .findByProductoIdOrderByIdAsc(product.getId())
-                .stream()
-                .map(ingrediente -> ingrediente.getNombre())
-                .toList();
+        response.put("categoriaId", product.getTipoProductoId());
 
-        response.put("ingredientesExtra", ingredientesExtra);
+        response.put("restauranteId",
+                asociacion.getId().getRestauranteId());
+        response.put("precio", asociacion.getPrecio());
+        response.put("imagenUrl", asociacion.getImagenUrl());
+        response.put("disponible", asociacion.getDisponible());
+
+        // Compatibilidad temporal con el formato anterior del frontend.
+        response.put("ingredientesExtra", List.of());
+
         return response;
     }
 }

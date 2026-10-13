@@ -1,51 +1,39 @@
+
 package com.upbfood.Backend.dto;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+
 import java.math.BigDecimal;
-import java.util.List;
 
-public class UpdateProductRequest {
+public record UpdateProductRequest(
+        @NotBlank
+        @Size(max = 50)
+        String nombre,
 
-    @NotBlank(message = "El nombre es obligatorio.")
-    private String nombre;
+        @NotBlank
+        @Size(max = 120)
+        String descripcion,
 
-    @NotNull(message = "El precio es obligatorio.")
-    @DecimalMin(value = "0.01", message = "El precio debe ser mayor que cero.")
-    private BigDecimal precio;
+        @NotNull
+        @Positive
+        BigDecimal precio,
 
-    @NotNull(message = "La categoría es obligatoria.")
-    @Positive(message = "La categoría debe ser válida.")
-    private Long categoriaId;
+        @NotNull
+        @Positive
+        Integer categoriaId,
 
-    @NotNull(message = "El restaurante es obligatorio.")
-    @Positive(message = "El restaurante debe ser válido.")
-    private Long restauranteId;
+        @NotNull
+        @Positive
+        Integer restauranteId,
 
-    @NotNull(message = "La disponibilidad es obligatoria.")
-    private Boolean disponible;
+        @Size(max = 500)
+        String imagenUrl,
 
-    @NotBlank(message = "La descripción es obligatoria.")
-    private String descripcion;
-    private String imagenUrl;
-    private List<String> ingredientesExtra;
-
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
-    public BigDecimal getPrecio() { return precio; }
-    public void setPrecio(BigDecimal precio) { this.precio = precio; }
-    public Long getCategoriaId() { return categoriaId; }
-    public void setCategoriaId(Long categoriaId) { this.categoriaId = categoriaId; }
-    public Long getRestauranteId() { return restauranteId; }
-    public void setRestauranteId(Long restauranteId) { this.restauranteId = restauranteId; }
-    public Boolean getDisponible() { return disponible; }
-    public void setDisponible(Boolean disponible) { this.disponible = disponible; }
-    public String getDescripcion() { return descripcion; }
-    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
-    public String getImagenUrl() { return imagenUrl; }
-    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl;}
-    public List<String> getIngredientesExtra() {return ingredientesExtra;}
-    public void setIngredientesExtra(List<String> ingredientesExtra) {this.ingredientesExtra = ingredientesExtra;}
+        @NotNull
+        Boolean disponible
+) {
 }

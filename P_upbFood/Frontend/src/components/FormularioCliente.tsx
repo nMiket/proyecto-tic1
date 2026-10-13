@@ -20,9 +20,6 @@ export default function FormularioCliente() {
 
     const [mensaje, setMensaje] = useState("");
     const [enviando, setEnviando] = useState(false);
-    const formularioValido = nombre.trim().length > 0
-        && /^3[0-9]{9}$/.test(telefono.trim())
-        && /^[^\s@]+@upb\.edu\.co$/.test(correo.trim());
 
     const guardarCliente = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -45,8 +42,8 @@ export default function FormularioCliente() {
 
         if (!correo.trim()) {
             nuevosErrores.correo = "El correo es obligatorio";
-        } else if (!/^[^\s@]+@upb\.edu\.co$/.test(correo)) {
-            nuevosErrores.correo = "Debes utilizar tu correo institucional";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+            nuevosErrores.correo = "Ingresa un correo electrónico válido";
         }
 
         setErrores(nuevosErrores);
@@ -87,27 +84,26 @@ export default function FormularioCliente() {
             });
 
             if (respuesta.ok) {
-                const pedido = await respuesta.json() as { id: number; codigoSeguimiento: string };
-                const pago = await apiFetch(`${getApiBaseUrl()}/api/pedidos/seguimiento/${pedido.codigoSeguimiento}/pago`, {
-                    method: "PUT",
-                });
-                if (!pago.ok) {
-                    const error = await pago.json().catch(() => null) as { message?: string } | null;
-                    setMensaje(error?.message ?? "No se pudo iniciar el pago.");
-                    return;
-                }
+                const pedido = await respuesta.json() as {
+                    id: number;
+                    codigoSeguimiento: string;
+                    total: number;
+                };
 
-                const pedidoEnPago = await pago.json() as { id: number; total: number };
                 vaciarCarrito();
+
                 navigate("/pago", {
                     state: {
-                        pedidoId: pedidoEnPago.id,
+                        pedidoId: pedido.id,
                         codigoSeguimiento: pedido.codigoSeguimiento,
-                        total: pedidoEnPago.total,
+                        total: pedido.total,
                     },
                 });
             } else {
-                const error = await respuesta.json().catch(() => null) as { message?: string } | null;
+                const error = await respuesta.json().catch(() => null) as {
+                    message?: string;
+                } | null;
+
                 setMensaje(error?.message ?? "No se pudo registrar el pedido.");
             }
         } catch (error) {
@@ -128,7 +124,7 @@ export default function FormularioCliente() {
                     </p>
                 </div>
 
-                <form onSubmit={guardarCliente}>
+                <form onSubmit={guardarCliente} noValidate>
                     <div className="campo">
                         <label>Nombre completo</label>
                         <input
@@ -185,7 +181,7 @@ export default function FormularioCliente() {
                         <small>Si no eliges una hora, se usará el tiempo estimado de la cafetería.</small>
                     </div>
 
-                    <button type="submit" disabled={enviando || items.length === 0 || !formularioValido}>
+                    <button type="submit" disabled={enviando || items.length === 0}>
                         {enviando ? "Abriendo pago..." : "Continuar al pago"}
                     </button>
 

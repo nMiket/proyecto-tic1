@@ -1,3 +1,4 @@
+
 package com.upbfood.Backend.entity;
 
 import jakarta.persistence.Column;
@@ -8,30 +9,31 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "restaurantes")
+@Table(name = "restaurante")
 public class Restaurant {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "restaurante_id")
+    private Integer id;
 
-    @Column(nullable = false)
+    @Column(name = "nombre_restaurante", nullable = false, length = 50)
     private String nombre;
 
-    @Column(nullable = false)
+    @Column(name = "ubicacion_restaurante", nullable = false, length = 50)
     private String ubicacion;
 
-    @Column(nullable = false)
+    @Column(name = "estado", nullable = false, length = 20)
     private String estado = "Abierto";
 
-    @Column(name = "tiempo_estimado_min")
+    @Column(name = "tiempo_pedido", nullable = false)
     private Integer tiempoEstimadoMin = 15;
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

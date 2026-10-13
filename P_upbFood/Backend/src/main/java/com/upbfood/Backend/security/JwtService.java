@@ -1,3 +1,4 @@
+
 package com.upbfood.Backend.security;
 
 import com.upbfood.Backend.entity.AdminUser;
@@ -19,26 +20,30 @@ public class JwtService {
     private final Duration accessTokenLifetime;
 
     public JwtService(
-        @Value("${app.jwt.secret}") String secret,
-        @Value("${app.jwt.access-token-minutes:15}") long accessTokenMinutes
-    ) {
+            @Value("${app.jwt.secret}") String secret,
+            @Value("${app.jwt.access-token-minutes:15}") long accessTokenMinutes) {
+
         if (secret.getBytes(StandardCharsets.UTF_8).length < 32) {
-            throw new IllegalArgumentException("app.jwt.secret debe tener al menos 32 bytes.");
+            throw new IllegalArgumentException(
+                    "app.jwt.secret debe tener al menos 32 bytes.");
         }
-        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+
+        this.signingKey = Keys.hmacShaKeyFor(
+                secret.getBytes(StandardCharsets.UTF_8));
+
         this.accessTokenLifetime = Duration.ofMinutes(accessTokenMinutes);
     }
 
     public String generateAccessToken(AdminUser admin) {
         Instant now = Instant.now();
+
         return Jwts.builder()
-            .subject(admin.getEmail())
-            .claim("userId", admin.getId())
-            .claim("restauranteId", admin.getRestauranteId())
-            .issuedAt(Date.from(now))
-            .expiration(Date.from(now.plus(accessTokenLifetime)))
-            .signWith(signingKey)
-            .compact();
+                .subject(admin.getEmail())
+                .claim("userId", admin.getId())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plus(accessTokenLifetime)))
+                .signWith(signingKey)
+                .compact();
     }
 
     public String extractSubject(String token) {
@@ -60,9 +65,9 @@ public class JwtService {
 
     private Claims parseClaims(String token) {
         return Jwts.parser()
-            .verifyWith(signingKey)
-            .build()
-            .parseSignedClaims(token)
-            .getPayload();
+                .verifyWith(signingKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }

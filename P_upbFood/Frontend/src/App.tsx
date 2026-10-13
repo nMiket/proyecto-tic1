@@ -1,13 +1,28 @@
+
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import {
+  Link,
+  NavLink,
+  Navigate,
+  Route,
+  Routes,
+  useNavigate,
+} from 'react-router-dom'
 import ListaRestaurantes from './components/ListaRestaurantes'
 import ListaProductos from './components/ListaProductos'
 import ResumenPedido from './components/ResumenPedido'
 import { CartProvider } from './context/CartContext'
 import { useCart } from './context/useCart'
-import { apiFetch, getApiBaseUrl, login as authenticate, logout as endSession, refreshSession } from './auth'
-import FormularioCliente from "./components/FormularioCliente";
-import PagoPage from "./components/PagoPage";
+import {
+  apiFetch,
+  getApiBaseUrl,
+  login as authenticate,
+  logout as endSession,
+  refreshSession,
+  type AsignacionRestaurante,
+} from './auth'
+import FormularioCliente from './components/FormularioCliente'
+import PagoPage from './components/PagoPage'
 import { DashboardCocina } from './components/DashboardCocina'
 import AdminDashboardPage from './components/AdminDashboardPage'
 import './App.css'
@@ -21,20 +36,36 @@ type RestauranteItem = {
 }
 
 export function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [adminName, setAdminName] = useState('')
   const [restauranteId, setRestauranteId] = useState<number | null>(null)
-  const location = useLocation()
+  const [asignaciones, setAsignaciones] = useState<AsignacionRestaurante[]>([])
+
+  const tieneAccesoAdmin =
+    isLoggedIn && asignaciones.some(
+      (asignacion) => Number(asignacion.restauranteId) > 0
+    )
+
+  const restauranteCocinaId =
+    asignaciones.find(
+      (asignacion) => Number(asignacion.tipoAdministradorId) === 2
+    )?.restauranteId ?? null
 
   useEffect(() => {
     let cancelled = false
-    void refreshSession().then((session) => {
-      if (!cancelled && session) {
-        setAdminName(session.email)
-        setRestauranteId(session.restauranteId)
-        setIsLoggedIn(true)
-      }
-    })
+
+    void refreshSession()
+      .then((session) => {
+        if (!cancelled && session) {
+          setAdminName(session.email)
+          setRestauranteId(session.restauranteId)
+          setAsignaciones(session.asignaciones ?? [])
+          setIsLoggedIn(true)
+        }
+      })
+      .catch((error) => {
+        console.error('Error al recuperar la sesión:', error)
+      })
 
     return () => {
       cancelled = true
@@ -43,9 +74,12 @@ export function App() {
 
   const handleLogin = async (email: string, password: string) => {
     const session = await authenticate(email, password)
+
     setAdminName(session.email)
     setRestauranteId(session.restauranteId)
+    setAsignaciones(session.asignaciones ?? [])
     setIsLoggedIn(true)
+
     return session.email
   }
 
@@ -54,6 +88,7 @@ export function App() {
     setIsLoggedIn(false)
     setAdminName('')
     setRestauranteId(null)
+    setAsignaciones([])
   }
 
   return (
@@ -63,74 +98,107 @@ export function App() {
           UPB Food
         </Link>
 
-        <div className="nav-actions">
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) => (isActive ? 'active' : '')}
-          >
-            Servicios
-          </NavLink>
+        
+      <div className="nav-actions">
+        {!isLoggedIn ? (
+          <>
+            <NavLink
+              to="/"
+              end
+              className={({ isActive }) => (isActive ? 'active' : '')}
+            >
+              Servicios
+            </NavLink>
 
-          <NavLink
-            to="/pedido"
-            className={({ isActive }) => (isActive ? 'active' : '')}
-          >
-            Pedido
-          </NavLink>
+            <NavLink
+              to="/pedido"
+              className={({ isActive }) => (isActive ? 'active' : '')}
+            >
+              Pedido
+            </NavLink>
 
-          <NavLink
-            to="/historial"
-            className={({ isActive }) => (isActive ? 'active' : '')}
-          >
-            Historial
-          </NavLink>
+            <NavLink
+              to="/admin"
+              className={({ isActive }) => (isActive ? 'active' : '')}
+            >
+              Iniciar sesión
+            </NavLink>
+          </>
+        ) : (
+          <>
+            {tieneAccesoAdmin && (
+              <NavLink
+                to="/admin/dashboard"
+                className={({ isActive }) => (isActive ? 'active' : '')}
+              >
+                Panel administrativo
+              </NavLink>
+            )}
 
-          <Link
-            to={isLoggedIn ? '/admin/dashboard' : '/admin'}
-            className={location.pathname.startsWith('/admin') ? 'active' : ''}
-          >
-            Panel administrativo
-          </Link>
-        </div>
+            {tieneAccesoAdmin && restauranteCocinaId !== null && (
+              <NavLink
+                to="/admin/cocina"
+                className={({ isActive }) => (isActive ? 'active' : '')}
+              >
+                Cocina
+              </NavLink>
+            )}
+          </>
+        )}
+      </div>
+
       </nav>
 
       <CartProvider>
         <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route
-          path="/admin"
-          element={
-            isLoggedIn ? <Navigate to="/admin/dashboard" replace /> : <AdminLoginPage onLogin={handleLogin} />
-          }
-        />
-        <Route
-          path="/admin/dashboard"
-          element={
-            isLoggedIn ? (
-              <AdminDashboardPage
-                adminName={adminName}
-                restauranteId={restauranteId ?? 1}
-                onLogout={handleLogout}
-              />
-            ) : (
-              <Navigate to="/admin" replace />
-            )
-          }
-        />
-        <Route
-          path="/admin/cocina"
-          element={isLoggedIn ? <DashboardCocina /> : <Navigate to="/admin" replace />}
-        />
+          <Route path="/" element={<HomePage />} />
 
-        <Route 
-        path="/pedido" element={<PedidoPage />} />
-        <Route path="/historial" element={<HistorialPage />} />
-        <Route path="/cliente" element={<FormularioCliente />} />
-        <Route path="/pago" element={<PagoPage />} />
+          <Route
+            path="/admin"
+            element={
+              isLoggedIn ? (
+                <Navigate to="/admin/dashboard" replace />
+              ) : (
+                <AdminLoginPage onLogin={handleLogin} />
+              )
+            }
+          />
+
+          <Route
+            path="/admin/dashboard"
+            element={
+              tieneAccesoAdmin ? (
+                <AdminDashboardPage
+                  adminName={adminName}
+                  restauranteId={restauranteId ?? asignaciones[0].restauranteId}
+                  asignaciones={asignaciones}
+                  onLogout={handleLogout}
+                />
+              ) : (
+                <Navigate to="/admin" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/admin/cocina"
+            element={
+              tieneAccesoAdmin && restauranteCocinaId !== null ? (
+                <DashboardCocina restauranteId={restauranteCocinaId} />
+              ) : (
+                <Navigate
+                  to={tieneAccesoAdmin ? '/admin/dashboard' : '/admin'}
+                  replace
+                />
+              )
+            }
+          />
+
+          <Route path="/pedido" element={<PedidoPage />} />
+          <Route path="/historial" element={<HistorialPage />} />
+          <Route path="/cliente" element={<FormularioCliente />} />
+          <Route path="/pago" element={<PagoPage />} />
         </Routes>
-        
-
       </CartProvider>
     </main>
   )
@@ -156,6 +224,17 @@ function HomePage() {
       .then((data: RestauranteItem[]) => {
         if (data && data.length > 0) {
           setListaRestaurantes(data)
+
+          setRestauranteSeleccionado((actual) => {
+            const existe = data.some((r) => r.id === actual.id)
+
+            if (existe) {
+              const restaurante = data.find((r) => r.id === actual.id)!
+              return { id: restaurante.id, nombre: restaurante.nombre }
+            }
+
+            return { id: data[0].id, nombre: data[0].nombre }
+          })
         }
       })
       .catch(() => {})
@@ -169,7 +248,8 @@ function HomePage() {
         <h1>Haz tu pedido antes de llegar</h1>
 
         <p>
-          Explora cafeterías, revisa el menú y prepara tu pedido desde cualquier dispositivo.
+          Explora cafeterías, revisa el menú y prepara tu pedido desde cualquier
+          dispositivo.
         </p>
 
         <div className="stats">
@@ -195,10 +275,7 @@ function HomePage() {
         }}
       />
 
-      <section
-        className="menu-destacado"
-        style={{ marginTop: '2.5rem' }}
-      >
+      <section className="menu-destacado" style={{ marginTop: '2.5rem' }}>
         <div
           style={{
             display: 'flex',
@@ -275,7 +352,7 @@ function HomePage() {
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  📍 {r.nombre}
+                  {r.nombre}
                 </button>
               )
             })}
@@ -294,20 +371,24 @@ function HomePage() {
           }
         />
       </section>
-          
+
       <button
-      className="floating-cart-button"
-      type="button"
-      onClick={() => navigate('/pedido')}
-    >
-      <span>Carrito ({totalItems})</span>
-      <strong>${total.toLocaleString('es-CO')}</strong>
-    </button>
+        className="floating-cart-button"
+        type="button"
+        onClick={() => navigate('/pedido')}
+      >
+        <span>Carrito ({totalItems})</span>
+        <strong>${total.toLocaleString('es-CO')}</strong>
+      </button>
     </>
   )
 }
 
-function AdminLoginPage({ onLogin }: { onLogin: (email: string, password: string) => Promise<string> }) {
+function AdminLoginPage({
+  onLogin,
+}: {
+  onLogin: (email: string, password: string) => Promise<string>
+}) {
   const [email, setEmail] = useState('admin@upb.edu.co')
   const [password, setPassword] = useState('admin123')
   const [error, setError] = useState('')
@@ -323,7 +404,9 @@ function AdminLoginPage({ onLogin }: { onLogin: (email: string, password: string
       await onLogin(email, password)
       navigate('/admin/dashboard')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión.')
+      setError(
+        err instanceof Error ? err.message : 'No se pudo iniciar sesión.'
+      )
     } finally {
       setLoading(false)
     }
@@ -354,7 +437,7 @@ function AdminLoginPage({ onLogin }: { onLogin: (email: string, password: string
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
+            placeholder="Contraseña"
             required
           />
         </label>
@@ -368,7 +451,6 @@ function AdminLoginPage({ onLogin }: { onLogin: (email: string, password: string
     </section>
   )
 }
-
 
 function PedidoPage() {
   return (

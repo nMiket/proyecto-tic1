@@ -1,4 +1,10 @@
+
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+
+export type AsignacionRestaurante = {
+  restauranteId: number
+  tipoAdministradorId: number
+}
 
 export type AuthSession = {
   success: boolean
@@ -6,6 +12,8 @@ export type AuthSession = {
   expiresIn: number
   email: string
   restauranteId: number
+  restaurantes?: number[]
+  asignaciones: AsignacionRestaurante[]
   message?: string
 }
 
@@ -15,14 +23,18 @@ async function readJson<T>(response: Response): Promise<T> {
   return (await response.json()) as T
 }
 
-export async function login(email: string, password: string): Promise<AuthSession> {
+export async function login(
+  email: string,
+  password: string
+): Promise<AuthSession> {
   const response = await fetch(`${API_BASE_URL}/api/admin/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify({ email, password }),
   })
-  const data = await readJson<AuthSession & { message?: string }>(response)
+
+  const data = await readJson<AuthSession>(response)
 
   if (!response.ok || !data.success) {
     throw new Error(data.message ?? 'Credenciales inválidas.')
@@ -44,6 +56,7 @@ export async function refreshSession(): Promise<AuthSession | null> {
   }
 
   const data = await readJson<AuthSession>(response)
+
   if (!data.success || !data.accessToken) {
     accessToken = null
     return null
@@ -64,8 +77,13 @@ export async function logout(): Promise<void> {
   }
 }
 
-export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {}, retry = true): Promise<Response> {
+export async function apiFetch(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  retry = true
+): Promise<Response> {
   const headers = new Headers(init.headers)
+
   if (accessToken) {
     headers.set('Authorization', `Bearer ${accessToken}`)
   }
@@ -78,6 +96,7 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {},
 
   if (response.status === 401 && retry) {
     const session = await refreshSession()
+
     if (session) {
       return apiFetch(input, init, false)
     }

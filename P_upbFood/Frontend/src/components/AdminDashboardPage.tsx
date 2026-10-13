@@ -1,6 +1,12 @@
-import { startTransition, useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
-import { apiFetch, getApiBaseUrl } from '../auth'
+
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useState,
+  type FormEvent,
+} from 'react'
+import { apiFetch, getApiBaseUrl, type AsignacionRestaurante } from '../auth'
 
 type ProductItem = {
   id: number
@@ -21,8 +27,18 @@ type RestauranteItem = {
   tiempoEstimadoMin?: number
 }
 
+type AdministradorCocinaItem = {
+  administradorId: number
+  nombre: string
+  telefono: string
+  correo: string
+  estado: string
+}
+
+
 function getImagenPorCategoria(categoriaId: number, nombre: string): string {
   const n = nombre.toLowerCase()
+
   if (n.includes('empanada')) return 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=400'
   if (n.includes('pizza')) return 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400'
   if (n.includes('perro') || n.includes('hot dog')) return 'https://images.unsplash.com/photo-1599599811450-2c59409af2c0?w=400'
@@ -36,21 +52,25 @@ function getImagenPorCategoria(categoriaId: number, nombre: string): string {
   if (n.includes('postre') || n.includes('torta') || n.includes('dulce') || n.includes('brownie')) return 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400'
   if (n.includes('ensalada') || n.includes('saludable') || n.includes('vegetariano')) return 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400'
 
-  if (categoriaId === 1) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400' // Almuerzos
-  if (categoriaId === 2) return 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400' // Bebidas
-  return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400' // Snacks
+  if (categoriaId === 1) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'
+  if (categoriaId === 2) return 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400'
+  return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400'
 }
 
 export default function AdminDashboardPage({
   adminName,
   restauranteId: initialRestauranteId,
+  asignaciones,
   onLogout,
 }: {
   adminName: string
   restauranteId: number
+  asignaciones: AsignacionRestaurante[]
   onLogout: () => void
 }) {
-  const [selectedRestauranteId, setSelectedRestauranteId] = useState<number>(initialRestauranteId)
+  const [selectedRestauranteId, setSelectedRestauranteId] =
+    useState<number>(initialRestauranteId)
+
   const [listaRestaurantes, setListaRestaurantes] = useState<RestauranteItem[]>([])
   const [productDescription, setProductDescription] = useState('')
   const [products, setProducts] = useState<ProductItem[]>([])
@@ -64,6 +84,10 @@ export default function AdminDashboardPage({
   const [ingredientesExtra, setIngredientesExtra] = useState<string[]>([])
   const [nuevoIngredienteExtra, setNuevoIngredienteExtra] = useState('')
 
+  const restauranteSeleccionado = listaRestaurantes.find(
+    (r) => Number(r.id) === Number(selectedRestauranteId),
+  )
+
   const resetProductForm = () => {
     setProductName('')
     setProductDescription('')
@@ -72,37 +96,109 @@ export default function AdminDashboardPage({
     setDisponible(true)
     setEditingProductId(null)
     setIngredientesExtra([])
+    setNuevoIngredienteExtra('')
   }
 
+  // Consulta y filtra los restaurantes que tiene asignados la sesión.
   useEffect(() => {
-    apiFetch(`${getApiBaseUrl()}/api/restaurantes`)
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data: RestauranteItem[]) => {
-        setListaRestaurantes(data)
+    let cancelled = false
+
+    const idsAutorizados = new Set(
+      asignaciones
+        .filter((a) => Number(a.restauranteId) > 0)
+        .map((a) => Number(a.restauranteId)),
+    )
+
+    apiFetch(`${getApiBaseUrl()}/api/admin/restaurantes`)
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error('No se pudieron consultar los restaurantes asignados.')
+        }
+
+        return (await res.json()) as RestauranteItem[]
       })
-      .catch(() => {})
-  }, [])
+      .then((data) => {
+        if (cancelled) return
+
+        const permitidos = data.filter((r) => idsAutorizados.has(Number(r.id)))
+        setListaRestaurantes(permitidos)
+
+        if (
+          permitidos.some(
+            (r) => Number(r.id) === Number(initialRestauranteId),
+          )
+        ) {
+          setSelectedRestauranteId(initialRestauranteId)
+        } else if (permitidos.length > 0) {
+          setSelectedRestauranteId(permitidos[0].id)
+        } else {
+          setProductError('Tu cuenta no tiene restaurantes asignados activos.')
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error('Error al consultar restaurantes:', error)
+          setProductError('No se pudieron consultar los restaurantes asignados.')
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [asignaciones, initialRestauranteId])
 
   const agregarIngredienteExtra = () => {
-  const nuevoExtra = nuevoIngredienteExtra.trim()
+    const nuevoExtra = nuevoIngredienteExtra.trim()
+    if (!nuevoExtra) return
 
-  if (!nuevoExtra) return
+    setIngredientesExtra((extras) => [...extras, nuevoExtra])
+    setNuevoIngredienteExtra('')
+  }
+  
+  const [administradoresCocina, setAdministradoresCocina] =
+    useState<AdministradorCocinaItem[]>([])
+  const [nombreAdminCocina, setNombreAdminCocina] = useState('')
+  const [telefonoAdminCocina, setTelefonoAdminCocina] = useState('')
+  const [correoAdminCocina, setCorreoAdminCocina] = useState('')
+  const [passwordAdminCocina, setPasswordAdminCocina] = useState('')
+  const [loadingAdmins, setLoadingAdmins] = useState(false)
+  const [savingAdmin, setSavingAdmin] = useState(false)
+  const [adminCocinaError, setAdminCocinaError] = useState('')
+  const [adminCocinaSuccess, setAdminCocinaSuccess] = useState('')
 
-  setIngredientesExtra((extras) => [...extras, nuevoExtra])
-  setNuevoIngredienteExtra('')
-}
+  const asignacionSeleccionada = asignaciones.find(
+    (a) => Number(a.restauranteId) === Number(selectedRestauranteId),
+  )
+
+  const esDueno =
+    Number(asignacionSeleccionada?.tipoAdministradorId) === 1
+
 
   const fetchProducts = useCallback(async () => {
+    if (!selectedRestauranteId) return
+
     startTransition(() => setLoadingProducts(true))
+
     try {
-      const response = await apiFetch(`${getApiBaseUrl()}/api/products?restauranteId=${selectedRestauranteId}`)
+      const response = await apiFetch(
+        `${getApiBaseUrl()}/api/productos/admin?restauranteId=${selectedRestauranteId}`,
+      )
+
       if (!response.ok) {
         throw new Error('No se pudo cargar el menú.')
       }
 
       const data = (await response.json()) as ProductItem[]
-      setProducts(data)
-    } catch {
+
+      setProducts(
+        data.filter(
+          (product) =>
+            Number(product.restauranteId) === Number(selectedRestauranteId),
+        ),
+      )
+      setProductError('')
+    } catch (error) {
+      console.error('Error al cargar productos:', error)
       setProductError('No se pudo cargar el catálogo de productos.')
     } finally {
       setLoadingProducts(false)
@@ -110,28 +206,37 @@ export default function AdminDashboardPage({
   }, [selectedRestauranteId])
 
   useEffect(() => {
-    void Promise.resolve().then(() => fetchProducts())
+    void fetchProducts()
   }, [fetchProducts])
+
+  // Al cambiar de cafetería, limpia el formulario para evitar editar
+  // accidentalmente un producto de la cafetería anterior.
+  useEffect(() => {
+    resetProductForm()
+  }, [selectedRestauranteId])
 
   const handleCreateProduct = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setProductError('')
 
-    if (!productName.trim() || !productPrice) {
+    if (!selectedRestauranteId || !productName.trim() || !productPrice) {
       setProductError('Completa el nombre y el precio del producto.')
+      return
+    }
+
+    if (!Number.isFinite(Number(productPrice)) || Number(productPrice) <= 0) {
+      setProductError('El precio debe ser un número mayor que cero.')
       return
     }
 
     try {
       const response = await apiFetch(`${getApiBaseUrl()}/api/products`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nombre: productName.trim(),
           descripcion: productDescription.trim(),
-          precio: productPrice,
+          precio: Number(productPrice),
           categoriaId: Number(categoriaId),
           restauranteId: selectedRestauranteId,
           disponible,
@@ -139,14 +244,17 @@ export default function AdminDashboardPage({
       })
 
       const data = (await response.json()) as { message?: string }
+
       if (!response.ok) {
         throw new Error(data.message ?? 'No se pudo guardar el producto.')
       }
 
       resetProductForm()
       await fetchProducts()
-    } catch (err) {
-      setProductError(err instanceof Error ? err.message : 'No se pudo guardar el producto.')
+    } catch (error) {
+      setProductError(
+        error instanceof Error ? error.message : 'No se pudo guardar el producto.',
+      )
     }
   }
 
@@ -162,70 +270,222 @@ export default function AdminDashboardPage({
 
   const handleUpdateProduct = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setProductError('') 
+    setProductError('')
 
-    if (editingProductId === null) {
-      return
-    }
+    if (editingProductId === null) return
 
     if (!productName.trim() || !productPrice) {
       setProductError('Completa el nombre y el precio del producto.')
       return
     }
 
+    if (!Number.isFinite(Number(productPrice)) || Number(productPrice) <= 0) {
+      setProductError('El precio debe ser un número mayor que cero.')
+      return
+    }
+
     const confirmar = window.confirm(
-        '¿Estás seguro de que quieres guardar los cambios de este producto?'
+      '¿Estás seguro de que quieres guardar los cambios de este producto?',
     )
 
     if (!confirmar) return
 
     try {
-      const response = await apiFetch(`${getApiBaseUrl()}/api/products/${editingProductId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await apiFetch(
+        `${getApiBaseUrl()}/api/products/${editingProductId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: productName.trim(),
+            descripcion: productDescription.trim(),
+            precio: Number(productPrice),
+            categoriaId: Number(categoriaId),
+            restauranteId: selectedRestauranteId,
+            disponible,
+            ingredientesExtra,
+          }),
         },
-        body: JSON.stringify({
-        nombre: productName.trim(),
-        descripcion: productDescription.trim(),
-        precio: productPrice,
-        categoriaId: Number(categoriaId),
-        restauranteId: selectedRestauranteId,
-        disponible,
-        ingredientesExtra,
-        }),
-      })
+      )
 
       const data = (await response.json()) as { message?: string }
+
       if (!response.ok) {
         throw new Error(data.message ?? 'No se pudo actualizar el producto.')
       }
 
       resetProductForm()
       await fetchProducts()
-    } catch (err) {
-      setProductError(err instanceof Error ? err.message : 'No se pudo actualizar el producto.')
+    } catch (error) {
+      setProductError(
+        error instanceof Error ? error.message : 'No se pudo actualizar el producto.',
+      )
     }
   }
 
   const handleDeleteProduct = async (productId: number) => {
+    const confirmar = window.confirm(
+      '¿Quieres retirar este producto de la cafetería?',
+    )
+    if (!confirmar) return
+
     setProductError('')
 
     try {
-      const response = await apiFetch(`${getApiBaseUrl()}/api/products/${productId}`, {
-        method: 'DELETE',
-      })
+      const response = await apiFetch(
+        `${getApiBaseUrl()}/api/products/${productId}?restauranteId=${selectedRestauranteId}`,
+        { method: 'DELETE' },
+      )
 
       const data = (await response.json()) as { message?: string }
+
       if (!response.ok) {
-        throw new Error(data.message ?? 'No se pudo eliminar el producto.')
+        throw new Error(data.message ?? 'No se pudo retirar el producto.')
       }
 
       await fetchProducts()
-    } catch (err) {
-      setProductError(err instanceof Error ? err.message : 'No se pudo eliminar el producto.')
+    } catch (error) {
+      setProductError(
+        error instanceof Error ? error.message : 'No se pudo retirar el producto.',
+      )
     }
   }
+
+  
+  const cargarAdministradoresCocina = useCallback(async () => {
+    if (!selectedRestauranteId || !esDueno) {
+      setAdministradoresCocina([])
+      return
+    }
+
+    setLoadingAdmins(true)
+    setAdminCocinaError('')
+
+    try {
+      const response = await apiFetch(
+        `${getApiBaseUrl()}/api/admin/restaurantes/${selectedRestauranteId}/administradores-cocina`,
+      )
+
+      if (!response.ok) {
+        throw new Error('No se pudieron consultar los administradores de cocina.')
+      }
+
+      const data = (await response.json()) as AdministradorCocinaItem[]
+      setAdministradoresCocina(data)
+    } catch (error) {
+      setAdminCocinaError(
+        error instanceof Error
+          ? error.message
+          : 'Error al consultar los administradores.',
+      )
+    } finally {
+      setLoadingAdmins(false)
+    }
+  }, [selectedRestauranteId, esDueno])
+
+  useEffect(() => {
+    void cargarAdministradoresCocina()
+  }, [cargarAdministradoresCocina])
+
+  const handleCrearAdminCocina = async (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault()
+    setAdminCocinaError('')
+    setAdminCocinaSuccess('')
+
+    if (!esDueno || !selectedRestauranteId) {
+      setAdminCocinaError(
+        'No tienes permisos para gestionar administradores de cocina.',
+      )
+      return
+    }
+
+    setSavingAdmin(true)
+
+    try {
+      const response = await apiFetch(
+        `${getApiBaseUrl()}/api/admin/restaurantes/${selectedRestauranteId}/administradores-cocina`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: nombreAdminCocina.trim(),
+            telefono: telefonoAdminCocina.trim(),
+            correo: correoAdminCocina.trim(),
+            password: passwordAdminCocina,
+          }),
+        },
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null)
+        throw new Error(
+          errorData?.message ??
+            errorData?.detail ??
+            'No se pudo crear el administrador de cocina.',
+        )
+      }
+
+      setNombreAdminCocina('')
+      setTelefonoAdminCocina('')
+      setCorreoAdminCocina('')
+      setPasswordAdminCocina('')
+      setAdminCocinaSuccess('Administrador de cocina creado correctamente.')
+
+      await cargarAdministradoresCocina()
+    } catch (error) {
+      setAdminCocinaError(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo crear el administrador.',
+      )
+    } finally {
+      setSavingAdmin(false)
+    }
+  }
+
+  const handleRetirarAdminCocina = async (
+    administrador: AdministradorCocinaItem,
+  ) => {
+    const confirmar = window.confirm(
+      `¿Quieres retirar el acceso de ${administrador.nombre} a esta cafetería?`,
+    )
+
+    if (!confirmar) return
+
+    setAdminCocinaError('')
+    setAdminCocinaSuccess('')
+
+    try {
+      const response = await apiFetch(
+        `${getApiBaseUrl()}/api/admin/restaurantes/${selectedRestauranteId}/administradores-cocina/${administrador.administradorId}`,
+        { method: 'DELETE' },
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null)
+        throw new Error(
+          errorData?.message ??
+            errorData?.detail ??
+            'No se pudo retirar el acceso al administrador.',
+        )
+      }
+
+      setAdminCocinaSuccess(
+        `Se retiró el acceso de ${administrador.nombre} a esta cafetería.`,
+      )
+
+      await cargarAdministradoresCocina()
+    } catch (error) {
+      setAdminCocinaError(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo retirar el acceso.',
+      )
+    }
+  }
+
 
   return (
     <section className="dashboard-card">
@@ -234,36 +494,232 @@ export default function AdminDashboardPage({
           <p className="eyebrow">Panel administrativo</p>
           <h2>Bienvenido, {adminName}</h2>
         </div>
+
         <button className="secondary" onClick={onLogout}>
           Cerrar sesión
         </button>
-        <Link className="secondary" to="/admin/cocina">
-          Cocina
-        </Link>
       </div>
 
-      {/* Selector de Cafetería a Administrar */}
-      <div style={{ margin: '0 0 24px', padding: '16px 20px', backgroundColor: '#f0f8f8', borderRadius: '12px', border: '1px solid #d3ebe7', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontWeight: 700, color: '#0f3d3e', fontSize: '1rem' }}>
-            Cafetería en gestión:
-          </span>
-          <select
-            value={selectedRestauranteId}
-            onChange={(e) => setSelectedRestauranteId(Number(e.target.value))}
-            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #0d7377', fontWeight: 600, color: '#0d7377', backgroundColor: '#fff', fontSize: '0.95rem', cursor: 'pointer' }}
+      <div
+        style={{
+          margin: '0 0 24px',
+          padding: '16px 20px',
+          backgroundColor: '#f0f8f8',
+          borderRadius: '12px',
+          border: '1px solid #d3ebe7',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px',
+        }}
+      >
+        <div>
+          <label
+            htmlFor="restaurante-admin"
+            style={{
+              display: 'block',
+              fontWeight: 700,
+              color: '#0f3d3e',
+              fontSize: '1rem',
+              marginBottom: '8px',
+            }}
           >
-            {listaRestaurantes.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.nombre} ({r.ubicacion})
-              </option>
-            ))}
-          </select>
+            Cafetería en gestión:
+          </label>
+
+          {listaRestaurantes.length > 1 ? (
+            <select
+              id="restaurante-admin"
+              value={selectedRestauranteId}
+              onChange={(e) => setSelectedRestauranteId(Number(e.target.value))}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid #0d7377',
+                fontWeight: 600,
+                color: '#0d7377',
+                backgroundColor: '#fff',
+                fontSize: '0.95rem',
+                maxWidth: '100%',
+              }}
+            >
+              {listaRestaurantes.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.nombre} ({r.ubicacion})
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p style={{ margin: 0, color: '#0d7377', fontWeight: 600 }}>
+              {restauranteSeleccionado
+                ? `${restauranteSeleccionado.nombre} (${restauranteSeleccionado.ubicacion})`
+                : 'Cargando restaurante asignado...'}
+            </p>
+          )}
         </div>
+
         <span style={{ fontSize: '0.85rem', color: '#557571' }}>
-          Los cambios se aplican al menú de esta cafetería
+          Los cambios se aplican al menú de esta cafetería.
         </span>
       </div>
+
+      
+      {esDueno && (
+        <section
+          className="panel"
+          style={{
+            marginBottom: '24px',
+            border: '1px solid #d3ebe7',
+            borderRadius: '12px',
+            padding: '24px',
+          }}
+        >
+          <div style={{ marginBottom: '20px' }}>
+            <h3 style={{ color: '#0f3d3e', marginTop: 0 }}>
+              Administradores de cocina
+            </h3>
+            <p style={{ color: '#557571', marginBottom: 0 }}>
+              Crea y administra las cuentas que pueden gestionar la cocina de
+              {` ${restauranteSeleccionado?.nombre ?? 'esta cafetería'}`}.
+            </p>
+          </div>
+
+          <form
+            onSubmit={handleCrearAdminCocina}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '14px',
+              marginBottom: '24px',
+            }}
+          >
+            <label>
+              Nombre completo
+              <input
+                value={nombreAdminCocina}
+                onChange={(e) => setNombreAdminCocina(e.target.value)}
+                maxLength={50}
+                placeholder="Ej: Carlos Pérez"
+                required
+              />
+            </label>
+
+            <label>
+              Teléfono
+              <input
+                type="tel"
+                value={telefonoAdminCocina}
+                onChange={(e) => setTelefonoAdminCocina(e.target.value)}
+                maxLength={20}
+                placeholder="Ej: 3001234567"
+                required
+              />
+            </label>
+
+            <label>
+              Correo institucional
+              <input
+                type="email"
+                value={correoAdminCocina}
+                onChange={(e) => setCorreoAdminCocina(e.target.value)}
+                maxLength={100}
+                placeholder="cocinero@upb.edu.co"
+                required
+              />
+            </label>
+
+            <label>
+              Contraseña inicial
+              <input
+                type="password"
+                value={passwordAdminCocina}
+                onChange={(e) => setPasswordAdminCocina(e.target.value)}
+                minLength={8}
+                maxLength={72}
+                placeholder="Mínimo 8 caracteres"
+                required
+              />
+            </label>
+
+            <div
+              style={{
+                gridColumn: '1 / -1',
+                display: 'flex',
+                justifyContent: 'flex-start',
+              }}
+            >
+              <button type="submit" disabled={savingAdmin}>
+                {savingAdmin ? 'Creando cuenta...' : 'Crear administrador'}
+              </button>
+            </div>
+          </form>
+
+          {adminCocinaError && (
+            <p className="error-message" role="alert">
+              {adminCocinaError}
+            </p>
+          )}
+
+          {adminCocinaSuccess && (
+            <p role="status" style={{ color: '#16734a' }}>
+              {adminCocinaSuccess}
+            </p>
+          )}
+
+          <h4 style={{ color: '#0f3d3e' }}>
+            Administradores asignados
+          </h4>
+
+          {loadingAdmins ? (
+            <p>Cargando administradores...</p>
+          ) : administradoresCocina.length === 0 ? (
+            <p>No hay administradores de cocina activos en esta cafetería.</p>
+          ) : (
+            <ul
+              style={{
+                listStyle: 'none',
+                padding: 0,
+                margin: 0,
+              }}
+            >
+              {administradoresCocina.map((administrador) => (
+                <li
+                  key={administrador.administradorId}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '12px',
+                    padding: '14px 0',
+                    borderBottom: '1px solid #e0eeeb',
+                  }}
+                >
+                  <div>
+                    <strong>{administrador.nombre}</strong>
+                    <p style={{ margin: '4px 0', color: '#557571' }}>
+                      {administrador.correo}
+                    </p>
+                    <small style={{ color: '#557571' }}>
+                      Teléfono: {administrador.telefono}
+                    </small>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="mini-button danger"
+                    onClick={() => handleRetirarAdminCocina(administrador)}
+                  >
+                    Retirar acceso
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
 
       <div className="dashboard-grid">
         <article className="metric-card accent">
@@ -271,11 +727,13 @@ export default function AdminDashboardPage({
           <strong>24</strong>
           <small>5 nuevos hoy</small>
         </article>
+
         <article className="metric-card">
           <span>Productos</span>
           <strong>{products.length}</strong>
-          <small>catálogo del restaurante</small>
+          <small>Catálogo del restaurante</small>
         </article>
+
         <article className="metric-card">
           <span>Ganancias</span>
           <strong>$3.4M</strong>
@@ -289,7 +747,7 @@ export default function AdminDashboardPage({
           <ul>
             <li>Ver pedidos pendientes</li>
             <li>Actualizar menú</li>
-            <li>Configurar cafeterías</li>
+            <li>Configurar cafetería</li>
             <li>Revisar métricas</li>
           </ul>
         </div>
@@ -314,25 +772,54 @@ export default function AdminDashboardPage({
       <div className="product-section">
         <div className="panel">
           <h3>Gestión de productos</h3>
-          <form className="product-form" onSubmit={editingProductId !== null ? handleUpdateProduct : handleCreateProduct}>
+
+          <form
+            className="product-form"
+            onSubmit={
+              editingProductId !== null
+                ? handleUpdateProduct
+                : handleCreateProduct
+            }
+          >
             <label>
               Nombre
-              <input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="Ej: Café Americano" required />
+              <input
+                value={productName}
+                onChange={(e) => setProductName(e.target.value)}
+                placeholder="Ej: Café Americano"
+                required
+              />
             </label>
 
             <label>
               Descripción
-                <textarea value={productDescription} onChange={(e) => setProductDescription(e.target.value)} placeholder="Ej: Café preparado con leche..." required />
+              <textarea
+                value={productDescription}
+                onChange={(e) => setProductDescription(e.target.value)}
+                placeholder="Ej: Café preparado con leche..."
+                required
+              />
             </label>
 
             <label>
-              Precio    
-              <input type="number" min="0" step="100" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} placeholder="4500" required />
+              Precio (COP)
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={productPrice}
+                onChange={(e) => setProductPrice(e.target.value)}
+                placeholder="2500"
+                required
+              />
             </label>
 
             <label>
               Categoría
-              <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)}>
+              <select
+                value={categoriaId}
+                onChange={(e) => setCategoriaId(e.target.value)}
+              >
                 <option value="1">Almuerzos</option>
                 <option value="2">Bebidas</option>
                 <option value="3">Snacks</option>
@@ -340,54 +827,67 @@ export default function AdminDashboardPage({
             </label>
 
             <div>
-                <label>
-                    Ingredientes extra
-                    <input
-                    value={nuevoIngredienteExtra}
-                    onChange={(e) => setNuevoIngredienteExtra(e.target.value)}
-                    placeholder="Ej: Queso"
-                    />
-                </label>
+              <label>
+                Ingredientes extra
+                <input
+                  value={nuevoIngredienteExtra}
+                  onChange={(e) => setNuevoIngredienteExtra(e.target.value)}
+                  placeholder="Ej: Queso"
+                />
+              </label>
 
-                <button
-                    type="button"
-                    onClick={agregarIngredienteExtra}
-                >
-                    Agregar extra
-                </button>
+              <button type="button" onClick={agregarIngredienteExtra}>
+                Agregar extra
+              </button>
 
-                {ingredientesExtra.length > 0 && (
-                    <ul>
-                    {ingredientesExtra.map((extra, index) => (
-                        <li key={`${extra}-${index}`}>
-                        {extra}
-                        <button
-                            type="button"
-                            onClick={() =>
-                            setIngredientesExtra((extras) =>
-                                extras.filter((_, i) => i !== index)
-                            )
-                            }
-                        >
-                            Eliminar
-                        </button>
-                        </li>
-                    ))}
-                    </ul>
-                )}
-                </div>
+              {ingredientesExtra.length > 0 && (
+                <ul>
+                  {ingredientesExtra.map((extra, index) => (
+                    <li key={`${extra}-${index}`}>
+                      {extra}{' '}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setIngredientesExtra((extras) =>
+                            extras.filter((_, i) => i !== index),
+                          )
+                        }
+                      >
+                        Eliminar
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
 
             <label className="checkbox-row">
-              <input type="checkbox" checked={disponible} onChange={(e) => setDisponible(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={disponible}
+                onChange={(e) => setDisponible(e.target.checked)}
+              />
               Disponible
             </label>
 
             {productError && <p className="error-message">{productError}</p>}
 
             <div className="product-form-actions">
-              <button type="submit">{editingProductId !== null ? 'Actualizar producto' : 'Guardar producto'}</button>
+              <button
+                type="submit"
+                disabled={!selectedRestauranteId || listaRestaurantes.length === 0}
+              >
+                {editingProductId !== null
+                  ? 'Actualizar producto'
+                  : 'Guardar producto'}
+              </button>
+
               {editingProductId !== null && (
-                <button type="button" className="secondary-button" onClick={resetProductForm}>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={resetProductForm}
+                >
                   Cancelar
                 </button>
               )}
@@ -397,6 +897,7 @@ export default function AdminDashboardPage({
 
         <div className="panel">
           <h3>Catálogo actual</h3>
+
           {loadingProducts ? (
             <p>Cargando productos...</p>
           ) : products.length === 0 ? (
@@ -404,23 +905,54 @@ export default function AdminDashboardPage({
           ) : (
             <ul className="product-list">
               {products.map((product) => (
-                <li key={product.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <img 
-                    src={getImagenPorCategoria(product.categoriaId, product.nombre)} 
-                    alt="" 
-                    style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} 
+                <li
+                  key={product.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                  }}
+                >
+                  <img
+                    src={getImagenPorCategoria(
+                      product.categoriaId,
+                      product.nombre,
+                    )}
+                    alt=""
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '8px',
+                      objectFit: 'cover',
+                    }}
                   />
+
                   <div style={{ flex: 1 }}>
                     <strong>{product.nombre}</strong>
-                    <span>{product.disponible ? 'Disponible' : 'Sin stock'}</span>
+                    <span>
+                      {product.disponible ? 'Disponible' : 'Sin stock'}
+                    </span>
                   </div>
+
                   <div className="product-actions">
-                    <span>${Number(product.precio).toLocaleString('es-CO')}</span>
+                    <span>
+                      ${Number(product.precio).toLocaleString('es-CO')}
+                    </span>
+
                     <div className="inline-actions">
-                      <button type="button" className="mini-button" onClick={() => handleEditProduct(product)}>
+                      <button
+                        type="button"
+                        className="mini-button"
+                        onClick={() => handleEditProduct(product)}
+                      >
                         Editar
                       </button>
-                      <button type="button" className="mini-button danger" onClick={() => handleDeleteProduct(product.id)}>
+
+                      <button
+                        type="button"
+                        className="mini-button danger"
+                        onClick={() => handleDeleteProduct(product.id)}
+                      >
                         Eliminar
                       </button>
                     </div>

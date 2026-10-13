@@ -1,3 +1,4 @@
+
 package com.upbfood.Backend.entity;
 
 import jakarta.persistence.Column;
@@ -7,59 +8,38 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import java.math.BigDecimal;
-
 @Entity
-@Table(name = "productos")
+@Table(name = "producto")
 public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "producto_id")
+    private Integer id;
 
-    @Column(name = "restaurante_id", nullable = false)
-    private Long restauranteId;
+    @Column(name = "tipo_producto_id", nullable = false)
+    private Integer tipoProductoId;
 
-    @Column(name = "categoria_id", nullable = false)
-    private Long categoriaId;
-
-    @Column(nullable = false)
+    @Column(name = "nombre_producto", nullable = false, length = 50)
     private String nombre;
 
-    @Column(nullable = false)
-    private BigDecimal precio;
-
-    @Column(nullable = false)
-    private Boolean disponible = true;
-
-   @Column(nullable = false)
+    @Column(name = "descripcion_producto", nullable = false, length = 120)
     private String descripcion;
 
-    @Column(name = "imagen_url")
-    private String imagenUrl;
-
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
-    public Long getRestauranteId() {
-        return restauranteId;
+    public Integer getTipoProductoId() {
+        return tipoProductoId;
     }
 
-    public void setRestauranteId(Long restauranteId) {
-        this.restauranteId = restauranteId;
-    }
-
-    public Long getCategoriaId() {
-        return categoriaId;
-    }
-
-    public void setCategoriaId(Long categoriaId) {
-        this.categoriaId = categoriaId;
+    public void setTipoProductoId(Integer tipoProductoId) {
+        this.tipoProductoId = tipoProductoId;
     }
 
     public String getNombre() {
@@ -70,34 +50,11 @@ public class Product {
         this.nombre = nombre;
     }
 
-    public BigDecimal getPrecio() {
-        return precio;
-    }
-
-    public void setPrecio(BigDecimal precio) {
-        this.precio = precio;
-    }
-
-    public Boolean getDisponible() {
-        return disponible;
-    }
-
-    public void setDisponible(Boolean disponible) {
-        this.disponible = disponible;
-    }
     public String getDescripcion() {
-    return descripcion;
-    }   
+        return descripcion;
+    }
 
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
-    }
-
-    public String getImagenUrl() {
-        return imagenUrl;
-    }
-
-    public void setImagenUrl(String imagenUrl) {
-        this.imagenUrl = imagenUrl;
     }
 }
