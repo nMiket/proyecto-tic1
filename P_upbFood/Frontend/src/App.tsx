@@ -95,11 +95,14 @@ export function App() {
     <main className="app-shell">
       <nav className="topbar">
         <Link to="/" className="brand">
-          UPB Food
+          <span className="brand-mark" aria-hidden="true">UPB</span>
+          <span className="brand-copy">
+            <strong>UPB Food</strong>
+            <small>Comunidad universitaria</small>
+          </span>
         </Link>
 
-        
-      <div className="nav-actions">
+      <div className="nav-actions" aria-label="Navegación principal">
         {!isLoggedIn ? (
           <>
             <NavLink
@@ -107,21 +110,14 @@ export function App() {
               end
               className={({ isActive }) => (isActive ? 'active' : '')}
             >
-              Servicios
+              Explorar menú
             </NavLink>
 
             <NavLink
               to="/pedido"
               className={({ isActive }) => (isActive ? 'active' : '')}
             >
-              Pedido
-            </NavLink>
-
-            <NavLink
-              to="/admin"
-              className={({ isActive }) => (isActive ? 'active' : '')}
-            >
-              Iniciar sesión
+              Mi pedido
             </NavLink>
           </>
         ) : (
@@ -146,7 +142,6 @@ export function App() {
           </>
         )}
       </div>
-
       </nav>
 
       <CartProvider>
@@ -243,121 +238,56 @@ function HomePage() {
   return (
     <>
       <section className="hero-card">
-        <p className="eyebrow">Comedor UPB</p>
+        <div className="hero-content">
+          <p className="eyebrow">Alimentación en campus</p>
+          <h1>Tu próxima pausa empieza aquí.</h1>
+          <p className="hero-description">
+            Consulta los menús de las cafeterías UPB, arma tu pedido y recógelo
+            cuando estés listo.
+          </p>
+          <a className="hero-cta" href="#cafeterias">Ver cafeterías</a>
+        </div>
 
-        <h1>Haz tu pedido antes de llegar</h1>
-
-        <p>
-          Explora cafeterías, revisa el menú y prepara tu pedido desde cualquier
-          dispositivo.
-        </p>
-
-        <div className="stats">
-          <div>
-            <strong>3 min</strong>
-            <span>tiempo estimado de entrega</span>
+        <div className="hero-aside" aria-label="Información del servicio">
+          <div className="identity-placeholders" aria-label="Espacios reservados para logos">
+            <span className="identity-logo-slot">Logo UPB</span>
+            <span className="identity-logo-slot identity-logo-slot--food">Logo Food</span>
           </div>
-
-          <div>
-            <strong>{listaRestaurantes.length || 2}</strong>
-            <span>cafeterías disponibles</span>
+          <span className="hero-aside__label">Hoy en el campus</span>
+          <strong>Menos filas, más tiempo para ti.</strong>
+          <div className="stats">
+            <div>
+              <strong>3 min</strong>
+              <span>tiempo estimado</span>
+            </div>
+            <div>
+              <strong>{listaRestaurantes.length || 2}</strong>
+              <span>cafeterías disponibles</span>
+            </div>
           </div>
         </div>
       </section>
 
-      <ListaRestaurantes
-        restauranteSeleccionadoId={restauranteSeleccionado.id}
-        onSelectRestaurante={(r) => {
-          setRestauranteSeleccionado({
-            id: r.id,
-            nombre: r.nombre,
-          })
-        }}
-      />
-
-      <section className="menu-destacado" style={{ marginTop: '2.5rem' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            marginBottom: '1rem',
-            flexWrap: 'wrap',
-            gap: '12px',
+      <div id="cafeterias">
+        <ListaRestaurantes
+          restauranteSeleccionadoId={restauranteSeleccionado.id}
+          onSelectRestaurante={(r) => {
+            setRestauranteSeleccionado({
+              id: r.id,
+              nombre: r.nombre,
+            })
           }}
-        >
+        />
+      </div>
+
+      <section className="menu-destacado">
+        <div className="menu-heading">
           <div>
-            <span
-              style={{
-                fontSize: '0.8rem',
-                color: '#0d7377',
-                textTransform: 'uppercase',
-                letterSpacing: '1px',
-                fontWeight: 700,
-              }}
-            >
-              Menú de la cafetería
-            </span>
-
-            <h2
-              style={{
-                fontSize: '1.6rem',
-                color: '#0f3d3e',
-                margin: '4px 0 0',
-              }}
-            >
-              {restauranteSeleccionado.nombre}
-            </h2>
+            <p className="section-kicker">Menú disponible</p>
+            <h2>{restauranteSeleccionado.nombre}</h2>
           </div>
+          <span className="menu-hint">Selecciona un producto para agregarlo a tu pedido</span>
         </div>
-
-        {listaRestaurantes.length > 1 && (
-          <div
-            style={{
-              display: 'flex',
-              gap: '10px',
-              marginBottom: '20px',
-              flexWrap: 'wrap',
-            }}
-          >
-            {listaRestaurantes.map((r) => {
-              const active = restauranteSeleccionado.id === r.id
-
-              return (
-                <button
-                  key={r.id}
-                  onClick={() =>
-                    setRestauranteSeleccionado({
-                      id: r.id,
-                      nombre: r.nombre,
-                    })
-                  }
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '24px',
-                    border: active
-                      ? '2px solid #0d7377'
-                      : '1px solid #c2ded9',
-                    backgroundColor: active ? '#0d7377' : '#ffffff',
-                    color: active ? '#ffffff' : '#0f3d3e',
-                    fontWeight: 600,
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    boxShadow: active
-                      ? '0 2px 6px rgba(13, 115, 119, 0.2)'
-                      : 'none',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  {r.nombre}
-                </button>
-              )
-            })}
-          </div>
-        )}
 
         <ListaProductos
           restauranteId={restauranteSeleccionado.id}
@@ -453,12 +383,42 @@ function AdminLoginPage({
 }
 
 function PedidoPage() {
+  const navigate = useNavigate()
+
   return (
-    <section className="hero-card order-page">
-      <p className="eyebrow">Lista de pedidos</p>
-      <h1>Mi pedido</h1>
-      <p>Revisa los productos seleccionados antes de confirmar la compra.</p>
-      <ResumenPedido />
+    <section className="order-page-shell">
+      <button className="order-page__back" type="button" onClick={() => navigate('/')}>
+        Seguir explorando cafeterías
+      </button>
+
+      <header className="order-page__header">
+        <div>
+          <p className="section-kicker">Paso 1 de 3</p>
+          <h1>Revisa tu pedido</h1>
+          <p>Confirma los productos y agrega cualquier indicación antes de continuar.</p>
+        </div>
+        <div className="order-steps" aria-label="Progreso del pedido">
+          <span className="active"><strong>1</strong> Pedido</span>
+          <span><strong>2</strong> Datos</span>
+          <span><strong>3</strong> Pago</span>
+        </div>
+      </header>
+
+      <div className="order-page__content">
+        <div className="order-page__aside">
+          <div className="order-note">
+            <span className="order-note__mark">UPB FOOD</span>
+            <h2>Una pausa hecha a tu medida.</h2>
+            <p>Revisa las cantidades, personaliza tus productos y elige cuándo recoger tu pedido.</p>
+          </div>
+          <div className="order-checklist">
+            <span>Pedido preparado en la cafetería que elegiste</span>
+            <span>Observaciones comunicadas al equipo de cocina</span>
+            <span>Pago simulado y seguro dentro de la plataforma</span>
+          </div>
+        </div>
+        <ResumenPedido />
+      </div>
     </section>
   )
 }

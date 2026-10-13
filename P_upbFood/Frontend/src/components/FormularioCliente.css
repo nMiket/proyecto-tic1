@@ -11,8 +11,9 @@
     max-width: 500px;
     background: white;
     padding: 35px;
+    border: 1px solid #e5e5e7;
     border-radius: 16px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 12px 28px -12px rgba(18, 18, 18, 0.14);
 }
 
 .cliente-header {
@@ -22,11 +23,13 @@
 .cliente-header h2 {
     margin: 0 0 8px;
     font-size: 28px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #1b1c1a;
 }
 
 .cliente-header p {
     margin: 0;
-    color: #666;
+    color: #767961;
     font-size: 15px;
 }
 
@@ -45,16 +48,16 @@
     width: 100%;
     box-sizing: border-box;
     padding: 13px 14px;
-    border: 1px solid #d8d8d8;
-    border-radius: 9px;
+    border: 1.5px solid #e5e5e7;
+    border-radius: 12px;
     font-size: 15px;
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .campo input:focus {
-    border-color: #1f8f4c;
-    box-shadow: 0 0 0 3px rgba(31, 143, 76, 0.12);
+    border-color: #1d1d1b;
+    box-shadow: 0 0 0 3px rgba(192, 217, 1, 0.45);
 }
 
 .error {
@@ -68,9 +71,9 @@
     width: 100%;
     padding: 14px;
     border: none;
-    border-radius: 9px;
-    background: #1f8f4c;
-    color: white;
+    border-radius: 999px;
+    background: #c0d901;
+    color: #121212;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
@@ -78,7 +81,7 @@
 }
 
 .cliente-card button:hover {
-    background: #18763d;
+    background: #d5ef2b;
 }
 
 .mensaje-exito {

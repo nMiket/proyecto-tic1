@@ -53,37 +53,19 @@ function CardRestaurante({ restaurante, seleccionado, onClick }: CardRestaurante
           </span>
         </div>
 
-        <p className="restaurant-card__location">📍 Ubicación: <strong>{restaurante.ubicacion}</strong></p>
+        <p className="restaurant-card__location">Ubicación <strong>{restaurante.ubicacion}</strong></p>
         <p className="restaurant-card__time">
-          ⏱️ Tiempo estimado: <strong>{restaurante.tiempoEstimadoMin} min</strong>
+          Tiempo estimado <strong>{restaurante.tiempoEstimadoMin} min</strong>
         </p>
 
-        <div style={{ marginTop: '6px' }}>
+        <div className="restaurant-card__selection">
           {seleccionado ? (
-            <span style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '6px', 
-              backgroundColor: '#0d7377', 
-              color: '#ffffff', 
-              padding: '6px 12px', 
-              borderRadius: '8px', 
-              fontSize: '0.8rem', 
-              fontWeight: 700 
-            }}>
-              ✓ Menú activo abajo
+            <span className="restaurant-card__selection--active">
+              Menú seleccionado
             </span>
           ) : (
-            <span style={{ 
-              display: 'inline-block',
-              color: '#0d7377', 
-              backgroundColor: '#e6f4f2',
-              padding: '6px 12px', 
-              borderRadius: '8px', 
-              fontSize: '0.8rem', 
-              fontWeight: 600 
-            }}>
-              👆 Clic para ver este menú
+            <span className="restaurant-card__selection--idle">
+              Ver menú
             </span>
           )}
         </div>

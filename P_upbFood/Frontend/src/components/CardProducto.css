@@ -1,0 +1,116 @@
+.product-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #e5e5e7;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px -2px rgba(18, 18, 18, 0.05);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.product-card:hover {
+  border-color: #c0d901;
+  box-shadow: 0 12px 28px -4px rgba(18, 18, 18, 0.1);
+  transform: translateY(-3px);
+}
+
+.product-card--unavailable {
+  opacity: 0.68;
+}
+
+.product-card__image-wrap {
+  position: relative;
+  height: 168px;
+  overflow: hidden;
+  background: #efeeea;
+}
+
+.product-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 240ms ease;
+}
+
+.product-card:hover .product-card__image {
+  transform: scale(1.04);
+}
+
+.product-card__badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #1d1d1b;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.product-card__content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+}
+
+.product-card__content h3 {
+  margin: 0;
+  color: #1b1c1a;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1rem;
+}
+
+.product-card__content p {
+  display: -webkit-box;
+  min-height: 40px;
+  margin: 0;
+  overflow: hidden;
+  color: #767961;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.product-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.product-card__price {
+  color: #586400;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.product-card__button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 13px;
+  background: #1d1d1b;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.product-card__button:hover:not(:disabled) {
+  background: #586400;
+}
+
+.product-card__button:disabled {
+  background: #767961;
+  cursor: not-allowed;
+}

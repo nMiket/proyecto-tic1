@@ -12,6 +12,7 @@ function ListaRestaurantes({ restauranteSeleccionadoId, onSelectRestaurante }: L
   const [restaurantes, setRestaurantes] = useState<Restaurante[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
 
   useEffect(() => {
     apiFetch(`${getApiBaseUrl()}/api/restaurantes`)
@@ -33,7 +34,7 @@ function ListaRestaurantes({ restauranteSeleccionadoId, onSelectRestaurante }: L
         setError(true);
         setCargando(false);
       });
-  }, [onSelectRestaurante, restauranteSeleccionadoId]);
+  }, [restauranteSeleccionadoId]);
 
   if (cargando) {
     return <p>Cargando restaurantes...</p>;
@@ -43,15 +44,47 @@ function ListaRestaurantes({ restauranteSeleccionadoId, onSelectRestaurante }: L
     return <p>No se pudieron cargar los restaurantes.</p>;
   }
 
+  const restaurantesVisibles = [...restaurantes]
+    .filter((restaurante) => {
+      const texto = `${restaurante.nombre} ${restaurante.ubicacion} ${restaurante.estado}`.toLowerCase();
+      return texto.includes(busqueda.trim().toLowerCase());
+    })
+    .sort((a, b) => {
+      if (a.id === restauranteSeleccionadoId) return -1;
+      if (b.id === restauranteSeleccionadoId) return 1;
+      return a.nombre.localeCompare(b.nombre, 'es');
+    });
+
   return (
     <section className="lista-restaurantes">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '16px' }}>
-        <h2 style={{ margin: 0 }}>Restaurantes y cafeterías</h2>
-        <span style={{ fontSize: '0.85rem', color: '#557571' }}>Selecciona una cafetería para ver su menú</span>
+      <div className="restaurant-directory-heading">
+        <div>
+          <p className="section-kicker">Explora el campus</p>
+          <h2>¿Dónde quieres comer?</h2>
+          <span>Elige una cafetería para descubrir su menú.</span>
+        </div>
+
+        <label className="restaurant-search">
+          <span>Buscar cafetería</span>
+          <input
+            type="search"
+            value={busqueda}
+            onChange={(event) => setBusqueda(event.target.value)}
+            placeholder="Nombre o ubicación"
+            aria-label="Buscar cafetería por nombre o ubicación"
+          />
+        </label>
+      </div>
+
+      <div className="restaurant-directory-meta">
+        <span>{restaurantesVisibles.length} opciones disponibles</span>
+        {busqueda && <button type="button" onClick={() => setBusqueda('')}>Limpiar búsqueda</button>}
       </div>
 
       <div className="restaurantes-container">
-        {restaurantes.map((restaurante) => (
+        {restaurantesVisibles.length === 0 ? (
+          <p className="restaurant-empty">No encontramos cafeterías con esa búsqueda.</p>
+        ) : restaurantesVisibles.map((restaurante) => (
           <CardRestaurante 
             key={restaurante.id} 
             restaurante={restaurante} 
@@ -61,7 +94,7 @@ function ListaRestaurantes({ restauranteSeleccionadoId, onSelectRestaurante }: L
         ))}
       </div>
     </section>
-  );
+    );
 }
 
 export default ListaRestaurantes;

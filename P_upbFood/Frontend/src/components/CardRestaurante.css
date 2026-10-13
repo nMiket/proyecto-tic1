@@ -3,22 +3,22 @@
   grid-template-columns: 180px 1fr;
   overflow: hidden;
   background: #ffffff;
-  border: 2px solid #d9e7e2;
-  border-radius: 18px;
-  box-shadow: 0 12px 28px -24px rgba(15, 118, 110, 0.6);
+  border: 1px solid #e5e5e7;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px -2px rgba(18, 18, 18, 0.05);
   cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .restaurant-card:hover {
   transform: translateY(-2px);
-  border-color: #0d7377;
-  box-shadow: 0 8px 24px rgba(13, 115, 119, 0.18);
+  border-color: #c0d901;
+  box-shadow: 0 12px 28px -4px rgba(18, 18, 18, 0.1);
 }
 
 .restaurant-card--selected {
-  border-color: #0d7377;
-  box-shadow: 0 0 0 3px rgba(13, 115, 119, 0.25), 0 8px 24px rgba(13, 115, 119, 0.15);
+  border-color: #c0d901;
+  box-shadow: 0 0 0 3px rgba(192, 217, 1, 0.24), 0 12px 28px -4px rgba(18, 18, 18, 0.1);
 }
 
 
@@ -45,7 +45,8 @@
 
 .restaurant-card h3 {
   margin: 0;
-  color: #153c33;
+  color: #1b1c1a;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.2rem;
 }
 
@@ -75,16 +76,45 @@
 .restaurant-card__location,
 .restaurant-card__time {
   margin: 0;
-  color: #315349;
+  color: #767961;
+  font-size: 0.85rem;
 }
 
 .restaurant-card__location::before {
-  content: 'Ubicación: ';
+  content: '';
   font-weight: 600;
 }
 
 .restaurant-card__time strong {
-  color: #0f766e;
+  color: #586400;
+}
+
+.restaurant-card__location strong,
+.restaurant-card__time strong {
+  color: #464834;
+}
+
+.restaurant-card__selection {
+  margin-top: 6px;
+}
+
+.restaurant-card__selection--active,
+.restaurant-card__selection--idle {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.restaurant-card__selection--active {
+  background: #c0d901;
+  color: #121212;
+}
+
+.restaurant-card__selection--idle {
+  background: #f5f3ef;
+  color: #586400;
 }
 
 @media (max-width: 560px) {

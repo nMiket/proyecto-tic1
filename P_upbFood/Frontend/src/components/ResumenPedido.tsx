@@ -16,7 +16,11 @@ function ResumenPedido() {
         <span className="order-badge">{totalItems}</span>
       </div>
       {items.length === 0 ? (
-        <p className="empty-order">Agrega productos del menú para verlos aquí.</p>
+        <div className="empty-order">
+          <strong>Tu pedido está vacío</strong>
+          <p>Explora una cafetería y agrega tus productos favoritos para comenzar.</p>
+          <button type="button" onClick={() => navigate('/')}>Explorar cafeterías</button>
+        </div>
       ) : (
         <>
           <div className="order-items">

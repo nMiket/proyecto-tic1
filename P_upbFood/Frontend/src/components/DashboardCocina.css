@@ -1,5 +1,5 @@
 .cocina-dashboard {
-  padding: 2rem;
+  padding: 2rem 0;
 }
 
 .cocina-dashboard__header {
@@ -11,7 +11,8 @@
 
 .cocina-dashboard__header h1 {
   margin: 0.3rem 0 0;
-  color: #0f3d3e;
+  color: #1b1c1a;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 .kanban-board {
@@ -21,26 +22,27 @@
 }
 
 .kanban-column {
-  background-color: #f4f6f8;
+  background-color: #f5f3ef;
   padding: 1.5rem;
   border-radius: 16px;
   min-height: 500px;
-  border: 1px solid #dfe7ea;
+  border: 1px solid #e5e5e7;
 }
 
 .kanban-column h2 {
   margin: 0 0 1rem;
   font-size: 1.25rem;
-  color: #173d3f;
+  color: #1b1c1a;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 .empty-column {
   margin: 0;
   padding: 1rem;
-  border: 1px dashed #9db8be;
+  border: 1px dashed #c7c9ad;
   border-radius: 10px;
   background: rgba(255,255,255,0.5);
-  color: #45686b;
+  color: #767961;
 }
 
 .pedido-card {
@@ -49,11 +51,11 @@
   padding: 1rem;
   margin-bottom: 1rem;
   box-shadow: 0 8px 18px rgba(17, 24, 39, 0.06);
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid #c0d901;
 }
 
 .pedido-card.en-preparacion {
-  border-left-color: #f59e0b;
+  border-left-color: #bccdfc;
 }
 
 .pedido-card__header {
@@ -76,12 +78,13 @@
 .pedido-card__header h3 {
   margin: 0.25rem 0 0;
   font-size: 1.15rem;
-  color: #0f3d3e;
+  color: #1b1c1a;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 .pedido-card__badge {
-  background: #e8f2ff;
-  color: #1d4ed8;
+  background: #c0d901;
+  color: #121212;
   border-radius: 999px;
   padding: 0.32rem 0.7rem;
   font-size: 0.72rem;
@@ -97,7 +100,7 @@
 .pedido-card__meta p,
 .pedido-card__observaciones p {
   margin: 0;
-  color: #465a5f;
+  color: #767961;
   line-height: 1.5;
 }
 
@@ -105,7 +108,7 @@
 .pedido-card__observaciones strong {
   display: block;
   margin-bottom: 0.35rem;
-  color: #173d3f;
+  color: #1b1c1a;
 }
 
 .pedido-card__productos ul {
@@ -127,8 +130,8 @@
   width: 100%;
   padding: 0.75rem 1rem;
   border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #0d7377, #1a969d);
+  border-radius: 999px;
+  background: #1d1d1b;
   color: white;
   cursor: pointer;
   font-weight: 700;
@@ -136,11 +139,12 @@
 }
 
 .pedido-card button:hover {
+  background: #586400;
   transform: translateY(-1px);
 }
 
 .pedido-card__secondary {
-  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  background: #586400 !important;
 }
 
 @media (max-width: 700px) {

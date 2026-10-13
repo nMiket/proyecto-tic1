@@ -1,11 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+
 :root {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: #1b1c1a;
+  background: #fbf9f5;
 }
 
 * {
@@ -21,5 +25,12 @@ body,
 
 body {
   min-height: 100vh;
-  background: linear-gradient(160deg, #eff8f5 0%, #f7fbf8 60%, #edf5f3 100%);
+  background: #fbf9f5;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
