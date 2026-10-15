@@ -28,7 +28,11 @@ services:
       db:
         condition: service_healthy
     
+    
     environment:
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      APP_NOTIFICACIONES_CORREO_DESTINO: ${APP_NOTIFICACIONES_CORREO_DESTINO}
       SERVER_PORT: 8080
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/upbfood
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}

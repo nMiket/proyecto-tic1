@@ -6,16 +6,19 @@ export type AsignacionRestaurante = {
   tipoAdministradorId: number
 }
 
+
 export type AuthSession = {
   success: boolean
   accessToken: string
   expiresIn: number
   email: string
-  restauranteId: number
+  restauranteId?: number
   restaurantes?: number[]
   asignaciones: AsignacionRestaurante[]
+  esTopGlobal: boolean
   message?: string
 }
+
 
 let accessToken: string | null = null
 

@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -33,50 +34,53 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .exceptionHandling(exception ->
-                exception.authenticationEntryPoint(
-                    new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
-            .authorizeHttpRequests(auth -> auth
-                // Rutas de autenticación de administradores
-                .requestMatchers(
-                    "/api/admin/login",
-                    "/api/admin/refresh",
-                    "/api/admin/logout"
-                ).permitAll()
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(
+                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .authorizeHttpRequests(auth -> auth
+                        // Rutas de autenticación de administradores
+                        .requestMatchers(
+                                "/api/admin/login",
+                                "/api/admin/refresh",
+                                "/api/admin/logout")
+                        .permitAll()
 
-                // Consultas públicas del catálogo
-                .requestMatchers(
-                    HttpMethod.GET,
-                    "/api/products",
-                    "/api/productos",
-                    "/api/restaurantes"
-                ).permitAll()
+                        // Consultas públicas del catálogo
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/products",
+                                "/api/productos",
+                                "/api/restaurantes")
+                        .permitAll()
 
-                // Operaciones públicas de pedidos
-                .requestMatchers(HttpMethod.POST, "/api/pedidos").permitAll()
-                .requestMatchers(
-                    HttpMethod.PUT,
-                    "/api/pedidos/seguimiento/*/pago"
-                ).permitAll()
-                .requestMatchers(
-                    HttpMethod.GET,
-                    "/api/pedidos/seguimiento/consulta",
-                    "/api/pedidos/**"
-                ).permitAll()
+                        // Operaciones públicas de pedidos
+                        .requestMatchers(HttpMethod.POST, "/api/pedidos").permitAll()
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/pedidos/seguimiento/*/pago")
+                        .permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/pedidos/seguimiento/consulta",
+                                "/api/pedidos/**")
+                        .permitAll()
 
-                // El resto requiere autenticación
-                .anyRequest().authenticated()
-            )
-            .httpBasic(httpBasic -> httpBasic.disable())
-            .formLogin(formLogin -> formLogin.disable())
-            .addFilterBefore(
-                jwtAuthenticationFilter,
-                UsernamePasswordAuthenticationFilter.class
-            );
+                        .requestMatchers(HttpMethod.POST, "/api/invitaciones/activar").permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/solicitudes-registro")
+                        .permitAll()
+
+                        // El resto requiere autenticación
+                        .anyRequest().authenticated())
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .formLogin(formLogin -> formLogin.disable())
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -91,23 +95,20 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(List.of(
-            "http://localhost:5173",
-            "http://127.0.0.1:5173"
-        ));
+                "http://localhost:5173",
+                "http://127.0.0.1:5173"));
 
         configuration.setAllowedMethods(List.of(
-            "GET",
-            "POST",
-            "PUT",
-            "DELETE",
-            "OPTIONS"
-        ));
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "OPTIONS"));
 
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source =
-            new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration("/**", configuration);
 

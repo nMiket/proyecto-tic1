@@ -1,4 +1,4 @@
-
+import TopGlobalDashboard from './components/TopGlobalDashboard'
 import { useEffect, useState, type FormEvent } from 'react'
 import {
   Link,
@@ -6,6 +6,7 @@ import {
   Navigate,
   Route,
   Routes,
+  useLocation,
   useNavigate,
 } from 'react-router-dom'
 import ListaRestaurantes from './components/ListaRestaurantes'
@@ -17,6 +18,7 @@ import {
   login as authenticate,
   logout as endSession,
   refreshSession,
+  getApiBaseUrl,
   type AsignacionRestaurante,
 } from './auth'
 import FormularioCliente from './components/FormularioCliente'
@@ -30,11 +32,19 @@ export function App() {
   const [adminName, setAdminName] = useState('')
   const [restauranteId, setRestauranteId] = useState<number | null>(null)
   const [asignaciones, setAsignaciones] = useState<AsignacionRestaurante[]>([])
+  const [esTopGlobal, setEsTopGlobal] = useState(false)
+
+  const location = useLocation()
+  const esRutaAdmin =
+    location.pathname === '/admin' ||
+    location.pathname.startsWith('/admin/')
 
   const tieneAccesoAdmin =
-    isLoggedIn && asignaciones.some(
+  isLoggedIn &&
+  (esTopGlobal ||
+    asignaciones.some(
       (asignacion) => Number(asignacion.restauranteId) > 0
-    )
+    ))
 
   const restauranteCocinaId =
     asignaciones.find(
@@ -47,8 +57,9 @@ export function App() {
     void refreshSession()
       .then((session) => {
         if (!cancelled && session) {
+          setEsTopGlobal(session.esTopGlobal === true)
           setAdminName(session.email)
-          setRestauranteId(session.restauranteId)
+          setRestauranteId(session.restauranteId ?? null)
           setAsignaciones(session.asignaciones ?? [])
           setIsLoggedIn(true)
         }
@@ -66,9 +77,10 @@ export function App() {
     const session = await authenticate(email, password)
 
     setAdminName(session.email)
-    setRestauranteId(session.restauranteId)
+    setRestauranteId(session.restauranteId ?? null)
     setAsignaciones(session.asignaciones ?? [])
     setIsLoggedIn(true)
+    setEsTopGlobal(session.esTopGlobal === true)
 
     return session.email
   }
@@ -79,6 +91,7 @@ export function App() {
     setAdminName('')
     setRestauranteId(null)
     setAsignaciones([])
+    setEsTopGlobal(false) 
   }
 
   return (
@@ -92,67 +105,92 @@ export function App() {
           </span>
         </Link>
 
-      <div className="nav-actions" aria-label="Navegación principal">
-        {!isLoggedIn ? (
-          <>
+        <div className="nav-actions" aria-label="Navegación principal">
+          {esRutaAdmin ? (
             <NavLink
-              to="/"
-              end
+              to={
+                isLoggedIn
+                  ? esTopGlobal
+                    ? '/admin/top-global'
+                    : '/admin/dashboard'
+                  : '/admin'
+              }
               className={({ isActive }) => (isActive ? 'active' : '')}
             >
-              Explorar menú
+              Panel administrativo
             </NavLink>
-
-            <NavLink
-              to="/pedido"
-              className={({ isActive }) => (isActive ? 'active' : '')}
-            >
-              Mi pedido
-            </NavLink>
-
-            <NavLink
-              to="/seguimiento"
-              className={({ isActive }) => (isActive ? 'active' : '')}
-            >
-              Consultar pedido
-            </NavLink>
-          </>
-        ) : (
-          <>
-            {tieneAccesoAdmin && (
+          ) : !isLoggedIn ? (
+            <>
               <NavLink
-                to="/admin/dashboard"
+                to="/"
+                end
                 className={({ isActive }) => (isActive ? 'active' : '')}
               >
-                Panel administrativo
+                Explorar menú
               </NavLink>
-            )}
 
-            {tieneAccesoAdmin && restauranteCocinaId !== null && (
               <NavLink
-                to="/admin/cocina"
+                to="/pedido"
                 className={({ isActive }) => (isActive ? 'active' : '')}
               >
-                Cocina
+                Mi pedido
               </NavLink>
-            )}
-          </>
-        )}
-      </div>
+
+              <NavLink
+                to="/seguimiento"
+                className={({ isActive }) => (isActive ? 'active' : '')}
+              >
+                Consultar pedido
+              </NavLink>
+            </>
+          ) : (
+            <>
+              {tieneAccesoAdmin && (
+                <NavLink
+                  to={esTopGlobal ? '/admin/top-global' : '/admin/dashboard'}
+                  className={({ isActive }) => (isActive ? 'active' : '')}
+                >
+                  Panel administrativo
+                </NavLink>
+              )}
+
+              {tieneAccesoAdmin && !esTopGlobal && restauranteCocinaId !== null && (
+                <NavLink
+                  to="/admin/cocina"
+                  className={({ isActive }) => (isActive ? 'active' : '')}
+                >
+                  Cocina
+                </NavLink>
+              )}
+            </>
+          )}
+        </div>
       </nav>
 
       <CartProvider>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/restaurante/:restauranteId" element={<RestaurantMenuPage />} />
-          <Route path="/seguimiento" element={<SeguimientoPedidoPage />} />
-          <Route path="/seguimiento/:codigo" element={<SeguimientoPedidoPage />} />
+          <Route
+            path="/restaurante/:restauranteId"
+            element={<RestaurantMenuPage />}
+          />
+          <Route
+            path="/seguimiento"
+            element={<SeguimientoPedidoPage />}
+          />
+          <Route
+            path="/seguimiento/:codigo"
+            element={<SeguimientoPedidoPage />}
+          />
 
           <Route
             path="/admin"
             element={
               isLoggedIn ? (
-                <Navigate to="/admin/dashboard" replace />
+                <Navigate
+                  to={esTopGlobal ? '/admin/top-global' : '/admin/dashboard'}
+                  replace
+                />
               ) : (
                 <AdminLoginPage onLogin={handleLogin} />
               )
@@ -162,7 +200,7 @@ export function App() {
           <Route
             path="/admin/dashboard"
             element={
-              tieneAccesoAdmin ? (
+              tieneAccesoAdmin && !esTopGlobal ? (
                 <AdminDashboardPage
                   adminName={adminName}
                   restauranteId={restauranteId ?? asignaciones[0].restauranteId}
@@ -171,6 +209,27 @@ export function App() {
                 />
               ) : (
                 <Navigate to="/admin" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/admin/top-global"
+            element={
+              isLoggedIn && esTopGlobal ? (
+                <TopGlobalDashboard
+                  adminName={adminName}
+                  onLogout={handleLogout}
+                />
+              ) : (
+                <Navigate
+                  to={
+                    isLoggedIn
+                      ? '/admin/dashboard'
+                      : '/admin'
+                  }
+                  replace
+                />
               )
             }
           />
@@ -208,19 +267,31 @@ function HomePage() {
         <div>
           <p className="section-kicker">UPB Food · Alimentación en campus</p>
           <h1>¿Dónde quieres comer hoy?</h1>
-          <p>Selecciona una cafetería, descubre su carta y arma tu pedido en pocos pasos.</p>
+          <p>
+            Selecciona una cafetería, descubre su carta y arma tu pedido en
+            pocos pasos.
+          </p>
           <Link className="directory-tracking-cta" to="/seguimiento">
             Ya hice un pedido · Consultar estado
           </Link>
         </div>
-        <div className="identity-logo-panel" aria-label="Espacios reservados para identidad visual">
-          <span className="identity-logo-slot">/assets/branding/upb-logo.svg</span>
-          <span className="identity-logo-slot identity-logo-slot--food">/assets/branding/upb-food-logo.svg</span>
+        <div
+          className="identity-logo-panel"
+          aria-label="Espacios reservados para identidad visual"
+        >
+          <span className="identity-logo-slot">
+            /assets/branding/upb-logo.svg
+          </span>
+          <span className="identity-logo-slot identity-logo-slot--food">
+            /assets/branding/upb-food-logo.svg
+          </span>
         </div>
       </section>
 
       <ListaRestaurantes
-        onSelectRestaurante={(restaurant) => navigate(`/restaurante/${restaurant.id}`)}
+        onSelectRestaurante={(restaurant) =>
+          navigate(`/restaurante/${restaurant.id}`)
+        }
       />
 
       <SiteFooter />
@@ -232,7 +303,9 @@ function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="site-footer__brand">
-        <div className="footer-logo-placeholder">/assets/branding/upb-logo.svg</div>
+        <div className="footer-logo-placeholder">
+          /assets/branding/upb-logo.svg
+        </div>
         <div>
           <strong>UPB Food</strong>
           <span>Alimentación universitaria, más simple.</span>
@@ -252,65 +325,275 @@ function AdminLoginPage({
 }: {
   onLogin: (email: string, password: string) => Promise<string>
 }) {
+  const [modo, setModo] = useState<'login' | 'registro'>('login')
   const [email, setEmail] = useState('admin@upb.edu.co')
   const [password, setPassword] = useState('admin123')
+
+  const [nombreSolicitante, setNombreSolicitante] = useState('')
+  const [telefonoSolicitante, setTelefonoSolicitante] = useState('')
+  const [correoSolicitante, setCorreoSolicitante] = useState('')
+  const [nombreRestaurante, setNombreRestaurante] = useState('')
+  const [ubicacionRestaurante, setUbicacionRestaurante] = useState('')
+  const [tiempoPreparacionMin, setTiempoPreparacionMin] = useState('15')
+
   const [error, setError] = useState('')
+  const [mensaje, setMensaje] = useState('')
   const [loading, setLoading] = useState(false)
+
   const navigate = useNavigate()
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setLoading(true)
     setError('')
+    setMensaje('')
+    setLoading(true)
 
     try {
       await onLogin(email, password)
-      navigate('/admin/dashboard')
+      navigate('/admin')
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'No se pudo iniciar sesión.'
+        err instanceof Error
+          ? err.message
+          : 'No fue posible iniciar sesión.'
       )
     } finally {
       setLoading(false)
     }
   }
 
+  async function handleRegistro(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError('')
+    setMensaje('')
+    setLoading(true)
+
+    try {
+      const response = await fetch(
+        `${getApiBaseUrl()}/api/solicitudes-registro`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombreSolicitante,
+            telefonoSolicitante,
+            correoSolicitante,
+            nombreRestaurante,
+            ubicacionRestaurante,
+            tiempoPreparacionMin: Number(tiempoPreparacionMin),
+          }),
+        }
+      )
+
+      const data = (await response.json().catch(() => ({}))) as {
+        mensaje?: string
+        message?: string
+        solicitudId?: number
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.mensaje ??
+            data.message ??
+            'No fue posible enviar la solicitud.'
+        )
+      }
+
+      setMensaje(
+        `${data.mensaje ?? 'Solicitud enviada correctamente.'}${
+          data.solicitudId
+            ? ` Código de solicitud: #${data.solicitudId}.`
+            : ''
+        }`
+      )
+
+      setNombreSolicitante('')
+      setTelefonoSolicitante('')
+      setCorreoSolicitante('')
+      setNombreRestaurante('')
+      setUbicacionRestaurante('')
+      setTiempoPreparacionMin('15')
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Ocurrió un error al enviar la solicitud.'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function volverAlLogin() {
+    setModo('login')
+    setError('')
+    setMensaje('')
+  }
+
   return (
     <section className="login-card">
       <div className="login-header">
         <p className="eyebrow">Administración</p>
-        <h2>Iniciar sesión</h2>
+        <h2>
+          {modo === 'login' ? 'Iniciar sesión' : 'Registrar restaurante'}
+        </h2>
+        <p>
+          {modo === 'login'
+            ? 'Ingresa con tus credenciales de administrador.'
+            : 'Completa los datos para solicitar el registro de tu restaurante.'}
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="login-form">
-        <label>
-          Correo institucional
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="admin@upb.edu.co"
-            required
-          />
-        </label>
+      {modo === 'login' ? (
+        <form onSubmit={handleLogin} className="login-form">
+          <label>
+            Correo institucional
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="admin@upb.edu.co"
+              autoComplete="username"
+              required
+            />
+          </label>
 
-        <label>
-          Contraseña
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Contraseña"
-            required
-          />
-        </label>
+          <label>
+            Contraseña
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Contraseña"
+              autoComplete="current-password"
+              required
+            />
+          </label>
 
-        {error && <p className="error-message">{error}</p>}
+          {error && <p className="error-message">{error}</p>}
 
-        <button type="submit" disabled={loading}>
-          {loading ? 'Validando...' : 'Ingresar'}
-        </button>
-      </form>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Validando...' : 'Ingresar'}
+          </button>
+
+          <div className="register-restaurant-prompt">
+            <span>¿Tu restaurante aún no está registrado?</span>
+            <button
+              type="button"
+              className="register-restaurant-button"
+              onClick={() => {
+                setModo('registro')
+                setError('')
+                setMensaje('')
+              }}
+            >
+              Registrar restaurante
+            </button>
+          </div>
+        </form>
+      ) : (
+        <>
+          <form
+            onSubmit={handleRegistro}
+            className="login-form registration-form"
+          >
+            <label>
+              Nombre del solicitante
+              <input
+                value={nombreSolicitante}
+                onChange={(event) =>
+                  setNombreSolicitante(event.target.value)
+                }
+                maxLength={100}
+                autoComplete="name"
+                required
+              />
+            </label>
+
+            <label>
+              Teléfono de contacto
+              <input
+                type="tel"
+                value={telefonoSolicitante}
+                onChange={(event) =>
+                  setTelefonoSolicitante(event.target.value)
+                }
+                maxLength={20}
+                autoComplete="tel"
+                required
+              />
+            </label>
+
+            <label>
+              Correo de contacto
+              <input
+                type="email"
+                value={correoSolicitante}
+                onChange={(event) =>
+                  setCorreoSolicitante(event.target.value)
+                }
+                maxLength={255}
+                autoComplete="email"
+                required
+              />
+            </label>
+
+            <label>
+              Nombre del restaurante
+              <input
+                value={nombreRestaurante}
+                onChange={(event) =>
+                  setNombreRestaurante(event.target.value)
+                }
+                maxLength={50}
+                required
+              />
+            </label>
+
+            <label>
+              Ubicación del restaurante
+              <input
+                value={ubicacionRestaurante}
+                onChange={(event) =>
+                  setUbicacionRestaurante(event.target.value)
+                }
+                maxLength={50}
+                placeholder="Ej. Bloque 10, primer piso"
+                required
+              />
+            </label>
+
+            <label>
+              Tiempo estimado de preparación (minutos)
+              <input
+                type="number"
+                min={1}
+                max={1440}
+                value={tiempoPreparacionMin}
+                onChange={(event) =>
+                  setTiempoPreparacionMin(event.target.value)
+                }
+                required
+              />
+            </label>
+
+            {error && <p className="error-message">{error}</p>}
+            {mensaje && <p className="success-message">{mensaje}</p>}
+
+            <button type="submit" disabled={loading}>
+              {loading ? 'Enviando...' : 'Enviar solicitud'}
+            </button>
+          </form>
+
+          <button
+            type="button"
+            className="register-restaurant-button back-to-login-button"
+            onClick={volverAlLogin}
+          >
+            Volver al inicio de sesión
+          </button>
+        </>
+      )}
     </section>
   )
 }
@@ -320,7 +603,11 @@ function PedidoPage() {
 
   return (
     <section className="order-page-shell">
-      <button className="order-page__back" type="button" onClick={() => navigate('/')}>
+      <button
+        className="order-page__back"
+        type="button"
+        onClick={() => navigate('/')}
+      >
         Seguir explorando cafeterías
       </button>
 
@@ -328,7 +615,10 @@ function PedidoPage() {
         <div>
           <p className="section-kicker">Paso 1 de 3</p>
           <h1>Revisa tu pedido</h1>
-          <p>Confirma los productos y agrega cualquier indicación antes de continuar.</p>
+          <p>
+            Confirma los productos y agrega cualquier indicación antes de
+            continuar.
+          </p>
         </div>
         <div className="order-steps" aria-label="Progreso del pedido">
           <span className="active"><strong>1</strong> Pedido</span>
@@ -342,7 +632,10 @@ function PedidoPage() {
           <div className="order-note">
             <span className="order-note__mark">UPB FOOD</span>
             <h2>Una pausa hecha a tu medida.</h2>
-            <p>Revisa las cantidades, personaliza tus productos y elige cuándo recoger tu pedido.</p>
+            <p>
+              Revisa las cantidades, personaliza tus productos y elige cuándo
+              recoger tu pedido.
+            </p>
           </div>
           <div className="order-checklist">
             <span>Pedido preparado en la cafetería que elegiste</span>

@@ -155,8 +155,8 @@ public class AdminAuthController {
                 .body(response);
     }
 
-    private ResponseEntity<Map<String, Object>> issueSession(
-            AdminUser admin, String message) {
+        private ResponseEntity<Map<String, Object>> issueSession(
+                AdminUser admin, String message) {
 
         // Solo se incluyen las asignaciones activas.
         List<AdministradorRestaurante> asociaciones =
@@ -168,9 +168,11 @@ public class AdminAuthController {
                                         asociacion.getEstado()))
                         .toList();
 
-        if (asociaciones.isEmpty()) {
-            return unauthorized(
-                    "El administrador no tiene asignaciones activas.");
+        // Los administradores normales necesitan una asignación activa.
+        // Top Global puede ingresar sin estar asociado a un restaurante.
+        if (asociaciones.isEmpty() && !admin.isEsTopGlobal()) {
+                return unauthorized(
+                        "El administrador no tiene asignaciones activas.");
         }
 
         List<Integer> restaurantes = asociaciones.stream()
@@ -181,17 +183,17 @@ public class AdminAuthController {
         // Cada restaurante conserva su propio rol.
         List<Map<String, Object>> asignaciones = asociaciones.stream()
                 .map(asociacion -> {
-                    Map<String, Object> asignacion = new HashMap<>();
+                        Map<String, Object> asignacion = new HashMap<>();
 
-                    asignacion.put(
-                            "restauranteId",
-                            asociacion.getId().getRestauranteId());
+                        asignacion.put(
+                                "restauranteId",
+                                asociacion.getId().getRestauranteId());
 
-                    asignacion.put(
-                            "tipoAdministradorId",
-                            asociacion.getTipoAdministradorId());
+                        asignacion.put(
+                                "tipoAdministradorId",
+                                asociacion.getTipoAdministradorId());
 
-                    return asignacion;
+                        return asignacion;
                 })
                 .toList();
 
@@ -214,14 +216,15 @@ public class AdminAuthController {
                 jwtService.getAccessTokenLifetimeSeconds());
         response.put("id", admin.getId());
         response.put("email", admin.getEmail());
+        response.put("esTopGlobal", admin.isEsTopGlobal());
 
-        // Compatibilidad con el frontend existente.
-        response.put("restauranteId", restaurantes.get(0));
+        // Top Global no necesita un restaurante seleccionado.
+        if (!restaurantes.isEmpty()) {
+                response.put("restauranteId", restaurantes.get(0));
+        }
+
         response.put("restaurantes", restaurantes);
-
-        // Nueva información para controlar las opciones según el rol.
         response.put("asignaciones", asignaciones);
-
         response.put("message", message);
 
         return ResponseEntity.ok()
@@ -229,7 +232,7 @@ public class AdminAuthController {
                         HttpHeaders.SET_COOKIE,
                         refreshCookie(rawRefreshToken).toString())
                 .body(response);
-    }
+        }
 
     private ResponseEntity<Map<String, Object>> badRequest(
             String message) {

@@ -403,6 +403,61 @@
   }
 }
 
+
+/* Registro de restaurantes en el acceso administrativo */
+.register-restaurant-prompt {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 18px;
+  border-top: 1px solid #e5e5e7;
+  color: #767961;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.register-restaurant-button {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #d8d9ce !important;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: #ffffff !important;
+  color: #464834 !important;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.register-restaurant-button:hover {
+  border-color: #c0d901 !important;
+  background: #f5f8e8 !important;
+}
+
+.back-to-login-button {
+  margin-top: 16px;
+}
+
+.registration-form {
+  gap: 15px;
+}
+
+.registration-form input {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.success-message {
+  margin: 0;
+  border-radius: 10px;
+  padding: 12px;
+  background: #e5f5ef;
+  color: #176447;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+
 /* Public ordering experience */
 .app-shell {
   max-width: 1320px;
@@ -1194,3 +1249,59 @@
     margin-top: 28px;
   }
 }
+
+
+/* Registro de restaurantes en el acceso administrativo */
+.register-restaurant-prompt {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 18px;
+  border-top: 1px solid #e5e5e7;
+  color: #767961;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.register-restaurant-button {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #d8d9ce;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: #ffffff;
+  color: #464834;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.register-restaurant-button:hover {
+  border-color: #c0d901;
+  background: #f5f8e8;
+}
+
+.back-to-login-button {
+  margin-top: 16px;
+}
+
+.registration-form {
+  gap: 15px;
+}
+
+.registration-form input {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.success-message {
+  margin: 0;
+  border-radius: 10px;
+  padding: 12px;
+  background: #e5f5ef;
+  color: #176447;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+
