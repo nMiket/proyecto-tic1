@@ -269,7 +269,7 @@ El proyecto se gestiona de manera ágil bajo el marco **Scrumban**, combinando l
 * [x] **HU024: Control de acceso basado en roles y cafetería - RBAC (5 PH)** — *Ismael López* `Completado`
 * [x] **HU025: Gestión de administradores de cocina con borrado lógico (5 PH)** — *Ismael López* `Completado`
 * [x] **HU026: Aislamiento estricto de productos por cafetería (4 PH)** — *Ismael López* `Completado`
-* [ ] **HU027: Historial de pedidos del cliente (3 PH)** — *Valeria Gómez* `Planificado`
+* [x] **HU027: Historial de pedidos del cliente (3 PH)** — *Valeria Gómez* `Planificado`
 * [ ] **HU028: Métricas reales del panel administrativo (4 PH)** — *Valeria Gómez* `Planificado`
 * [ ] **HU029: Cambio de estado y tiempo de la cafetería (3 PH)** — *Valeria Gómez* `Planificado`
 
