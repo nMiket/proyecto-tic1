@@ -1,67 +1,50 @@
-# Plan General de UPB Food
+﻿# Plan General de UPB Food
 
 ## Objetivo
 
-UPB Food es una plataforma web para consultar cafeterías, explorar sus productos y gestionar pedidos dentro de la Universidad Pontificia Bolivariana. El objetivo es reducir filas y tiempos de espera mediante un catálogo digital y un panel administrativo.
+UPB Food es una plataforma web para consultar cafeterías, explorar sus productos y gestionar pedidos dentro de la Universidad Pontificia Bolivariana. El objetivo es reducir filas y tiempos de espera mediante un catálogo digital, checkout en tres pasos y paneles especializados para cocina y administración.
 
-## Alcance actual
+## Alcance Actual y Estado del Repositorio (Sprint 1 a 4)
 
-| Área | Estado | Resultado |
-|---|---|---|
-| Entorno de desarrollo | Completado | Docker Compose con PostgreSQL, backend y frontend. |
-| Modelo de datos | Completado | Tablas normalizadas, funciones CRUD y datos semilla. |
-| Catálogo público | Completado | Cafeterías, categorías, productos e imágenes por producto. |
-| Selección de cafetería | Completado | Menús independientes por restaurante. |
-| Panel administrativo | Completado | Crear, editar, eliminar y cambiar disponibilidad de productos. |
-| Login administrativo | Completado | BCrypt, JWT, refresh token revocable y rutas protegidas. |
-| Autorización por cafetería | Completado | Cada administrador solo puede crear, editar o eliminar productos de su restaurante. |
-| Validación de API | Completado | DTOs tipados, validación de productos y respuestas de error centralizadas. |
-| Carrito | Completado | Agregar productos, modificar cantidades y calcular totales. |
-| HU008 tarjeta de producto pedido | Completado | Imagen, precio unitario, subtotal, cantidades, eliminación y observaciones editables. |
-| Resumen del pedido | En progreso | Interfaz disponible; falta cerrar el flujo persistente contra el backend. |
-| Gestión de pedidos | Pendiente | Persistir pedidos, detalles, cliente, estado y seguimiento. |
+| Área | Historia / Módulo | Estado | Resultado |
+|---|---|---|---|
+| Infraestructura | Docker Compose | **Completado** | PostgreSQL 16, backend Spring Boot y frontend React contenerizados y orquestados. |
+| Modelo de datos | Tablas y Funciones 3FN | **Completado** | Scripts `init.sql`, tablas relacionales y funciones plpgsql para restaurantes, productos, pedidos y clientes. |
+| Catálogo y Restaurantes | HU001, HU002, HU003 | **Completado** | Lista responsive, CardRestaurante (estados y tiempos), buscador y barra de navegación dinámica. |
+| Productos y Carrito | HU004, HU005, HU006, HU007, HU008 | **Completado** | Catálogo con fotos automáticas, selector de productos, CartContext de una sola cafetería, cantidades y observaciones. |
+| Autenticación | HU012, HU013, HU023 | **Completado** | Login con BCrypt, emisión de tokens JWT, Refresh Tokens revocables en cookie HttpOnly y cierre de sesión. |
+| Pedidos y Cocina | HU009, HU010, HU011, HU014, HU015 | **Completado** | POST `/api/pedidos`, checkout en frontend, y Dashboard de Cocina (`/cocina`) con tablero Kanban y refresco en tiempo real. |
+| Administración | HU016, HU017, HU018, HU019, HU026 | **Completado** | Panel administrativo, filtro por categoría, alta de productos con fotos/tamaños, edición y aislamiento por cafetería. |
+| Seguridad y Roles | HU024, HU025 | **Completado** | Control de acceso por rol (Dueño vs. Cocina), autorización por cafetería y gestión de personal operativo. |
+| Trazabilidad y Pagos | HU020, HU021, HU022 | **En Progreso** | Código de seguimiento UUID, consulta por teléfono/correo y portal de simulación de pago. |
+| Métricas e Historial | HU027, HU028, HU029 | **Planificado** | Historial del cliente en `/historial`, métricas dinámicas del dashboard y cambio de estado de la cafetería. |
 
-## Próximos pasos priorizados
+## Resumen del Cumplimiento de Sprints
 
-1. Crear los endpoints de pedidos y detalles usando las tablas existentes.
-2. Conectar el resumen del carrito con la creación de pedidos.
-3. Agregar validación de disponibilidad y stock antes de confirmar un pedido.
-4. Implementar consulta de historial y estados del pedido para clientes.
-5. Completar el flujo administrativo de preparación y cambio de estado.
-6. Mejorar las pruebas de integración de autenticación, autorización y pedidos.
-7. Corregir los avisos pendientes de ESLint y revisar accesibilidad del frontend.
+* **Sprint 1 (16 PH):** Finalizado (100%) — HU001, HU002, HU003, HU012, HU013.
+* **Sprint 2 (19 PH):** Finalizado (100%) — HU004, HU005, HU006, HU007, HU008.
+* **Sprint 3 (19 PH):** Finalizado (100%) — HU009, HU010, HU011, HU014, HU015.
+* **Sprint 4 (18 PH):** Finalizado (100%) — HU016, HU017, HU018, HU019.
+* **Sprint 4 Extendido (42 PH):** En Ejecución (HU023, HU024, HU025, HU026 completadas en backend; HU020-HU022 en integración).
 
-## Criterios de terminado
-
-Una funcionalidad se considera terminada cuando:
-
-- Tiene una ruta o interacción visible en el frontend.
-- Tiene validaciones y respuestas de error en el backend.
-- Persiste correctamente los datos necesarios en PostgreSQL.
-- Cuenta con pruebas o una verificación reproducible.
-- Está documentada y funciona con Docker Compose.
-
-## Comandos de verificación
+## Comandos de Verificación
 
 Desde `P_upbFood/Backend`:
-
 ```powershell
 .\mvnw.cmd test
 ```
 
 Desde `P_upbFood/Frontend`:
-
 ```powershell
 npm.cmd run build
 ```
 
 Para levantar el sistema completo:
-
 ```powershell
 cd P_upbFood
 docker compose up --build
 ```
 
-## Equipo y metodología
+## Equipo y Metodología
 
-El proyecto se desarrolla para Proyecto Aplicado en TIC 1 con un enfoque híbrido Scrum + Kanban. La distribución actual de responsabilidades está documentada en el README principal.
+El proyecto se desarrolla para Proyecto Aplicado en TIC 1 con un enfoque híbrido **Scrumban** (Scrum + Kanban en GitHub Projects).
