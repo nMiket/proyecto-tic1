@@ -218,7 +218,7 @@ Este proyecto es desarrollado en el marco de la asignatura **Proyecto Aplicado e
 
 ## 📋 Tablero Kanban y Matriz de Historias de Usuario (Actualizado v4)
 
-El proyecto se gestiona de manera ágil bajo el marco **Scrumban**, combinando la estructura temporal de Sprints con el flujo de trabajo continuo en **GitHub Projects**. A continuación se presenta el estado de avance oficial de las Historias de Usuario (HU001 a HU029 - 114 PH en total):
+El proyecto se gestiona de manera ágil bajo el marco **Scrumban**, combinando la estructura temporal de Sprints con el flujo de trabajo continuo en **GitHub Projects**. A continuación se presenta el estado de avance oficial de las Historias de Usuario (HU001 a HU031 - 123 PH en total):
 
 ### 🎯 Estado Consolidado de Sprints
 
@@ -228,7 +228,7 @@ El proyecto se gestiona de manera ágil bajo el marco **Scrumban**, combinando l
 | **Sprint 2** | 09/Sep/2026 – 23/Sep/2026 | Catálogo de productos interactivo y gestión del Carrito (Context API) | 19 PH | **Completado (100%)** |
 | **Sprint 3** | 23/Sep/2026 – 07/Oct/2026 | Formalización de pedidos, cliente y Tablero de Cocina en tiempo real | 19 PH | **Completado (100%)** |
 | **Sprint 4** | 07/Oct/2026 – 21/Oct/2026 | Gestión administrativa de catálogo, filtros por categoría y altas | 18 PH | **Completado (100%)** |
-| **Sprint 4 Ext.** | 21/Oct/2026 – Cierre | Trazabilidad por UUID, pago simulado, aislamiento y seguridad RBAC | 42 PH | **En Ejecución** |
+| **Sprint 4 Ext.** | 21/Oct/2026 – Cierre | Trazabilidad por UUID, pago simulado, aislamiento y seguridad RBAC | 51 PH | **En Ejecución** |
 
 ---
 
