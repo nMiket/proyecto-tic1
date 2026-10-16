@@ -1,4 +1,4 @@
-# 🍔 Plataforma Web para la Gestión de Pedidos en Cafeterías y Restaurantes UPB
+﻿# 🍔 Plataforma Web para la Gestión de Pedidos en Cafeterías y Restaurantes UPB
 
 ¡Bienvenido al repositorio oficial del proyecto **UPB Food**! Esta solución tecnológica nace para transformar la experiencia gastronómica en el campus de la **Universidad Pontificia Bolivariana (UPB)**, optimizando los tiempos de atención y digitalizando el proceso de compra.
 
@@ -213,14 +213,73 @@ Este proyecto es desarrollado en el marco de la asignatura **Proyecto Aplicado e
 
 ---
 
-## 📈 Metodología de Desarrollo
 
-Trabajamos con un **enfoque híbrido Scrum + Kanban**:
-* **Scrum:** Planificación incremental en **4 Sprints** de 2 semanas (8 semanas totales, 72 Puntos de Historia).
-* **Kanban:** Gestión del flujo de trabajo visualizado mediante **GitHub Projects**.
+---
 
-📌 **Tablero de Control:** [GitHub Projects - Kanban TIC1](https://github.com/users/nMiket/projects/1/views/2)
+## 📋 Tablero Kanban y Matriz de Historias de Usuario (Actualizado v4)
+
+El proyecto se gestiona de manera ágil bajo el marco **Scrumban**, combinando la estructura temporal de Sprints con el flujo de trabajo continuo en **GitHub Projects**. A continuación se presenta el estado de avance oficial de las Historias de Usuario (HU001 a HU029 - 114 PH en total):
+
+### 🎯 Estado Consolidado de Sprints
+
+| Sprint | Fechas Oficiales | Enfoque Principal | Puntos (PH) | Estado Actual |
+| :---: | :---: | :--- | :---: | :---: |
+| **Sprint 1** | 26/Ago/2026 – 09/Sep/2026 | Exploración inicial, catálogo, navegación y autenticación administrativa | 16 PH | **Completado (100%)** |
+| **Sprint 2** | 09/Sep/2026 – 23/Sep/2026 | Catálogo de productos interactivo y gestión del Carrito (Context API) | 19 PH | **Completado (100%)** |
+| **Sprint 3** | 23/Sep/2026 – 07/Oct/2026 | Formalización de pedidos, cliente y Tablero de Cocina en tiempo real | 19 PH | **Completado (100%)** |
+| **Sprint 4** | 07/Oct/2026 – 21/Oct/2026 | Gestión administrativa de catálogo, filtros por categoría y altas | 18 PH | **Completado (100%)** |
+| **Sprint 4 Ext.** | 21/Oct/2026 – Cierre | Trazabilidad por UUID, pago simulado, aislamiento y seguridad RBAC | 42 PH | **En Ejecución** |
+
+---
+
+### 📌 Detalle de Historias de Usuario en el Kanban
+
+#### Sprint 1: Exploración Inicial y Autenticación Administrativa (16 PH)
+* [x] **HU001: Lista de restaurantes y cafeterías (3 PH)** — *Julián Miranda* [AMPLIADA: Buscador de cafeterías] `Completado`
+* [x] **HU002: Card Restaurante (3 PH)** — *Valeria Gómez* `Completado`
+* [x] **HU003: Barra de navegación (3 PH)** — *Julián Miranda* [AMPLIADA: Vistas separadas por rol] `Completado`
+* [x] **HU012: Formulario de login administrativo (4 PH)** — *Andrés Martínez* `Completado`
+* [x] **HU013: Botón de ingreso y validación de acceso (3 PH)** — *Ismael López* `Completado`
+
+#### Sprint 2: Catálogo de Productos y Gestión del Carrito (19 PH)
+* [x] **HU004: Lista de productos (4 PH)** — *Julián Miranda* [AMPLIADA: Buscador de productos] `Completado`
+* [x] **HU005: Card producto (3 PH)** — *Ismael López* [AMPLIADA: Selector de adiciones] `Completado`
+* [x] **HU006: Botón y Estado Global del Carrito (4 PH)** — *Valeria Gómez* [AMPLIADA: Carrito de una sola cafetería] `Completado`
+* [x] **HU007: Lista de pedidos y Resumen de Compra (3 PH)** — *Valeria Gómez* [AMPLIADA: Flujo en tres pasos] `Completado`
+* [x] **HU008: Card de productos pedidos y Notas (5 PH)** — *Andrés Martínez* `Completado`
+
+#### Sprint 3: Confirmación, Identificación y Gestión de Pedidos (19 PH)
+* [x] **HU009: Botón confirmar pedido y Persistencia (4 PH)** — *Andrés Martínez* [AMPLIADA: Restricciones de apertura] `Completado`
+* [x] **HU010: Formulario de identificación del cliente (4 PH)** — *Julián Miranda* [AMPLIADA: Selección de hora de recogida] `Completado`
+* [x] **HU011: Botón continuar al pago y transición de estado (3 PH)** — *Andrés Martínez* `Completado`
+* [x] **HU014: Lista de pedidos cocina en tiempo real (4 PH)** — *Ismael López* [AMPLIADA: Tablero Kanban de cocina] `Completado`
+* [x] **HU015: Card de pedidos cocina y cambio de estado (4 PH)** — *Valeria Gómez* [AMPLIADA: Transiciones validadas] `Completado`
+
+#### Sprint 4: Administración y Gestión del Catálogo (18 PH)
+* [x] **HU016: Lista de productos administrativa (4 PH)** — *Ismael López* [AMPLIADA: Selector de cafetería] `Completado`
+* [x] **HU017: Card de productos administrativa y Switch de Stock (4 PH)** — *Valeria Gómez* [AMPLIADA: Retiro seguro] `Completado`
+* [x] **HU018: Panel de edición de producto (6 PH)** — *Andrés Martínez & Julián Miranda* [AMPLIADA: Soporte de adiciones] `Completado`
+* [x] **HU019: Botón y Formulario para añadir producto (4 PH)** — *Ismael López* `Completado`
+
+#### Sprint 4 (Extendido): Funcionalidades de Robustez y Trazabilidad (42 PH)
+* [ ] **HU020: Seguimiento de pedido por código único UUID (5 PH)** — *Valeria Gómez* `En Progreso`
+* [ ] **HU021: Consulta de pedido por número, correo o teléfono (4 PH)** — *Ismael López* `En Progreso`
+* [ ] **HU022: Portal de pago simulado y validación de total (5 PH)** — *Andrés Martínez* `En Progreso`
+* [x] **HU023: Sesión persistente y revocación de tokens JWT (4 PH)** — *Andrés Martínez* `Completado`
+* [x] **HU024: Control de acceso basado en roles y cafetería - RBAC (5 PH)** — *Ismael López* `Completado`
+* [x] **HU025: Gestión de administradores de cocina con borrado lógico (5 PH)** — *Ismael López* `Completado`
+* [x] **HU026: Aislamiento estricto de productos por cafetería (4 PH)** — *Ismael López* `Completado`
+* [ ] **HU027: Historial de pedidos del cliente (3 PH)** — *Valeria Gómez* `Planificado`
+* [ ] **HU028: Métricas reales del panel administrativo (4 PH)** — *Valeria Gómez* `Planificado`
+* [ ] **HU029: Cambio de estado y tiempo de la cafetería (3 PH)** — *Valeria Gómez* `Planificado`
+
+---
+
+🔗 **Enlaces de Seguimiento:**
+* 📌 [Tablero Kanban Oficial en GitHub Projects](https://github.com/users/nMiket/projects/1/views/2)
+* 📊 [Matriz Completa de Historias de Usuario (Google Sheets)](https://docs.google.com/spreadsheets/d/1amVVqmlFByd3B-D26sb1ATZo2ChJaOUX/edit?usp=sharing)
 
 ---
 
 Universidad Pontificia Bolivariana (UPB) — 2026
+
