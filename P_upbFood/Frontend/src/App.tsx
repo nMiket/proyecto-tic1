@@ -1,5 +1,6 @@
-import TopGlobalDashboard from './components/TopGlobalDashboard'
 import { useEffect, useState, type FormEvent } from 'react'
+import ConfigurarInvitacionPage from './components/ConfigurarInvitacionPage'
+import RevisarSolicitudPage from './components/RevisarSolicitudPage'
 import {
   Link,
   NavLink,
@@ -32,24 +33,31 @@ export function App() {
   const [adminName, setAdminName] = useState('')
   const [restauranteId, setRestauranteId] = useState<number | null>(null)
   const [asignaciones, setAsignaciones] = useState<AsignacionRestaurante[]>([])
-  const [esTopGlobal, setEsTopGlobal] = useState(false)
 
   const location = useLocation()
+  const navigate = useNavigate()
   const esRutaAdmin =
     location.pathname === '/admin' ||
     location.pathname.startsWith('/admin/')
 
-  const tieneAccesoAdmin =
-  isLoggedIn &&
-  (esTopGlobal ||
-    asignaciones.some(
-      (asignacion) => Number(asignacion.restauranteId) > 0
-    ))
+  const tieneRolDueno = asignaciones.some(
+    (asignacion) => Number(asignacion.tipoAdministradorId) === 1
+  )
+  const tieneRolCocina = asignaciones.some(
+    (asignacion) => Number(asignacion.tipoAdministradorId) === 2
+  )
+  const soloCocina = !tieneRolDueno && tieneRolCocina
 
-  const restauranteCocinaId =
-    asignaciones.find(
-      (asignacion) => Number(asignacion.tipoAdministradorId) === 2
-    )?.restauranteId ?? null
+const tieneAccesoAdmin =
+  isLoggedIn && (tieneRolDueno || tieneRolCocina)
+
+const rutaPanelPrincipal = soloCocina
+  ? '/admin/cocina'
+  : '/admin/dashboard'
+
+  const restauranteCocinaId = asignaciones.find(
+    (asignacion) => Number(asignacion.tipoAdministradorId) === 2
+  )?.restauranteId ?? null
 
   useEffect(() => {
     let cancelled = false
@@ -57,7 +65,6 @@ export function App() {
     void refreshSession()
       .then((session) => {
         if (!cancelled && session) {
-          setEsTopGlobal(session.esTopGlobal === true)
           setAdminName(session.email)
           setRestauranteId(session.restauranteId ?? null)
           setAsignaciones(session.asignaciones ?? [])
@@ -80,18 +87,23 @@ export function App() {
     setRestauranteId(session.restauranteId ?? null)
     setAsignaciones(session.asignaciones ?? [])
     setIsLoggedIn(true)
-    setEsTopGlobal(session.esTopGlobal === true)
 
     return session.email
   }
 
   const handleLogout = async () => {
-    await endSession()
-    setIsLoggedIn(false)
-    setAdminName('')
-    setRestauranteId(null)
-    setAsignaciones([])
-    setEsTopGlobal(false) 
+    try {
+      await endSession()
+    } catch (error) {
+      // La sesión local debe cerrarse incluso si el servidor no responde.
+      console.error('No se pudo confirmar el cierre de sesión en el servidor:', error)
+    } finally {
+      setIsLoggedIn(false)
+      setAdminName('')
+      setRestauranteId(null)
+      setAsignaciones([])
+      navigate('/admin', { replace: true })
+    }
   }
 
   return (
@@ -108,16 +120,10 @@ export function App() {
         <div className="nav-actions" aria-label="Navegación principal">
           {esRutaAdmin ? (
             <NavLink
-              to={
-                isLoggedIn
-                  ? esTopGlobal
-                    ? '/admin/top-global'
-                    : '/admin/dashboard'
-                  : '/admin'
-              }
+              to={isLoggedIn ? rutaPanelPrincipal : '/admin'}
               className={({ isActive }) => (isActive ? 'active' : '')}
             >
-              Panel administrativo
+              {soloCocina ? 'Cocina' : 'Panel del restaurante'}
             </NavLink>
           ) : !isLoggedIn ? (
             <>
@@ -145,16 +151,16 @@ export function App() {
             </>
           ) : (
             <>
-              {tieneAccesoAdmin && (
+              {isLoggedIn && tieneRolDueno && (
                 <NavLink
-                  to={esTopGlobal ? '/admin/top-global' : '/admin/dashboard'}
+                  to="/admin/dashboard"
                   className={({ isActive }) => (isActive ? 'active' : '')}
                 >
-                  Panel administrativo
+                  Panel del restaurante
                 </NavLink>
               )}
 
-              {tieneAccesoAdmin && !esTopGlobal && restauranteCocinaId !== null && (
+              {isLoggedIn && tieneRolCocina && restauranteCocinaId !== null && (
                 <NavLink
                   to="/admin/cocina"
                   className={({ isActive }) => (isActive ? 'active' : '')}
@@ -175,6 +181,14 @@ export function App() {
             element={<RestaurantMenuPage />}
           />
           <Route
+            path="/configurar-invitacion"
+            element={<ConfigurarInvitacionPage />}
+          />
+          <Route
+            path="/revisar-solicitud"
+            element={<RevisarSolicitudPage />}
+          />
+          <Route
             path="/seguimiento"
             element={<SeguimientoPedidoPage />}
           />
@@ -188,7 +202,7 @@ export function App() {
             element={
               isLoggedIn ? (
                 <Navigate
-                  to={esTopGlobal ? '/admin/top-global' : '/admin/dashboard'}
+                  to={rutaPanelPrincipal}
                   replace
                 />
               ) : (
@@ -200,7 +214,7 @@ export function App() {
           <Route
             path="/admin/dashboard"
             element={
-              tieneAccesoAdmin && !esTopGlobal ? (
+              isLoggedIn && tieneRolDueno ? (
                 <AdminDashboardPage
                   adminName={adminName}
                   restauranteId={restauranteId ?? asignaciones[0].restauranteId}
@@ -214,31 +228,10 @@ export function App() {
           />
 
           <Route
-            path="/admin/top-global"
-            element={
-              isLoggedIn && esTopGlobal ? (
-                <TopGlobalDashboard
-                  adminName={adminName}
-                  onLogout={handleLogout}
-                />
-              ) : (
-                <Navigate
-                  to={
-                    isLoggedIn
-                      ? '/admin/dashboard'
-                      : '/admin'
-                  }
-                  replace
-                />
-              )
-            }
-          />
-
-          <Route
             path="/admin/cocina"
             element={
-              tieneAccesoAdmin && restauranteCocinaId !== null ? (
-                <DashboardCocina restauranteId={restauranteCocinaId} />
+              isLoggedIn && tieneRolCocina && restauranteCocinaId !== null ? (
+                <DashboardCocina restauranteId={restauranteCocinaId} onLogout={handleLogout} />
               ) : (
                 <Navigate
                   to={tieneAccesoAdmin ? '/admin/dashboard' : '/admin'}
@@ -326,8 +319,8 @@ function AdminLoginPage({
   onLogin: (email: string, password: string) => Promise<string>
 }) {
   const [modo, setModo] = useState<'login' | 'registro'>('login')
-  const [email, setEmail] = useState('admin@upb.edu.co')
-  const [password, setPassword] = useState('admin123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
   const [nombreSolicitante, setNombreSolicitante] = useState('')
   const [telefonoSolicitante, setTelefonoSolicitante] = useState('')

@@ -17,9 +17,6 @@ public class AdminUser {
     @Column(name = "administrador_id")
     private Integer id;
 
-    @Column(name = "es_top_global", nullable = false)
-    private boolean esTopGlobal = false;
-
     @Column(name = "nombre_administrador", nullable = false, length = 50)
     private String nombre;
 
@@ -48,6 +45,4 @@ public class AdminUser {
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
     }
-    public boolean isEsTopGlobal() { return esTopGlobal;}
-    public void setEsTopGlobal(boolean esTopGlobal) { this.esTopGlobal = esTopGlobal; }
 }

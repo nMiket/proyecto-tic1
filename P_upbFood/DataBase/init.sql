@@ -11,12 +11,15 @@
 -- ----------------------------------------------------------------------------
 
 -- Tablas del modelo actual
+DROP TABLE IF EXISTS invitacion_administrador CASCADE;
+DROP TABLE IF EXISTS solicitud_registro_restaurante CASCADE;
 DROP TABLE IF EXISTS pago                      CASCADE;
 DROP TABLE IF EXISTS detalle_pedido_adicion    CASCADE;
 DROP TABLE IF EXISTS detalle_pedido            CASCADE;
 DROP TABLE IF EXISTS pedido                    CASCADE;
 DROP TABLE IF EXISTS refresh_tokens            CASCADE;
 DROP TABLE IF EXISTS administrador_restaurante CASCADE;
+DROP TABLE IF EXISTS producto_adicion          CASCADE;
 DROP TABLE IF EXISTS producto_restaurante      CASCADE;
 DROP TABLE IF EXISTS administrador             CASCADE;
 DROP TABLE IF EXISTS tipo_administrador        CASCADE;
@@ -45,6 +48,7 @@ DROP FUNCTION IF EXISTS fn_menu_asignar;
 DROP FUNCTION IF EXISTS fn_menu_obtener_por_restaurante;
 DROP FUNCTION IF EXISTS fn_menu_quitar;
 DROP FUNCTION IF EXISTS fn_administrador_crear;
+DROP FUNCTION IF EXISTS fn_administrador_crear_top_global;
 DROP FUNCTION IF EXISTS fn_administrador_login;
 DROP FUNCTION IF EXISTS fn_administrador_actualizar_password;
 DROP FUNCTION IF EXISTS fn_administrador_eliminar;
@@ -112,8 +116,7 @@ CREATE TABLE administrador (
     nombre_administrador    VARCHAR(50) NOT NULL,
     telefono_administrador  VARCHAR(20) NOT NULL,
     correo_administrador    VARCHAR(100) NOT NULL UNIQUE,
-    password_hash           VARCHAR(255) NOT NULL,
-    es_top_global           BOOLEAN NOT NULL DEFAULT FALSE
+    password_hash           VARCHAR(255) NOT NULL
 );
 
 -- El rol se define por restaurante: una persona puede tener un rol distinto en cada uno
@@ -154,7 +157,10 @@ CREATE TABLE solicitud_registro_restaurante (
 
     fecha_solicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fecha_revision TIMESTAMP NULL,
-    observacion_revision VARCHAR(500) NULL
+    observacion_revision VARCHAR(500) NULL,
+    token_aprobacion_hash VARCHAR(64) NULL,
+    token_rechazo_hash VARCHAR(64) NULL,
+    token_revision_expiracion TIMESTAMP NULL
 );
 
 CREATE TABLE IF NOT EXISTS invitacion_administrador (
@@ -190,8 +196,23 @@ CREATE TABLE producto_restaurante (
     producto_id     INTEGER NOT NULL REFERENCES producto (producto_id),
     precio          DECIMAL(10,2) NOT NULL CHECK (precio > 0),
     imagen_url      VARCHAR(500),
+    nombre_personalizado VARCHAR(50),
     disponible      BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (restaurante_id, producto_id)
+);
+
+-- Cada restaurante define qué adiciones puede ofrecer para cada producto.
+-- Las adiciones también son productos del tipo 'Adición', con precio propio por restaurante.
+CREATE TABLE producto_adicion (
+    restaurante_id INTEGER NOT NULL,
+    producto_id INTEGER NOT NULL,
+    adicion_id INTEGER NOT NULL,
+    PRIMARY KEY (restaurante_id, producto_id, adicion_id),
+    FOREIGN KEY (restaurante_id, producto_id)
+        REFERENCES producto_restaurante (restaurante_id, producto_id) ON DELETE CASCADE,
+    FOREIGN KEY (restaurante_id, adicion_id)
+        REFERENCES producto_restaurante (restaurante_id, producto_id) ON DELETE CASCADE,
+    CHECK (producto_id <> adicion_id)
 );
 
 -- ---------- Pedidos ----------
@@ -548,37 +569,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Crea un administrador Top Global, sin asignarlo a ningún restaurante
-CREATE OR REPLACE FUNCTION fn_administrador_crear_top_global(
-    p_nombre VARCHAR,
-    p_telefono VARCHAR,
-    p_correo VARCHAR,
-    p_password_hash VARCHAR
-) RETURNS INT AS $$
-DECLARE
-    v_id INT;
-BEGIN
-    INSERT INTO administrador (
-        nombre_administrador,
-        telefono_administrador,
-        correo_administrador,
-        password_hash,
-        es_top_global
-    )
-    VALUES (
-        p_nombre,
-        p_telefono,
-        p_correo,
-        p_password_hash,
-        TRUE
-    )
-    RETURNING administrador_id INTO v_id;
-
-    RETURN v_id;
-END;
-$$ LANGUAGE plpgsql;
-
-
 -- Restaurantes de un administrador y rol que tiene en cada uno (se usa después del login)
 CREATE OR REPLACE FUNCTION fn_administrador_restaurantes(p_administrador_id INT)
 RETURNS TABLE(restaurante_id INT, nombre_restaurante VARCHAR,
@@ -732,6 +722,16 @@ BEGIN
             IF NOT FOUND THEN
                 RAISE EXCEPTION 'La adición % no está disponible en el restaurante %',
                     v_adicion_id, p_restaurante_id;
+            END IF;
+
+            IF NOT EXISTS (
+                SELECT 1 FROM producto_adicion pa
+                WHERE pa.restaurante_id = p_restaurante_id
+                  AND pa.producto_id = v_producto_id
+                  AND pa.adicion_id = v_adicion_id
+            ) THEN
+                RAISE EXCEPTION 'La adición % no está habilitada para el producto %',
+                    v_adicion_id, v_producto_id;
             END IF;
             v_subtotal := v_subtotal + v_precio_ad;
         END LOOP;
@@ -904,18 +904,30 @@ SELECT fn_producto_crear(2, 'Café Latte', 'Café latte preparado con espresso y
 SELECT fn_producto_crear(4, 'Queso extra', 'Porción adicional de queso.');
 SELECT fn_producto_crear(4, 'Piña', 'Rodajas de piña.');
 SELECT fn_producto_crear(4, 'Ensalada', 'Porción de ensalada fresca.');
+SELECT fn_producto_crear(4, 'Tocineta extra', 'Porción adicional de tocineta.');
+SELECT fn_producto_crear(4, 'Extra pulpa', 'Porción adicional de pulpa de fruta.') ;
 
 -- Menú de Cafetería Central (restaurante 1): cada restaurante define sus precios
 SELECT fn_menu_asignar(1, 1, 15000.00, 'https://images.unsplash.com/photo-1547592180-85f173990554');
 SELECT fn_menu_asignar(1, 2,  4500.00, 'https://images.unsplash.com/photo-1600271886742-f049cd451bba');
 SELECT fn_menu_asignar(1, 5,  2000.00);
 SELECT fn_menu_asignar(1, 7,  1500.00);
+SELECT fn_menu_asignar(1, 9,  1000.00); -- Extra pulpa
 
 -- Menú de Cafetería Montana del Boulevard (restaurante 2)
 SELECT fn_menu_asignar(2, 3, 12500.00, 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af');
 SELECT fn_menu_asignar(2, 4,  5500.00, 'https://images.unsplash.com/photo-1509042239860-f550ce710b93');
 SELECT fn_menu_asignar(2, 5,  2500.00);
 SELECT fn_menu_asignar(2, 6,  1500.00);
+SELECT fn_menu_asignar(2, 8,  2500.00); -- Tocineta extra
+
+-- Extras habilitados por producto en los menús de demostración.
+INSERT INTO producto_adicion (restaurante_id, producto_id, adicion_id) VALUES
+    (1, 1, 5), -- Ejecutivo de carne: queso extra
+    (1, 2, 9), -- Jugo natural: extra pulpa
+    (2, 3, 5), -- Sándwich: queso extra
+    (2, 3, 8)  -- Sándwich: tocineta extra
+ON CONFLICT DO NOTHING;
 
 -- Administradores de demostración (ids 1 y 2)
 SELECT fn_administrador_crear('Administrador Central', '3000000001', 'admin@upb.edu.co',
@@ -927,5 +939,3 @@ SELECT fn_administrador_crear('Administrador Boulevard', '3000000002', 'admin2@u
 -- Roles por restaurante (1 = Dueño de restaurante, 2 = Administrador de cocina)
 SELECT fn_administrador_asignar(1, 1, 1);   -- admin: dueño del restaurante 1
 SELECT fn_administrador_asignar(2, 2, 1);   -- admin2: dueño del restaurante 2
-SELECT fn_administrador_crear_top_global('Administrador Top Global', '3125713677', 'mirandajulian712@gmail.com',
-    '$2a$10$FjDvPA4ZCF.FxfmO6YkLxe.ZGGKUah/ffmqxkeECwHrV549kmILbe');

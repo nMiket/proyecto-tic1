@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -36,8 +37,7 @@ public class OrderController {
                 creado.get("codigo_seguimiento").toString()
         );
 
-        Map<String, Object> pedido =
-                pedidoService.obtenerPorCodigo(codigo);
+        Map<String, Object> pedido = pedidoService.obtenerPorCodigo(codigo);
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("id", pedido.get("pedido_id"));
@@ -81,8 +81,13 @@ public class OrderController {
     @GetMapping("/seguimiento/{codigo}")
     public ResponseEntity<?> consultarPedido(@PathVariable UUID codigo) {
 
-        Map<String, Object> pedido =
-                pedidoService.obtenerPorCodigo(codigo);
+        Map<String, Object> pedido;
+        try {
+            pedido = pedidoService.obtenerPorCodigo(codigo);
+        } catch (EmptyResultDataAccessException exception) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "No encontramos un pedido con ese código de seguimiento."));
+        }
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("id", pedido.get("pedido_id"));
@@ -94,11 +99,12 @@ public class OrderController {
         response.put("horaRecogida", pedido.get("hora_recogida"));
         response.put("clienteNombre", pedido.get("nombre_cliente"));
         response.put("tiempoPedido", pedido.get("tiempo_pedido"));
+        response.put("productos", pedidoService.obtenerDetalle(((Number) pedido.get("pedido_id")).intValue()));
 
         return ResponseEntity.ok(response);
     }
 
-        @GetMapping({"/consulta", "/seguimiento/consulta"})
+    @GetMapping({"/consulta", "/seguimiento/consulta"})
     public ResponseEntity<?> consultarPedido(
             @RequestParam(required = false) Integer pedidoId,
             @RequestParam(required = false) UUID codigo,
@@ -116,12 +122,18 @@ public class OrderController {
             );
         }
 
-        Map<String, Object> pedido = pedidoService.buscarPedido(
-                pedidoId,
-                codigo,
-                correo,
-                telefono
-        );
+        Map<String, Object> pedido;
+        try {
+            pedido = pedidoService.buscarPedido(
+                    pedidoId,
+                    codigo,
+                    correo,
+                    telefono
+            );
+        } catch (EmptyResultDataAccessException exception) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "No encontramos un pedido con esos datos. Verifica el número, correo o teléfono."));
+        }
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("id", pedido.get("pedido_id"));
@@ -132,7 +144,8 @@ public class OrderController {
         response.put("fecha", pedido.get("fecha"));
         response.put("horaRecogida", pedido.get("hora_recogida"));
         response.put("clienteNombre", pedido.get("nombre_cliente"));
-        response.put("tiempoPedido", pedido.get("fecha"));
+        response.put("tiempoPedido", pedido.get("tiempo_pedido"));
+        response.put("productos", pedidoService.obtenerDetalle(((Number) pedido.get("pedido_id")).intValue()));
 
         return ResponseEntity.ok(response);
     }

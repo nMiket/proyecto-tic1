@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 public class PedidoService {
@@ -61,16 +63,54 @@ public class PedidoService {
     @Transactional
     public Map<String, Object> crearPedido(CreateOrderRequest request) {
 
+        Integer tiempoConfigurado = jdbcTemplate.queryForObject(
+                "SELECT tiempo_pedido FROM restaurante WHERE restaurante_id = ?",
+                Integer.class,
+                request.restauranteId());
+        if (tiempoConfigurado == null) {
+            throw new IllegalArgumentException("No se encontró la cafetería seleccionada.");
+        }
+
+        int minutosPreparacion = Math.max(15, tiempoConfigurado);
+        LocalDateTime horaMinimaRecogida = LocalDateTime.now(ZoneId.of("America/Bogota"))
+                .plusMinutes(minutosPreparacion);
+        LocalDateTime horaRecogida = request.horaRecogida();
+        if (horaRecogida == null) {
+            horaRecogida = horaMinimaRecogida;
+        } else if (horaRecogida.isBefore(horaMinimaRecogida)) {
+            throw new IllegalArgumentException(
+                    "La hora de recogida debe ser al menos dentro de "
+                            + minutosPreparacion + " minutos.");
+        }
+
         List<Map<String, Object>> items = new ArrayList<>();
 
         for (CreateOrderRequest.OrderItemRequest item : request.items()) {
+            List<Integer> adiciones = item.adiciones() == null ? List.of() : item.adiciones();
+            for (Integer adicionId : adiciones.stream().distinct().toList()) {
+                Integer habilitada = jdbcTemplate.queryForObject(
+                        """
+                        SELECT COUNT(*) FROM producto_adicion pa
+                        JOIN producto_restaurante pr
+                          ON pr.restaurante_id = pa.restaurante_id AND pr.producto_id = pa.adicion_id
+                        WHERE pa.restaurante_id = ? AND pa.producto_id = ?
+                          AND pa.adicion_id = ? AND pr.disponible = TRUE
+                        """,
+                        Integer.class,
+                        request.restauranteId(), item.productoId(), adicionId);
+                if (habilitada == null || habilitada == 0) {
+                    throw new IllegalArgumentException(
+                            "Uno de los ingredientes extra ya no está disponible para este producto.");
+                }
+            }
+
             Map<String, Object> detalle = new LinkedHashMap<>();
 
             detalle.put("producto_id", item.productoId());
             detalle.put("cantidad", item.cantidad());
             detalle.put(
                     "adiciones",
-                    item.adiciones() == null ? List.of() : item.adiciones()
+                    adiciones
             );
             detalle.put("observaciones", item.observaciones());
 
@@ -102,7 +142,7 @@ public class PedidoService {
                 request.clienteTelefono().trim(),
                 request.clienteCorreo().trim(),
                 itemsJson,
-                request.horaRecogida()
+                horaRecogida
         );
     }
 
@@ -131,6 +171,7 @@ public class PedidoService {
                        p.total,
                        p.fecha,
                        p.hora_recogida,
+                       r.tiempo_pedido,
                        p.nombre_cliente,
                        p.telefono_cliente,
                        p.correo_cliente
@@ -185,6 +226,7 @@ public class PedidoService {
                 SELECT estado
                 FROM pedido
                 WHERE pedido_id = ?
+                FOR UPDATE
                 """,
                 String.class,
                 pedidoId

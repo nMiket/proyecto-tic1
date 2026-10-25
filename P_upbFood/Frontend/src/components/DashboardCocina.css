@@ -156,3 +156,107 @@
     grid-template-columns: 1fr;
   }
 }
+
+.cocina-productos {
+  margin: 0 0 2rem;
+  padding: 1.5rem;
+  background: #fff;
+  border: 1px solid #e5e5e7;
+  border-radius: 16px;
+}
+
+.cocina-productos__heading h2 {
+  margin: 0;
+  color: #1b1c1a;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.cocina-productos__heading p {
+  margin: 0.4rem 0 1rem;
+  color: #767961;
+}
+
+.cocina-productos__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 0.75rem;
+}
+
+.cocina-producto {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #e5e5e7;
+  border-radius: 12px;
+}
+
+.cocina-producto__info {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.cocina-producto__info strong {
+  color: #1b1c1a;
+  overflow-wrap: anywhere;
+}
+
+.cocina-producto__info span {
+  color: #767961;
+  font-size: 0.9rem;
+}
+
+.cocina-producto__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  color: #0d7377;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.cocina-producto__toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: #0d7377;
+}
+
+.cocina-productos__error {
+  padding: 0.75rem;
+  color: #9b1c1c;
+  background: #fff1f0;
+  border-radius: 8px;
+}
+
+
+.cocina-dashboard__logout {
+  flex-shrink: 0;
+  padding: 0.7rem 1.1rem;
+  border: 1px solid #d8d9d2;
+  border-radius: 999px;
+  background: #fff;
+  color: #1b1c1a;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.cocina-dashboard__logout:hover {
+  background: #f5f3ef;
+  border-color: #b8baae;
+}
+
+@media (max-width: 520px) {
+  .cocina-dashboard__header {
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .cocina-dashboard__logout {
+    padding: 0.6rem 0.8rem;
+    white-space: nowrap;
+  }
+}

@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,7 +36,7 @@ class ProductControllerTest {
                 mock(AdminAuthorizationService.class);
 
         ProductController controller = new ProductController(
-                productRepository, menuRepository, authorizationService
+                productRepository, menuRepository, authorizationService, mock(JdbcTemplate.class)
         );
 
         Product product = product(1, "Café Especial", 2);
@@ -71,7 +72,7 @@ class ProductControllerTest {
                 mock(AdminAuthorizationService.class);
 
         ProductController controller = new ProductController(
-                productRepository, menuRepository, authorizationService
+                productRepository, menuRepository, authorizationService, mock(JdbcTemplate.class)
         );
 
         Product savedProduct = product(3, "Empanada", 1);
@@ -117,7 +118,7 @@ class ProductControllerTest {
                 mock(AdminAuthorizationService.class);
 
         ProductController controller = new ProductController(
-                productRepository, menuRepository, authorizationService
+                productRepository, menuRepository, authorizationService, mock(JdbcTemplate.class)
         );
 
         Product existingProduct = product(10, "Café", 1);
@@ -171,7 +172,7 @@ class ProductControllerTest {
                 mock(AdminAuthorizationService.class);
 
         ProductController controller = new ProductController(
-                productRepository, menuRepository, authorizationService
+                productRepository, menuRepository, authorizationService, mock(JdbcTemplate.class)
         );
 
         ProductoRestaurante menuItem =

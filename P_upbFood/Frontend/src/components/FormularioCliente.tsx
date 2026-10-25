@@ -4,13 +4,16 @@ import { apiFetch, getApiBaseUrl } from "../auth";
 import { useCart } from "../context/useCart";
 import "./FormularioCliente.css";
 
-function crearOpcionesHora() {
+function crearOpcionesHora(tiempoPreparacionMin: number) {
     const ahora = new Date();
-    const minutosSiguiente = Math.ceil((ahora.getMinutes() + 1) / 15) * 15;
-    ahora.setMinutes(minutosSiguiente, 0, 0);
+    const minutosMinimos = Math.max(15, tiempoPreparacionMin || 15);
+    const primeraHora = new Date(ahora.getTime() + minutosMinimos * 60 * 1000);
+    // Ofrecemos horarios cada 15 minutos, redondeando hacia arriba para no
+    // sugerir una recogida anterior al tiempo mínimo de preparación.
+    primeraHora.setMinutes(Math.ceil(primeraHora.getMinutes() / 15) * 15, 0, 0);
 
-    return Array.from({ length: 6 }, (_, indice) => {
-        const hora = new Date(ahora.getTime() + (indice * 15 * 60 * 1000));
+    return Array.from({ length: 8 }, (_, indice) => {
+        const hora = new Date(primeraHora.getTime() + (indice * 15 * 60 * 1000));
         const fecha = [
             hora.getFullYear(),
             String(hora.getMonth() + 1).padStart(2, "0"),
@@ -34,11 +37,12 @@ function crearOpcionesHora() {
 export default function FormularioCliente() {
     const navigate = useNavigate();
     const { items, vaciarCarrito } = useCart();
+    const tiempoPreparacionMin = Math.max(15, ...items.map((item) => item.tiempoEstimadoMin || 15));
     const [nombre, setNombre] = useState("");
     const [telefono, setTelefono] = useState("");
     const [correo, setCorreo] = useState("");
     const [horaRecogida, setHoraRecogida] = useState("");
-    const opcionesHora = crearOpcionesHora();
+    const opcionesHora = crearOpcionesHora(tiempoPreparacionMin);
 
     const [errores, setErrores] = useState({
         nombre: "",
@@ -107,6 +111,7 @@ export default function FormularioCliente() {
                         productoId: item.id,
                         cantidad: item.cantidad,
                         observaciones: item.observaciones.trim(),
+                        adiciones: (item.adiciones ?? []).map((extra) => extra.id),
                     })),
                 }),
             });
@@ -215,7 +220,7 @@ export default function FormularioCliente() {
                                 onClick={() => setHoraRecogida("")}
                             >
                                 <strong>Lo antes posible</strong>
-                                <span>Según el tiempo estimado</span>
+                                <span>Listo en aproximadamente {tiempoPreparacionMin} minutos</span>
                             </button>
                             <span className="pickup-or">o elige una hora</span>
                         </div>
@@ -232,7 +237,6 @@ export default function FormularioCliente() {
                                 </button>
                             ))}
                         </div>
-                        <small>Los horarios mostrados son posteriores a “Lo antes posible”.</small>
                     </div>
 
                     <button type="submit" disabled={enviando || items.length === 0}>

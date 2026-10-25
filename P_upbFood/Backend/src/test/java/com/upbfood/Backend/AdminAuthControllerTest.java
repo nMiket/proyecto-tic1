@@ -50,6 +50,7 @@ class AdminAuthControllerTest {
 
         AdministradorRestaurante asociacion = new AdministradorRestaurante();
         asociacion.setId(new AdministradorRestauranteId(1, 1));
+        asociacion.setEstado("Activo");
 
         when(repository.findByEmail("admin@upb.edu.co"))
                 .thenReturn(Optional.of(admin));

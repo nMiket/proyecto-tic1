@@ -1305,3 +1305,17 @@
 }
 
 
+
+.product-extra-manager { display: grid; gap: 10px; padding: 16px; border: 1px solid #e5e5e7; border-radius: 14px; background: #fafbf3; }
+.product-extra-manager h4 { margin: 0; color: #1b1c1a; font-family: 'Plus Jakarta Sans', sans-serif; }
+.product-extra-manager > p { margin: 0; color: #767961; font-size: .82rem; line-height: 1.5; }
+.product-extra-manager .checkbox-row { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px; background: #fff; }
+.product-extra-manager .checkbox-row input { width: 16px; height: 16px; accent-color: #8c9f00; }
+.new-extra-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .7fr); gap: 10px; margin-top: 8px; }
+.new-extra-fields button { grid-column: 1 / -1; }
+@media (max-width: 560px) { .new-extra-fields { grid-template-columns: 1fr; } }
+.restaurant-extra-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.restaurant-extra-row .checkbox-row { min-width: 0; }
+.restaurant-extra-row > input { min-width: 0; width: 100%; box-sizing: border-box; }
+.restaurant-extra-row > button { width: fit-content; padding: 8px 12px; }
+@media (max-width: 560px) { .restaurant-extra-row { grid-template-columns: 1fr; } }

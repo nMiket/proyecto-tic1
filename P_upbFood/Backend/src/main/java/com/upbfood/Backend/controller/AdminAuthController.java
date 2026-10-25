@@ -168,9 +168,8 @@ public class AdminAuthController {
                                         asociacion.getEstado()))
                         .toList();
 
-        // Los administradores normales necesitan una asignación activa.
-        // Top Global puede ingresar sin estar asociado a un restaurante.
-        if (asociaciones.isEmpty() && !admin.isEsTopGlobal()) {
+        // Toda cuenta operativa debe tener al menos una asignación activa.
+        if (asociaciones.isEmpty()) {
                 return unauthorized(
                         "El administrador no tiene asignaciones activas.");
         }
@@ -216,9 +215,7 @@ public class AdminAuthController {
                 jwtService.getAccessTokenLifetimeSeconds());
         response.put("id", admin.getId());
         response.put("email", admin.getEmail());
-        response.put("esTopGlobal", admin.isEsTopGlobal());
-
-        // Top Global no necesita un restaurante seleccionado.
+        // Las cuentas operativas siempre están asociadas a un restaurante.
         if (!restaurantes.isEmpty()) {
                 response.put("restauranteId", restaurantes.get(0));
         }

@@ -80,17 +80,9 @@ Después de ingresar los datos, pulsa **Test Connection**. El contenedor `upbfoo
 
 El formulario de login administrativo está disponible en http://localhost:5173/admin.
 
-### Credenciales de prueba
+### Acceso administrativo de desarrollo
 
-```text
-Correo: admin@upb.edu.co
-Contraseña: admin123
-
-Correo: admin2@upb.edu.co
-Contraseña: admin456
-```
-
-Estas credenciales son datos de desarrollo sembrados por `DataBase/init.sql`.
+Las cuentas de desarrollo se inicializan desde `DataBase/init.sql`. No se incluyen contraseñas en este paquete; configura credenciales propias para el entorno local y cámbialas antes de cualquier despliegue.
 
 ## HU implementada: login administrativo
 
@@ -118,6 +110,32 @@ La implementación está distribuida así:
 - Pruebas: `Backend/src/test/java/com/upbfood/Backend/AdminAuthControllerTest.java`
 
 El backend valida la contraseña con BCrypt. Las respuestas principales son `200` para credenciales válidas, `401` para credenciales inválidas o sesión expirada y `400` cuando faltan datos. Las variables `APP_JWT_SECRET`, `APP_JWT_ACCESS_TOKEN_MINUTES`, `APP_JWT_REFRESH_TOKEN_DAYS` y `APP_AUTH_COOKIE_SECURE` permiten configurar los tokens por entorno.
+
+
+## Solicitudes de registro aprobadas desde el correo
+
+El administrador global ya no tiene una cuenta ni una vista dentro de la aplicación. Al enviarse una solicitud de restaurante, UPBFood manda un correo al destinatario configurado en `APP_NOTIFICACIONES_CORREO_DESTINO`, con enlaces separados para aprobar o rechazar. Cada enlace vence en 48 horas y requiere confirmar la decisión en la página de UPBFood; abrir el enlace por sí solo no modifica la solicitud.
+
+Para que los correos se envíen, configura `MAIL_USERNAME`, `MAIL_PASSWORD`, `APP_NOTIFICACIONES_CORREO_DESTINO` y `APP_FRONTEND_URL` en `.env`.
+
+### Actualizar una base de datos existente
+
+Haz un respaldo de PostgreSQL y ejecuta una sola vez el script:
+
+```text
+DataBase/migrations/20261024_remove_global_admin_add_email_review.sql
+DataBase/migrations/20261024_product_adiciones_por_producto.sql
+```
+
+Ejecuta cada migración pendiente una sola vez, en ese orden. La primera elimina las cuentas marcadas como administrador global, retira la columna `es_top_global` y añade los campos para almacenar los hashes de los enlaces de decisión. La segunda crea la relación entre cada producto y los ingredientes extra que ofrece. No borra restaurantes, pedidos, productos ni las cuentas de dueño y administrador de cocina.
+
+Si vas a crear una base de datos completamente nueva, `DataBase/init.sql` ya incluye el esquema actualizado. No ejecutes `init.sql` sobre una base con datos que quieras conservar, porque es un script de inicialización que elimina y recrea tablas.
+
+### Ingredientes extra por producto
+
+Cada restaurante puede crear ingredientes extra con nombre y precio propios, reutilizarlos en varios productos y seleccionar cuáles se ofrecen en cada uno. En el menú público, el cliente abre los detalles del producto, marca sus extras y ve el precio actualizado antes de agregarlo al carrito. El backend vuelve a validar que cada extra pertenezca al restaurante y esté habilitado para ese producto; el precio final se calcula desde la base de datos.
+
+Para bases existentes, aplica `DataBase/migrations/20261024_product_adiciones_por_producto.sql` antes de volver a levantar la aplicación. En bases nuevas, la tabla ya se crea desde `DataBase/init.sql`.
 
 ## Ejecutar las pruebas
 

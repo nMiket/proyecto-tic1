@@ -73,6 +73,15 @@ public class SecurityConfig {
                                 HttpMethod.POST,
                                 "/api/solicitudes-registro")
                         .permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/solicitudes-registro/revisar-correo")
+                        .permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/solicitudes-registro/revisar-correo")
+                        .permitAll()
 
                         // El resto requiere autenticación
                         .anyRequest().authenticated())
@@ -102,6 +111,7 @@ public class SecurityConfig {
                 "GET",
                 "POST",
                 "PUT",
+                "PATCH",
                 "DELETE",
                 "OPTIONS"));
 

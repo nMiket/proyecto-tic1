@@ -77,7 +77,7 @@ export default function RestaurantMenuPage() {
               <p className="section-kicker">Carta disponible</p>
               <h2>Elige tus productos</h2>
             </div>
-            <span>Personaliza tu pedido desde el carrito.</span>
+            <span>Abre los detalles para elegir ingredientes extra.</span>
           </div>
           <ListaProductos
             restauranteId={restaurante.id}
@@ -86,7 +86,9 @@ export default function RestaurantMenuPage() {
               ...product,
               id: Number(product.id),
               restauranteId: restaurante.id,
+              tiempoEstimadoMin: restaurante.tiempoEstimadoMin || 15,
               imagenUrl: product.imagenUrl,
+              adiciones: product.adiciones ?? [],
             })}
           />
         </div>

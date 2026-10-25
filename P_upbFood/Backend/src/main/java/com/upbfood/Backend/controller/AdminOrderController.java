@@ -36,19 +36,19 @@ public class AdminOrderController {
                 pedidoService.obtenerActivos(restauranteId);
 
         return ResponseEntity.ok(pedidos.stream().map(pedido -> {
-            Map<String, Object> response = new HashMap<>(pedido);
-
+            Map<String, Object> response = new HashMap<>();
             Object pedidoId = pedido.get("pedido_id");
-
+            response.put("id", pedidoId);
+            response.put("client", Map.of("nombre", pedido.getOrDefault("nombre_cliente", "Cliente sin nombre")));
+            response.put("estado", pedido.get("estado"));
+            response.put("total", pedido.get("total"));
+            response.put("fechaCreacion", pedido.get("fecha"));
+            response.put("horaRecogida", pedido.get("hora_recogida"));
             if (pedidoId != null) {
-                response.put(
-                        "details",
-                        pedidoService.obtenerDetalle(
-                                ((Number) pedidoId).intValue()
-                        )
-                );
+                response.put("details", pedidoService.obtenerDetalle(((Number) pedidoId).intValue()));
+            } else {
+                response.put("details", List.of());
             }
-
             return response;
         }).toList());
     }

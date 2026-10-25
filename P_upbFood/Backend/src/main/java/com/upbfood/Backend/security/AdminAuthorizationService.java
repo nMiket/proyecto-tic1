@@ -26,17 +26,6 @@ public class AdminAuthorizationService {
                 this.administradorRestauranteRepository = administradorRestauranteRepository;
         }
 
-        public AdminUser requireTopGlobal() {
-                AdminUser admin = getAuthenticatedAdmin();
-
-                if (!admin.isEsTopGlobal()) {
-                        throw new AccessDeniedException(
-                                        "Solo Top Global puede gestionar las solicitudes de registro.");
-                }
-
-                return admin;
-        }
-
         public AdminUser requireAdminForRestaurant(Integer restauranteId) {
                 AdminUser admin = getAuthenticatedAdmin();
                 obtenerAsignacion(admin, restauranteId);

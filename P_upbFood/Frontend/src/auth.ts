@@ -15,7 +15,6 @@ export type AuthSession = {
   restauranteId?: number
   restaurantes?: number[]
   asignaciones: AsignacionRestaurante[]
-  esTopGlobal: boolean
   message?: string
 }
 

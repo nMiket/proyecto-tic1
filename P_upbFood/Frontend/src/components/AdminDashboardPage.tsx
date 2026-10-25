@@ -8,6 +8,13 @@ import {
 } from 'react'
 import { apiFetch, getApiBaseUrl, type AsignacionRestaurante } from '../auth'
 
+type RestaurantExtra = {
+  id: number
+  nombre: string
+  precio: number | string
+  disponible: boolean
+}
+
 type ProductItem = {
   id: number
   nombre: string
@@ -16,7 +23,7 @@ type ProductItem = {
   disponible: boolean
   categoriaId: number
   restauranteId: number
-  ingredientesExtra: string[]
+  ingredientesExtra: RestaurantExtra[]
 }
 
 type RestauranteItem = {
@@ -81,8 +88,14 @@ export default function AdminDashboardPage({
   const [productError, setProductError] = useState('')
   const [loadingProducts, setLoadingProducts] = useState(false)
   const [editingProductId, setEditingProductId] = useState<number | null>(null)
-  const [ingredientesExtra, setIngredientesExtra] = useState<string[]>([])
-  const [nuevoIngredienteExtra, setNuevoIngredienteExtra] = useState('')
+  const [restaurantExtras, setRestaurantExtras] = useState<RestaurantExtra[]>([])
+  const [selectedExtraIds, setSelectedExtraIds] = useState<number[]>([])
+  const [newExtraName, setNewExtraName] = useState('')
+  const [newExtraPrice, setNewExtraPrice] = useState('')
+  const [savingExtra, setSavingExtra] = useState(false)
+  const [editingExtraId, setEditingExtraId] = useState<number | null>(null)
+  const [editingExtraName, setEditingExtraName] = useState('')
+  const [editingExtraPrice, setEditingExtraPrice] = useState('')
 
   const restauranteSeleccionado = listaRestaurantes.find(
     (r) => Number(r.id) === Number(selectedRestauranteId),
@@ -95,8 +108,7 @@ export default function AdminDashboardPage({
     setCategoriaId('1')
     setDisponible(true)
     setEditingProductId(null)
-    setIngredientesExtra([])
-    setNuevoIngredienteExtra('')
+    setSelectedExtraIds([])
   }
 
   // Consulta y filtra los restaurantes que tiene asignados la sesión.
@@ -147,14 +159,6 @@ export default function AdminDashboardPage({
     }
   }, [asignaciones, initialRestauranteId])
 
-  const agregarIngredienteExtra = () => {
-    const nuevoExtra = nuevoIngredienteExtra.trim()
-    if (!nuevoExtra) return
-
-    setIngredientesExtra((extras) => [...extras, nuevoExtra])
-    setNuevoIngredienteExtra('')
-  }
-  
   const [administradoresCocina, setAdministradoresCocina] =
     useState<AdministradorCocinaItem[]>([])
   const [nombreAdminCocina, setNombreAdminCocina] = useState('')
@@ -209,6 +213,95 @@ export default function AdminDashboardPage({
     void fetchProducts()
   }, [fetchProducts])
 
+  const fetchRestaurantExtras = useCallback(async () => {
+    if (!selectedRestauranteId) return
+    try {
+      const response = await apiFetch(
+        `${getApiBaseUrl()}/api/productos/extras?restauranteId=${selectedRestauranteId}`,
+      )
+      if (!response.ok) throw new Error('No se pudieron cargar los ingredientes extra.')
+      setRestaurantExtras(await response.json() as RestaurantExtra[])
+    } catch (error) {
+      console.error('Error al cargar ingredientes extra:', error)
+      setProductError('No se pudieron cargar los ingredientes extra del restaurante.')
+    }
+  }, [selectedRestauranteId])
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchRestaurantExtras())
+  }, [fetchRestaurantExtras])
+
+  const handleCreateExtra = async () => {
+    if (!newExtraName.trim() || !newExtraPrice || Number(newExtraPrice) <= 0) {
+      setProductError('Escribe el nombre y un precio válido para el ingrediente extra.')
+      return
+    }
+    setSavingExtra(true)
+    setProductError('')
+    try {
+      const response = await apiFetch(`${getApiBaseUrl()}/api/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: newExtraName.trim(),
+          descripcion: `Ingrediente adicional: ${newExtraName.trim()}`,
+          precio: Number(newExtraPrice),
+          categoriaId: 4,
+          restauranteId: selectedRestauranteId,
+          disponible: true,
+        }),
+      })
+      const data = await response.json() as { id?: number; message?: string }
+      if (!response.ok || !data.id) throw new Error(data.message ?? 'No se pudo crear el ingrediente extra.')
+      setSelectedExtraIds((ids) => [...new Set([...ids, data.id as number])])
+      setNewExtraName('')
+      setNewExtraPrice('')
+      await fetchRestaurantExtras()
+    } catch (error) {
+      setProductError(error instanceof Error ? error.message : 'No se pudo crear el ingrediente extra.')
+    } finally {
+      setSavingExtra(false)
+    }
+  }
+
+  const guardarEdicionExtra = async (extraId: number) => {
+    if (!editingExtraName.trim() || !editingExtraPrice || Number(editingExtraPrice) <= 0) {
+      setProductError('Escribe un nombre y un precio válido para el ingrediente extra.')
+      return
+    }
+    try {
+      const response = await apiFetch(`${getApiBaseUrl()}/api/productos/extras/${extraId}?restauranteId=${selectedRestauranteId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: editingExtraName.trim(), precio: Number(editingExtraPrice) }),
+      })
+      const data = await response.json().catch(() => null) as { message?: string } | null
+      if (!response.ok) throw new Error(data?.message ?? 'No se pudo actualizar el ingrediente extra.')
+      setEditingExtraId(null)
+      setEditingExtraName('')
+      setEditingExtraPrice('')
+      await fetchRestaurantExtras()
+      await fetchProducts()
+    } catch (error) {
+      setProductError(error instanceof Error ? error.message : 'No se pudo actualizar el ingrediente extra.')
+    }
+  }
+
+  const guardarExtrasDelProducto = async (productId: number) => {
+    const response = await apiFetch(
+      `${getApiBaseUrl()}/api/productos/${productId}/extras?restauranteId=${selectedRestauranteId}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adiciones: selectedExtraIds }),
+      },
+    )
+    if (!response.ok) {
+      const data = await response.json().catch(() => null) as { message?: string } | null
+      throw new Error(data?.message ?? 'No se pudieron guardar los ingredientes extra del producto.')
+    }
+  }
+
   // Al cambiar de cafetería, limpia el formulario para evitar editar
   // accidentalmente un producto de la cafetería anterior.
   useEffect(() => {
@@ -243,11 +336,12 @@ export default function AdminDashboardPage({
         }),
       })
 
-      const data = (await response.json()) as { message?: string }
+      const data = (await response.json()) as { id?: number; message?: string }
 
-      if (!response.ok) {
+      if (!response.ok || !data.id) {
         throw new Error(data.message ?? 'No se pudo guardar el producto.')
       }
+      await guardarExtrasDelProducto(data.id)
 
       resetProductForm()
       await fetchProducts()
@@ -265,7 +359,7 @@ export default function AdminDashboardPage({
     setCategoriaId(String(product.categoriaId))
     setDisponible(Boolean(product.disponible))
     setProductDescription(product.descripcion)
-    setIngredientesExtra(product.ingredientesExtra ?? [])
+    setSelectedExtraIds((product.ingredientesExtra ?? []).map((extra) => Number(extra.id)))
   }
 
   const handleUpdateProduct = async (event: FormEvent<HTMLFormElement>) => {
@@ -303,7 +397,6 @@ export default function AdminDashboardPage({
             categoriaId: Number(categoriaId),
             restauranteId: selectedRestauranteId,
             disponible,
-            ingredientesExtra,
           }),
         },
       )
@@ -313,6 +406,7 @@ export default function AdminDashboardPage({
       if (!response.ok) {
         throw new Error(data.message ?? 'No se pudo actualizar el producto.')
       }
+      await guardarExtrasDelProducto(editingProductId)
 
       resetProductForm()
       await fetchProducts()
@@ -826,39 +920,50 @@ export default function AdminDashboardPage({
               </select>
             </label>
 
-            <div>
-              <label>
-                Ingredientes extra
-                <input
-                  value={nuevoIngredienteExtra}
-                  onChange={(e) => setNuevoIngredienteExtra(e.target.value)}
-                  placeholder="Ej: Queso"
-                />
-              </label>
-
-              <button type="button" onClick={agregarIngredienteExtra}>
-                Agregar extra
-              </button>
-
-              {ingredientesExtra.length > 0 && (
-                <ul>
-                  {ingredientesExtra.map((extra, index) => (
-                    <li key={`${extra}-${index}`}>
-                      {extra}{' '}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setIngredientesExtra((extras) =>
-                            extras.filter((_, i) => i !== index),
-                          )
-                        }
-                      >
-                        Eliminar
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
+            <div className="product-extra-manager">
+              <h4>Ingredientes extra disponibles en esta cafetería</h4>
+              <p>Marca cuáles se podrán agregar a este producto. Cada restaurante administra sus propios precios.</p>
+              {restaurantExtras.length === 0 ? (
+                <p>Aún no hay ingredientes extra creados.</p>
+              ) : restaurantExtras.map((extra) => (
+                <div className="restaurant-extra-row" key={extra.id}>
+                  {editingExtraId === extra.id ? (
+                    <>
+                      <input aria-label="Nombre del ingrediente extra" value={editingExtraName} onChange={(event) => setEditingExtraName(event.target.value)} maxLength={50} />
+                      <input aria-label="Precio del ingrediente extra" type="number" min="1" step="1" value={editingExtraPrice} onChange={(event) => setEditingExtraPrice(event.target.value)} />
+                      <button type="button" onClick={() => void guardarEdicionExtra(extra.id)}>Guardar</button>
+                      <button type="button" className="secondary-button" onClick={() => setEditingExtraId(null)}>Cancelar</button>
+                    </>
+                  ) : (
+                    <>
+                      <label className="checkbox-row">
+                        <input
+                          type="checkbox"
+                          checked={selectedExtraIds.includes(Number(extra.id))}
+                          onChange={(event) => setSelectedExtraIds((ids) => event.target.checked
+                            ? [...new Set([...ids, Number(extra.id)])]
+                            : ids.filter((id) => id !== Number(extra.id)))}
+                        />
+                        <span>{extra.nombre} · ${Number(extra.precio).toLocaleString('es-CO')}</span>
+                      </label>
+                      <button type="button" className="mini-button" onClick={() => { setEditingExtraId(extra.id); setEditingExtraName(extra.nombre); setEditingExtraPrice(String(extra.precio)) }}>Editar precio</button>
+                    </>
+                  )}
+                </div>
+              ))}
+              <div className="new-extra-fields">
+                <label>
+                  Nuevo ingrediente extra
+                  <input value={newExtraName} onChange={(event) => setNewExtraName(event.target.value)} placeholder="Ej. Queso extra" maxLength={50} />
+                </label>
+                <label>
+                  Precio adicional (COP)
+                  <input type="number" min="1" step="1" value={newExtraPrice} onChange={(event) => setNewExtraPrice(event.target.value)} placeholder="2000" />
+                </label>
+                <button type="button" onClick={() => void handleCreateExtra()} disabled={savingExtra}>
+                  {savingExtra ? 'Creando...' : 'Crear ingrediente extra'}
+                </button>
+              </div>
             </div>
 
             <label className="checkbox-row">

@@ -318,3 +318,53 @@
     min-height: 240px;
   }
 }
+
+
+.tracking-order-items {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e5e7;
+}
+
+.tracking-order-items h3 {
+  margin: 0 0 0.75rem;
+  color: #1b1c1a;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.tracking-order-items ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.tracking-order-items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #efefed;
+}
+
+.tracking-order-items li p {
+  margin: 0.25rem 0 0;
+  color: #767961;
+  font-size: 0.9rem;
+}
+
+.tracking-order-items li > span {
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.pedido-card button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.pedido-card .pedido-card__cancel {
+  margin-top: 0.5rem;
+  background: #8f2929 !important;
+}

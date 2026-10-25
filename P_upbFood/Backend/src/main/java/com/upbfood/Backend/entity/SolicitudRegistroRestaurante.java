@@ -43,6 +43,15 @@ public class SolicitudRegistroRestaurante {
     @Column(name = "observacion_revision", length = 500)
     private String observacionRevision;
 
+    @Column(name = "token_aprobacion_hash", length = 64)
+    private String tokenAprobacionHash;
+
+    @Column(name = "token_rechazo_hash", length = 64)
+    private String tokenRechazoHash;
+
+    @Column(name = "token_revision_expiracion")
+    private LocalDateTime tokenRevisionExpiracion;
+
     @PrePersist
     protected void alCrear() {
         if (fechaSolicitud == null) {
@@ -131,5 +140,29 @@ public class SolicitudRegistroRestaurante {
 
     public void setObservacionRevision(String observacionRevision) {
         this.observacionRevision = observacionRevision;
+    }
+
+    public String getTokenAprobacionHash() {
+        return tokenAprobacionHash;
+    }
+
+    public void setTokenAprobacionHash(String tokenAprobacionHash) {
+        this.tokenAprobacionHash = tokenAprobacionHash;
+    }
+
+    public String getTokenRechazoHash() {
+        return tokenRechazoHash;
+    }
+
+    public void setTokenRechazoHash(String tokenRechazoHash) {
+        this.tokenRechazoHash = tokenRechazoHash;
+    }
+
+    public LocalDateTime getTokenRevisionExpiracion() {
+        return tokenRevisionExpiracion;
+    }
+
+    public void setTokenRevisionExpiracion(LocalDateTime tokenRevisionExpiracion) {
+        this.tokenRevisionExpiracion = tokenRevisionExpiracion;
     }
 }

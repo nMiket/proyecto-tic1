@@ -33,3 +33,15 @@
 .checkout-button:disabled { cursor: not-allowed; opacity: .55; }
 .checkout-button:disabled { opacity: .65; cursor: not-allowed; }
 .clear-button { background: transparent; color: #d4d5ce; }
+.order-item__extras { display: grid; gap: 5px; padding: 10px 11px; border-radius: 10px; background: rgba(255,255,255,.06); }
+.order-item__extras > span { color: #c0d901; font-size: .72rem; font-weight: 800; }
+.order-item__extras div { display: flex; justify-content: space-between; gap: 10px; }
+.order-item__extras div span, .order-item__extras div strong { color: #f0f0eb; font-size: .78rem; font-weight: 500; }
+.order-item__suggestions { min-width: 0; margin: 0; padding: 10px 11px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; }
+.order-item__suggestions legend { padding: 0 5px; color: #c0d901; font-size: .78rem; font-weight: 800; }
+.order-item__suggestions p { margin: 0 0 8px; color: #b9bab2; font-size: .72rem; }
+.suggestion-options { display: flex; flex-wrap: wrap; gap: 7px; }
+.suggestion-options label { display: inline-flex; align-items: center; gap: 5px; border: 1px solid #62645a; border-radius: 999px; padding: 5px 8px; cursor: pointer; }
+.suggestion-options label:has(input:checked) { border-color: #c0d901; background: rgba(192,217,1,.12); }
+.suggestion-options input { width: 13px; height: 13px; accent-color: #c0d901; }
+.suggestion-options span { color: #f0f0eb; font-size: .7rem; }

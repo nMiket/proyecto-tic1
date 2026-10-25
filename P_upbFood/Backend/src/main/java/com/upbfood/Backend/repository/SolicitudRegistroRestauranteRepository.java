@@ -24,4 +24,23 @@ public interface SolicitudRegistroRestauranteRepository
 
     List<SolicitudRegistroRestaurante> findByEstadoOrderByFechaSolicitudDesc(
             String estado);
+
+    @Query("""
+            SELECT s
+            FROM SolicitudRegistroRestaurante s
+            WHERE s.tokenAprobacionHash = :tokenHash
+               OR s.tokenRechazoHash = :tokenHash
+            """)
+    Optional<SolicitudRegistroRestaurante> buscarPorTokenRevisionParaValidar(
+            @Param("tokenHash") String tokenHash);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT s
+            FROM SolicitudRegistroRestaurante s
+            WHERE s.tokenAprobacionHash = :tokenHash
+               OR s.tokenRechazoHash = :tokenHash
+            """)
+    Optional<SolicitudRegistroRestaurante> buscarPorTokenRevision(
+            @Param("tokenHash") String tokenHash);
 }
