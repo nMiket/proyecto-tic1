@@ -56,7 +56,7 @@ export default function ConfigurarInvitacionPage() {
           data.mensaje ??
             data.message ??
             data.error ??
-            'No fue posible activar la cuenta. El enlace podría haber expirado o ya haber sido utilizado.',
+            'No fue posible activar la cuenta. Inténtalo nuevamente; si el problema continúa, contacta a soporte.',
         )
       }
 

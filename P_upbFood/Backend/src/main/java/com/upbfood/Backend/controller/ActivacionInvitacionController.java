@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Size;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
@@ -43,6 +44,20 @@ public class ActivacionInvitacionController {
                 "mensaje",
                 "Cuenta activada correctamente. Ya puedes iniciar sesión."
         ));
+    }
+
+    /**
+     * Devuelve el estado y el motivo reales (inválida, usada, expirada...) en el cuerpo JSON.
+     * Sin esto, Spring reenvía a /error, que SecurityConfig no permite, y el cliente recibe
+     * una respuesta vacía en lugar del motivo.
+     */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> manejarEstado(ResponseStatusException exception) {
+        String motivo = exception.getReason() != null
+                ? exception.getReason()
+                : "No fue posible activar la cuenta.";
+        return ResponseEntity.status(exception.getStatusCode())
+                .body(Map.of("mensaje", motivo));
     }
 
     public record ActivarCuentaRequest(

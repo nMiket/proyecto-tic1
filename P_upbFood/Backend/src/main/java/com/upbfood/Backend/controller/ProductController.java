@@ -116,8 +116,8 @@ public class ProductController {
             @PathVariable Integer id,
             @RequestParam Integer restauranteId,
             @RequestBody Map<String, Boolean> request) {
-        // La disponibilidad forma parte de la administración del menú; solo el dueño puede cambiarla.
-        authorizationService.requireOwnerForRestaurant(restauranteId);
+        // Dueño y administrador de cocina (con asignación activa) pueden cambiar la disponibilidad.
+        authorizationService.requireOwnerOrKitchenForRestaurant(restauranteId);
 
         Boolean disponible = request.get("disponible");
         if (disponible == null) {

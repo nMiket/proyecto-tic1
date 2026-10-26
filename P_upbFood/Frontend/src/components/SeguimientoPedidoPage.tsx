@@ -49,9 +49,6 @@ function formatearFecha(valor?: string | null) {
 export default function SeguimientoPedidoPage() {
   const { codigo } = useParams()
   const [codigoSeguimiento, setCodigoSeguimiento] = useState(codigo ?? '')
-  const [pedidoId, setPedidoId] = useState('')
-  const [correo, setCorreo] = useState('')
-  const [telefono, setTelefono] = useState('')
   const [pedido, setPedido] = useState<PedidoConsultado | null>(null)
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
@@ -64,13 +61,9 @@ export default function SeguimientoPedidoPage() {
     }
 
     const codigoLimpio = (codigoDesdeRuta ?? codigoSeguimiento).trim()
-    const idLimpio = pedidoId.trim()
-    const correoLimpio = correo.trim()
-    const telefonoLimpio = telefono.trim()
-    const tieneDatosAlternos = Boolean(idLimpio && (correoLimpio || telefonoLimpio))
 
-    if (!codigoLimpio && !tieneDatosAlternos) {
-      if (!silenciosa) setError('Ingresa el código de seguimiento o el número de pedido con correo o teléfono.')
+    if (!codigoLimpio) {
+      if (!silenciosa) setError('Ingresa el código de seguimiento.')
       return
     }
 
@@ -83,17 +76,7 @@ export default function SeguimientoPedidoPage() {
 
     if (!silenciosa) setCargando(true)
     try {
-      let url: string
-      if (codigoLimpio) {
-        url = `${getApiBaseUrl()}/api/pedidos/seguimiento/${encodeURIComponent(codigoLimpio)}`
-      } else {
-        const params = new URLSearchParams({ pedidoId: idLimpio })
-        // La consulta acepta correo o teléfono. Si se escriben ambos, usamos
-        // el correo para no exigir accidentalmente que coincidan los dos.
-        if (correoLimpio) params.set('correo', correoLimpio)
-        else params.set('telefono', telefonoLimpio)
-        url = `${getApiBaseUrl()}/api/pedidos/consulta?${params.toString()}`
-      }
+      const url = `${getApiBaseUrl()}/api/pedidos/seguimiento/${encodeURIComponent(codigoLimpio)}`
 
       const response = await fetch(url, { headers: { Accept: 'application/json' } })
       const data = await response.json().catch(() => null) as ({ message?: string; detail?: string } & Partial<PedidoConsultado>) | null
@@ -162,38 +145,6 @@ export default function SeguimientoPedidoPage() {
               value={codigoSeguimiento}
               onChange={(event) => setCodigoSeguimiento(event.target.value)}
               placeholder="Ej. 5eee1287-4692-4a8e..."
-            />
-          </label>
-
-          <div className="tracking-divider"><span>o busca con tus datos</span></div>
-
-          <label>
-            Número de pedido
-            <input
-              inputMode="numeric"
-              value={pedidoId}
-              onChange={(event) => setPedidoId(event.target.value)}
-              placeholder="Ej. 1042"
-            />
-          </label>
-
-          <label>
-            Correo
-            <input
-              type="email"
-              value={correo}
-              onChange={(event) => setCorreo(event.target.value)}
-              placeholder="correo@ejemplo.com"
-            />
-          </label>
-
-          <label>
-            Teléfono
-            <input
-              type="tel"
-              value={telefono}
-              onChange={(event) => setTelefono(event.target.value)}
-              placeholder="3001234567"
             />
           </label>
 

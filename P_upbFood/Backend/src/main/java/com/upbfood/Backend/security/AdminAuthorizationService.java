@@ -45,6 +45,24 @@ public class AdminAuthorizationService {
                 return admin;
         }
 
+        /**
+         * Permite dueño o administrador de cocina con asignación activa al restaurante.
+         * Se usa solo para cambiar la disponibilidad de productos.
+         */
+        public AdminUser requireOwnerOrKitchenForRestaurant(Integer restauranteId) {
+                AdminUser admin = getAuthenticatedAdmin();
+
+                AdministradorRestaurante asignacion = obtenerAsignacion(admin, restauranteId);
+
+                if (!ROL_DUENO.equals(asignacion.getTipoAdministradorId())
+                                && !ROL_COCINA.equals(asignacion.getTipoAdministradorId())) {
+                        throw new AccessDeniedException(
+                                        "No tienes permisos para cambiar la disponibilidad de productos.");
+                }
+
+                return admin;
+        }
+
         public AdminUser requireKitchenAdminForRestaurant(Integer restauranteId) {
                 AdminUser admin = getAuthenticatedAdmin();
 

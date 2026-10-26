@@ -76,6 +76,41 @@ class AdminAuthorizationServiceTest {
         );
     }
 
+    @Test
+    void ownerOrKitchenAllowsKitchenButNotOwnerOnlyOperations() {
+        AdministradorRestauranteRepository repo = mock(AdministradorRestauranteRepository.class);
+        AdminUserRepository users = mock(AdminUserRepository.class);
+        AdminUser admin = admin("cocina@upb.edu.co");
+        when(users.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
+        AdministradorRestaurante a = assignment(1, admin.getId());
+        a.setTipoAdministradorId(2);
+        a.setEstado("Activo");
+        when(repo.findById(new AdministradorRestauranteId(admin.getId(), 1))).thenReturn(Optional.of(a));
+        authenticate(admin.getEmail());
+        AdminAuthorizationService service = new AdminAuthorizationService(users, repo);
+
+        assertDoesNotThrow(() -> service.requireOwnerOrKitchenForRestaurant(1));
+        assertThrows(AccessDeniedException.class, () -> service.requireOwnerForRestaurant(1));
+    }
+
+    @Test
+    void ownerOrKitchenDeniesInactiveOrUnassigned() {
+        AdministradorRestauranteRepository repo = mock(AdministradorRestauranteRepository.class);
+        AdminUserRepository users = mock(AdminUserRepository.class);
+        AdminUser admin = admin("cocina@upb.edu.co");
+        when(users.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
+        AdministradorRestaurante inactiva = assignment(1, admin.getId());
+        inactiva.setTipoAdministradorId(2);
+        inactiva.setEstado("Inactivo");
+        when(repo.findById(new AdministradorRestauranteId(admin.getId(), 1))).thenReturn(Optional.of(inactiva));
+        when(repo.findById(new AdministradorRestauranteId(admin.getId(), 2))).thenReturn(Optional.empty());
+        authenticate(admin.getEmail());
+        AdminAuthorizationService service = new AdminAuthorizationService(users, repo);
+
+        assertThrows(AccessDeniedException.class, () -> service.requireOwnerOrKitchenForRestaurant(1));
+        assertThrows(AccessDeniedException.class, () -> service.requireOwnerOrKitchenForRestaurant(2));
+    }
+
     private void authenticate(String email) {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
