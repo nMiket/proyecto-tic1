@@ -188,19 +188,11 @@ export default function PagoPage() {
                     </p>
                 </div>
 
-                <div
-                    style={{
-                        padding: "14px 16px",
-                        borderRadius: "12px",
-                        background: "#f5f3ef",
-                        border: "1px solid #e5e5e7",
-                        marginBottom: "16px",
-                    }}
-                >
-                    <p style={{ margin: "0 0 6px" }}>
+                <div className="pago-summary-box">
+                    <p>
                         <strong>Pedido:</strong> #{pedidoId}
                     </p>
-                    <p style={{ margin: 0 }}>
+                    <p>
                         <strong>Total a pagar:</strong> $
                         {total.toLocaleString("es-CO")} COP
                     </p>
@@ -208,19 +200,9 @@ export default function PagoPage() {
 
                 {estadoPago === "pendiente" || estadoPago === "rechazado" ? (
                     <>
-                        <div
-                            style={{
-                                padding: "12px 14px",
-                                borderRadius: "10px",
-                                background: "#f8faf9",
-                                border: "1px dashed #b2d8d0",
-                                fontSize: "0.84rem",
-                                color: "#1d433d",
-                                marginBottom: "14px",
-                            }}
-                        >
+                        <div className="pago-sandbox-card">
                             <strong>Tarjeta de prueba (Stripe Sandbox):</strong>
-                            <div style={{ marginTop: "4px" }}>
+                            <div>
                                 Número: <code>4242 4242 4242 4242</code> ·
                                 Fecha: cualquier mes/año futuro (ej.{" "}
                                 <code>12/28</code>) · CVC: <code>123</code>
@@ -229,14 +211,9 @@ export default function PagoPage() {
 
                         <button
                             type="button"
+                            className="pago-stripe-button"
                             onClick={() => void iniciarPagoStripe()}
                             disabled={procesando || redirigiendoStripe}
-                            style={{
-                                width: "100%",
-                                background: "#1d1d1b",
-                                color: "#c0d901",
-                                fontWeight: 700,
-                            }}
                         >
                             {redirigiendoStripe
                                 ? "Abriendo Stripe Checkout..."
@@ -261,7 +238,7 @@ export default function PagoPage() {
                 )}
 
                 {estadoPago === "aprobado" && (
-                    <div style={{ marginTop: "14px" }}>
+                    <div className="pago-approved-box">
                         <p>
                             <strong>Código de seguimiento:</strong>{" "}
                             {codigoSeguimiento}

@@ -411,3 +411,54 @@
     gap: 0.35rem;
   }
 }
+
+.tracking-mode-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tracking-mode-tab {
+  flex: 1;
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 999px;
+  border: 1px solid #c7c9ad;
+  background: #ffffff;
+  color: #464834;
+  cursor: pointer;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.tracking-mode-tab:hover {
+  border-color: #c0d901;
+  background: #fafbf3;
+}
+
+.tracking-mode-tab.is-active {
+  border-color: #1d1d1b;
+  background: #1d1d1b;
+  color: #c0d901;
+}
+
+.tracking-form > .tracking-last-order-button {
+  min-height: 40px;
+  margin-top: 2px;
+  margin-bottom: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px dashed #c7c9ad;
+  background: #f5f3ef;
+  color: #1b1c1a;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.tracking-form > .tracking-last-order-button:hover {
+  border-color: #c0d901;
+  background: #eef6b8;
+}

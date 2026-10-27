@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getApiBaseUrl } from '../auth'
 import './SeguimientoPedidoPage.css'
@@ -56,7 +56,7 @@ export default function SeguimientoPedidoPage() {
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
 
-  const ultimoPedidoGuardado = (() => {
+  const ultimoPedidoGuardado = useMemo(() => {
     try {
       const raw = localStorage.getItem('upbfood.lastOrder')
       if (!raw) return null
@@ -65,7 +65,7 @@ export default function SeguimientoPedidoPage() {
     } catch {
       return null
     }
-  })()
+  }, [])
 
   const consultar = async (event?: FormEvent, codigoDesdeRuta?: string, silenciosa = false) => {
     event?.preventDefault()
@@ -201,43 +201,27 @@ export default function SeguimientoPedidoPage() {
             <p>Puedes usar cualquiera de las dos formas de búsqueda.</p>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.85rem' }}>
+          <div className="tracking-mode-tabs" role="tablist" aria-label="Modo de búsqueda">
             <button
               type="button"
+              role="tab"
+              aria-selected={modoBusqueda === 'codigo'}
+              className={`tracking-mode-tab ${modoBusqueda === 'codigo' ? 'is-active' : ''}`}
               onClick={() => {
                 setModoBusqueda('codigo')
                 setError('')
-              }}
-              style={{
-                flex: 1,
-                padding: '0.5rem 0.75rem',
-                fontSize: '0.82rem',
-                borderRadius: '0.6rem',
-                border: modoBusqueda === 'codigo' ? '1px solid #0f766e' : '1px solid #cbd5e1',
-                background: modoBusqueda === 'codigo' ? '#f0fdfa' : '#ffffff',
-                color: modoBusqueda === 'codigo' ? '#0f766e' : '#475569',
-                fontWeight: 700,
-                cursor: 'pointer',
               }}
             >
               Por código UUID
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={modoBusqueda === 'datos'}
+              className={`tracking-mode-tab ${modoBusqueda === 'datos' ? 'is-active' : ''}`}
               onClick={() => {
                 setModoBusqueda('datos')
                 setError('')
-              }}
-              style={{
-                flex: 1,
-                padding: '0.5rem 0.75rem',
-                fontSize: '0.82rem',
-                borderRadius: '0.6rem',
-                border: modoBusqueda === 'datos' ? '1px solid #0f766e' : '1px solid #cbd5e1',
-                background: modoBusqueda === 'datos' ? '#f0fdfa' : '#ffffff',
-                color: modoBusqueda === 'datos' ? '#0f766e' : '#475569',
-                fontWeight: 700,
-                cursor: 'pointer',
               }}
             >
               Por # pedido + contacto
@@ -279,21 +263,12 @@ export default function SeguimientoPedidoPage() {
           {ultimoPedidoGuardado?.codigoSeguimiento && (
             <button
               type="button"
+              className="tracking-last-order-button"
               onClick={() => {
                 const code = String(ultimoPedidoGuardado.codigoSeguimiento)
                 setModoBusqueda('codigo')
                 setCodigoSeguimiento(code)
                 void consultar(undefined, code)
-              }}
-              style={{
-                marginTop: '0.25rem',
-                marginBottom: '0.5rem',
-                background: '#f8fafc',
-                color: '#0f766e',
-                border: '1px dashed #99f6e4',
-                padding: '0.45rem 0.75rem',
-                fontSize: '0.8rem',
-                fontWeight: 600,
               }}
             >
               Consultar mi último pedido reciente

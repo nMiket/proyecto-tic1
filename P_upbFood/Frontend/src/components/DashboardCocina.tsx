@@ -531,7 +531,7 @@ export function DashboardCocina({ restauranteId, onLogout }: DashboardCocinaProp
       </section>
 
       {/* TABLERO KANBAN DE PEDIDOS */}
-      <div className="kanban-board">
+      <div className="kanban-board" aria-live="polite">
         <div className="kanban-column">
           <h2>Nuevos ({nuevos.length})</h2>
           {nuevos.length === 0 ? (

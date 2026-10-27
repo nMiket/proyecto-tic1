@@ -640,7 +640,7 @@ function PedidoPage() {
 }
 
 function HistorialPage() {
-  const ultimoPedido = (() => {
+  const [ultimoPedido] = useState(() => {
     try {
       const raw = localStorage.getItem('upbfood.lastOrder')
       if (!raw) return null
@@ -653,7 +653,7 @@ function HistorialPage() {
     } catch {
       return null
     }
-  })()
+  })
 
   return (
     <section className="hero-card">

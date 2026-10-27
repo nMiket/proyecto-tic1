@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Producto, IngredienteExtra } from '../types/Producto'
+import { getProductFallbackImage } from '../utils/formatters'
 import './CardProducto.css'
 
 interface CardProductoProps {
@@ -16,7 +17,14 @@ export const CardProducto = ({ producto, onAgregar, cafeteriaCerrada = false }: 
   const [modalAbierto, setModalAbierto] = useState(false)
   const [seleccionados, setSeleccionados] = useState<number[]>([])
   const [cantidad, setCantidad] = useState(1)
+  const triggerBtnRef = useRef<HTMLButtonElement | null>(null)
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null)
+  const modalRef = useRef<HTMLElement | null>(null)
   const disponible = producto.disponible !== false && !cafeteriaCerrada
+  const fallbackImage = useMemo(
+    () => getProductFallbackImage(producto.categoriaId, producto.nombre),
+    [producto.categoriaId, producto.nombre],
+  )
   const extras = useMemo(() => producto.ingredientesExtra ?? [], [producto.ingredientesExtra])
   const totalExtras = useMemo(() => extras
     .filter((extra) => seleccionados.includes(Number(extra.id)))
@@ -26,17 +34,43 @@ export const CardProducto = ({ producto, onAgregar, cafeteriaCerrada = false }: 
     setModalAbierto(false)
     setSeleccionados([])
     setCantidad(1)
+    window.setTimeout(() => {
+      triggerBtnRef.current?.focus()
+    }, 0)
   }
 
   useEffect(() => {
     if (!modalAbierto) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    closeBtnRef.current?.focus()
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         cerrarModal()
+        return
+      }
+      if (event.key === 'Tab' && modalRef.current) {
+        const focusables = modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        )
+        if (focusables.length === 0) return
+        const first = focusables[0]
+        const last = focusables[focusables.length - 1]
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault()
+          last.focus()
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault()
+          first.focus()
+        }
       }
     }
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
   }, [modalAbierto])
 
   const confirmarProducto = () => {
@@ -50,7 +84,18 @@ export const CardProducto = ({ producto, onAgregar, cafeteriaCerrada = false }: 
     <>
       <article className={`product-card ${disponible ? '' : 'product-card--unavailable'}`}>
         <div className="product-card__image-wrap">
-          <img className="product-card__image" src={producto.imagenUrl} alt={producto.nombre} />
+          <img
+            className="product-card__image"
+            src={producto.imagenUrl || fallbackImage}
+            alt={producto.nombre}
+            loading="lazy"
+            decoding="async"
+            onError={(event) => {
+              if (event.currentTarget.src !== fallbackImage) {
+                event.currentTarget.src = fallbackImage
+              }
+            }}
+          />
           {!disponible && (
             <span className="product-card__badge">
               {cafeteriaCerrada ? 'Cerrado' : 'No disponible'}
@@ -68,7 +113,13 @@ export const CardProducto = ({ producto, onAgregar, cafeteriaCerrada = false }: 
               </button>
             ) : (
               onAgregar && (
-                <button className="product-card__button" type="button" onClick={() => disponible && setModalAbierto(true)} disabled={!disponible}>
+                <button
+                  ref={triggerBtnRef}
+                  className="product-card__button"
+                  type="button"
+                  onClick={() => disponible && setModalAbierto(true)}
+                  disabled={!disponible}
+                >
                   {disponible ? 'Ver detalles' : 'No disponible'}
                 </button>
               )
@@ -79,9 +130,19 @@ export const CardProducto = ({ producto, onAgregar, cafeteriaCerrada = false }: 
 
       {modalAbierto && (
         <div className="product-detail-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) cerrarModal() }}>
-          <section className="product-detail-modal" role="dialog" aria-modal="true" aria-labelledby="product-detail-title">
-            <button type="button" className="product-detail-close" aria-label="Cerrar detalles" onClick={cerrarModal}>×</button>
-            <img className="product-detail-image" src={producto.imagenUrl} alt={producto.nombre} />
+          <section ref={modalRef} className="product-detail-modal" role="dialog" aria-modal="true" aria-labelledby="product-detail-title">
+            <button ref={closeBtnRef} type="button" className="product-detail-close" aria-label="Cerrar detalles" onClick={cerrarModal}>×</button>
+            <img
+              className="product-detail-image"
+              src={producto.imagenUrl || fallbackImage}
+              alt={producto.nombre}
+              decoding="async"
+              onError={(event) => {
+                if (event.currentTarget.src !== fallbackImage) {
+                  event.currentTarget.src = fallbackImage
+                }
+              }}
+            />
             <div className="product-detail-content">
               <p className="section-kicker">Detalles del producto</p>
               <h2 id="product-detail-title">{producto.nombre}</h2>

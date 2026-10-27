@@ -51,45 +51,28 @@ function ListaProductos({
 
   if (cargando) {
     return (
-      <p style={{ color: "#557571" }}>
-        Cargando menú de la cafetería...
-      </p>
+      <div className="skeleton-grid skeleton-grid--products" role="status" aria-live="polite" aria-label="Cargando carta de productos">
+        {[1, 2, 3, 4].map((item) => (
+          <div className="skeleton-card" key={item}>
+            <div className="skeleton-block skeleton-block--media" />
+            <div className="skeleton-block skeleton-block--title" />
+            <div className="skeleton-block skeleton-block--line" />
+            <div className="skeleton-block skeleton-block--pill" />
+          </div>
+        ))}
+      </div>
     );
   }
 
   if (error) {
-    return <p>No se pudieron cargar los productos.</p>;
+    return <p className="product-search__empty">No se pudieron cargar los productos.</p>;
   }
 
   if (productos.length === 0) {
     return (
-      <div
-        style={{
-          padding: "36px 20px",
-          backgroundColor: "#fff",
-          borderRadius: "14px",
-          textAlign: "center",
-          border: "1px dashed #b2ded6",
-        }}
-      >
-        <h3
-          style={{
-            margin: "0 0 8px",
-            color: "#0f3d3e",
-          }}
-        >
-          Sin productos en este momento
-        </h3>
-
-        <p
-          style={{
-            color: "#557571",
-            margin: 0,
-            fontSize: "0.95rem",
-          }}
-        >
-          Esta cafetería aún no tiene productos registrados en su carta.
-        </p>
+      <div className="product-search__empty">
+        <strong>Sin productos en este momento</strong>
+        <p>Esta cafetería aún no tiene productos registrados en su carta.</p>
       </div>
     );
   }
@@ -113,18 +96,7 @@ function ListaProductos({
         </label>
       )}
 
-      <div
-        className="product-catalog__grid"
-      style={{
-        display: "grid",
-        gridTemplateColumns:
-          "repeat(auto-fit, minmax(260px, 1fr))",
-        gap: "20px",
-        maxHeight: "600px",
-        overflowY: "auto",
-        padding: "8px",
-      }}
-    >
+      <div className="product-catalog__grid">
       {productosVisibles.map((producto) => (
         <CardProducto
           key={producto.id}

@@ -174,6 +174,7 @@ export default function FormularioCliente() {
                         <input
                             id="cliente-nombre"
                             type="text"
+                            autoComplete="name"
                             placeholder="Ej. Julián Miranda"
                             value={nombre}
                             aria-invalid={Boolean(errores.nombre)}
@@ -191,7 +192,9 @@ export default function FormularioCliente() {
                         <label htmlFor="cliente-telefono">Teléfono</label>
                         <input
                             id="cliente-telefono"
-                            type="text"
+                            type="tel"
+                            inputMode="numeric"
+                            autoComplete="tel"
                             placeholder="Ej. 3001234567"
                             value={telefono}
                             aria-invalid={Boolean(errores.telefono)}
@@ -210,6 +213,7 @@ export default function FormularioCliente() {
                         <input
                             id="cliente-correo"
                             type="email"
+                            autoComplete="email"
                             placeholder="Ej. nombre.apellido@upb.edu.co"
                             value={correo}
                             aria-invalid={Boolean(errores.correo)}

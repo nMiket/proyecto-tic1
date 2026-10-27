@@ -1,6 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 
 :root {
+  --color-surface: #fbf9f5;
+  --color-surface-card: #ffffff;
+  --color-surface-low: #f5f3ef;
+  --color-surface-high: #efeeea;
+  --color-primary: #c0d901;
+  --color-primary-hover: #d5ef2b;
+  --color-primary-tint: #586400;
+  --color-dark: #121212;
+  --color-dark-elevated: #1d1d1b;
+  --color-text: #1b1c1a;
+  --color-text-secondary: #464834;
+  --color-muted: #767961;
+  --color-border: #e5e5e7;
+  --color-border-strong: #c7c9ad;
+  --color-success-bg: #e5f5ef;
+  --color-success-text: #176447;
+  --color-error-bg: #ffdad6;
+  --color-error-text: #93000a;
+
   font-family: 'Inter', 'Helvetica Neue', sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -8,8 +27,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #1b1c1a;
-  background: #fbf9f5;
+  color: var(--color-text);
+  background: var(--color-surface);
 }
 
 * {
@@ -26,7 +45,7 @@ body,
 
 body {
   min-height: 100vh;
-  background: #fbf9f5;
+  background: var(--color-surface);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -40,4 +59,78 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Skeleton Screens — UI/UX Pro Max Loading States */
+@keyframes upbSkeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-grid {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+}
+
+.skeleton-grid--products {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.skeleton-card {
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface-card);
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.skeleton-block {
+  border-radius: 10px;
+  background: linear-gradient(90deg, #efeeea 25%, #e4e2de 50%, #efeeea 75%);
+  background-size: 200% 100%;
+  animation: upbSkeletonShimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-block--media {
+  height: 148px;
+  border-radius: 12px;
+}
+
+.skeleton-block--title {
+  height: 22px;
+  width: 65%;
+}
+
+.skeleton-block--line {
+  height: 14px;
+  width: 90%;
+}
+
+.skeleton-block--pill {
+  height: 36px;
+  width: 38%;
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

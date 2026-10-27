@@ -44,7 +44,17 @@ export default function RestaurantMenuPage() {
       .finally(() => setCargando(false))
   }, [restauranteId])
 
-  if (cargando) return <div className="restaurant-menu-state">Cargando menú...</div>
+  if (cargando) {
+    return (
+      <section className="restaurant-menu-page" aria-live="polite" aria-busy="true">
+        <div className="skeleton-card" role="status" aria-label="Cargando menú de la cafetería">
+          <div className="skeleton-block skeleton-block--media" />
+          <div className="skeleton-block skeleton-block--title" />
+          <div className="skeleton-block skeleton-block--line" />
+        </div>
+      </section>
+    )
+  }
 
   if (error || !restaurante) {
     return (

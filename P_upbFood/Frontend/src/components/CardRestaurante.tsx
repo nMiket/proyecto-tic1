@@ -57,6 +57,13 @@ function CardRestaurante({ restaurante, seleccionado, onClick }: CardRestaurante
         className="restaurant-card__image"
         src={imagenUrl}
         alt={`Imagen de ${restaurante.nombre}`}
+        loading="lazy"
+        decoding="async"
+        onError={(event) => {
+          if (event.currentTarget.src !== DEFAULT_IMAGE) {
+            event.currentTarget.src = DEFAULT_IMAGE
+          }
+        }}
       />
 
       <div className="restaurant-card__content">

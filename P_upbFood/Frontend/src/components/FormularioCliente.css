@@ -193,3 +193,88 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
+
+/* Estilos para PagoPage (Stripe Checkout) */
+.pago-summary-box {
+    padding: 16px 18px;
+    border-radius: 12px;
+    background: #f5f3ef;
+    border: 1px solid #e5e5e7;
+    margin-bottom: 16px;
+    display: grid;
+    gap: 6px;
+    color: #1b1c1a;
+}
+
+.pago-summary-box p {
+    margin: 0;
+}
+
+.pago-sandbox-card {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #fafbf3;
+    border: 1px dashed #c7c9ad;
+    font-size: 0.84rem;
+    color: #464834;
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.pago-sandbox-card strong {
+    color: #1b1c1a;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.pago-sandbox-card code {
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #e5e5e7;
+    color: #121212;
+    font-weight: 700;
+}
+
+.cliente-card .pago-stripe-button {
+    width: 100%;
+    background: #1d1d1b;
+    color: #c0d901;
+    font-weight: 700;
+    transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.cliente-card .pago-stripe-button:hover:not(:disabled) {
+    background: #30312e;
+    transform: translateY(-1px);
+}
+
+.cliente-card .pago-stripe-button:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+.mensaje-error {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #ffdad6;
+    color: #93000a;
+    font-weight: 600;
+    text-align: center;
+}
+
+.pago-approved-box {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e5e7;
+    display: grid;
+    gap: 10px;
+}
+
+.pago-approved-box p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #464834;
+    overflow-wrap: anywhere;
+}
