@@ -76,12 +76,10 @@ public class StripeService {
                 + "&pedidoId=" + encode(String.valueOf(pedidoId))
                 + "&total=" + encode(total.toPlainString());
 
-        String successUrl = basePagoUrl + "&stripe_session_id={CHECKOUT_SESSION_ID}";
         String cancelUrl = basePagoUrl + "&stripe_cancelled=1";
 
         Map<String, String> formParams = new LinkedHashMap<>();
         formParams.put("mode", "payment");
-        formParams.put("payment_method_types[0]", "card");
         formParams.put("line_items[0][price_data][currency]", "cop");
         formParams.put("line_items[0][price_data][unit_amount]", String.valueOf(unitAmountCentavos));
         formParams.put("line_items[0][price_data][product_data][name]", descripcionProducto);
@@ -182,3 +180,4 @@ public class StripeService {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 }
+
