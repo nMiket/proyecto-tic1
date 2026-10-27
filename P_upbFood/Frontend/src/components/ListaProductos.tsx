@@ -8,12 +8,14 @@ type ListaProductosProps = {
   restauranteId: number;
   onAgregar?: (producto: Producto) => void;
   mostrarBuscador?: boolean;
+  cafeteriaCerrada?: boolean;
 };
 
 function ListaProductos({
   restauranteId,
   onAgregar,
   mostrarBuscador = false,
+  cafeteriaCerrada = false,
 }: ListaProductosProps) {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -128,6 +130,7 @@ function ListaProductos({
           key={producto.id}
           producto={producto}
           onAgregar={onAgregar}
+          cafeteriaCerrada={cafeteriaCerrada}
         />
       ))}
       {productosVisibles.length === 0 && (

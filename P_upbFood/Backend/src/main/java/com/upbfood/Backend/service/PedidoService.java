@@ -66,13 +66,20 @@ public class PedidoService {
     @Transactional
     public Map<String, Object> crearPedido(CreateOrderRequest request) {
 
-        Integer tiempoConfigurado = jdbcTemplate.queryForObject(
-                "SELECT tiempo_pedido FROM restaurante WHERE restaurante_id = ?",
-                Integer.class,
+        List<Map<String, Object>> datosRestauranteList = jdbcTemplate.queryForList(
+                "SELECT tiempo_pedido, estado FROM restaurante WHERE restaurante_id = ?",
                 request.restauranteId());
-        if (tiempoConfigurado == null) {
+        if (datosRestauranteList.isEmpty()) {
             throw new IllegalArgumentException("No se encontró la cafetería seleccionada.");
         }
+        Map<String, Object> datosRestaurante = datosRestauranteList.get(0);
+        String estadoRestaurante = String.valueOf(datosRestaurante.getOrDefault("estado", "Abierto"));
+        if ("Cerrado".equalsIgnoreCase(estadoRestaurante.trim())) {
+            throw new IllegalArgumentException(
+                    "Esta cafetería se encuentra cerrada en este momento y no está recibiendo pedidos.");
+        }
+        Object tiempoObj = datosRestaurante.get("tiempo_pedido");
+        Integer tiempoConfigurado = tiempoObj instanceof Number num ? num.intValue() : 15;
 
         int minutosPreparacion = Math.max(15, tiempoConfigurado);
         LocalDateTime horaMinimaRecogida = LocalDateTime.now(ZoneId.of("America/Bogota"))

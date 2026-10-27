@@ -5,17 +5,18 @@ import './CardProducto.css'
 interface CardProductoProps {
   producto: Producto
   onAgregar?: (producto: Producto) => void
+  cafeteriaCerrada?: boolean
 }
 
 const formatearCOP = (valor: number) => new Intl.NumberFormat('es-CO', {
   style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0,
 }).format(valor)
 
-export const CardProducto = ({ producto, onAgregar }: CardProductoProps) => {
+export const CardProducto = ({ producto, onAgregar, cafeteriaCerrada = false }: CardProductoProps) => {
   const [modalAbierto, setModalAbierto] = useState(false)
   const [seleccionados, setSeleccionados] = useState<number[]>([])
   const [cantidad, setCantidad] = useState(1)
-  const disponible = producto.disponible !== false
+  const disponible = producto.disponible !== false && !cafeteriaCerrada
   const extras = useMemo(() => producto.ingredientesExtra ?? [], [producto.ingredientesExtra])
   const totalExtras = useMemo(() => extras
     .filter((extra) => seleccionados.includes(Number(extra.id)))
@@ -50,17 +51,27 @@ export const CardProducto = ({ producto, onAgregar }: CardProductoProps) => {
       <article className={`product-card ${disponible ? '' : 'product-card--unavailable'}`}>
         <div className="product-card__image-wrap">
           <img className="product-card__image" src={producto.imagenUrl} alt={producto.nombre} />
-          {!disponible && <span className="product-card__badge">No disponible</span>}
+          {!disponible && (
+            <span className="product-card__badge">
+              {cafeteriaCerrada ? 'Cerrado' : 'No disponible'}
+            </span>
+          )}
         </div>
         <div className="product-card__content">
           <h3>{producto.nombre}</h3>
           <p>{producto.descripcion}</p>
           <div className="product-card__footer">
             <span className="product-card__price">{formatearCOP(Number(producto.precio))}</span>
-            {onAgregar && (
-              <button className="product-card__button" type="button" onClick={() => disponible && setModalAbierto(true)} disabled={!disponible}>
-                {disponible ? 'Ver detalles' : 'No disponible'}
+            {cafeteriaCerrada ? (
+              <button className="product-card__button" type="button" disabled>
+                Cafetería cerrada
               </button>
+            ) : (
+              onAgregar && (
+                <button className="product-card__button" type="button" onClick={() => disponible && setModalAbierto(true)} disabled={!disponible}>
+                  {disponible ? 'Ver detalles' : 'No disponible'}
+                </button>
+              )
             )}
           </div>
         </div>

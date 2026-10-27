@@ -55,6 +55,8 @@ export default function RestaurantMenuPage() {
     )
   }
 
+  const estaCerrado = restaurante.estado?.trim().toLowerCase() === 'cerrado'
+
   return (
     <section className="restaurant-menu-page">
       <button className="restaurant-menu__back" type="button" onClick={() => navigate('/')}>
@@ -64,12 +66,23 @@ export default function RestaurantMenuPage() {
       <header className="restaurant-menu__hero">
         <img src={restaurante.imagenUrl || restaurante.imagen || DEFAULT_IMAGE} alt={`Imagen de ${restaurante.nombre}`} />
         <div className="restaurant-menu__hero-content">
-          <span className="restaurant-menu__status">{restaurante.estado || 'Disponible'}</span>
+          <span className={`restaurant-menu__status ${estaCerrado ? 'restaurant-menu__status--closed' : ''}`}>
+            {restaurante.estado || 'Disponible'}
+          </span>
           <p className="section-kicker">Menú de la cafetería</p>
           <h1>{restaurante.nombre}</h1>
           <p>{restaurante.ubicacion} · Recogida estimada en {restaurante.tiempoEstimadoMin || 15} minutos</p>
         </div>
       </header>
+
+      {estaCerrado && (
+        <div className="restaurant-menu__closed-banner" role="alert">
+          <strong>Cafetería cerrada en este momento</strong>
+          <span>
+            Esta cafetería no está recibiendo pedidos actualmente. Puedes consultar su carta, pero la compra está deshabilitada hasta que vuelva a abrir.
+          </span>
+        </div>
+      )}
 
       <div className="restaurant-menu__layout">
         <div className="restaurant-menu__catalog">
@@ -78,19 +91,29 @@ export default function RestaurantMenuPage() {
               <p className="section-kicker">Carta disponible</p>
               <h2>Elige tus productos</h2>
             </div>
-            <span>Abre los detalles para elegir ingredientes extra.</span>
+            <span>
+              {estaCerrado
+                ? 'Pedidos deshabilitados mientras la cafetería esté cerrada.'
+                : 'Abre los detalles para elegir ingredientes extra.'}
+            </span>
           </div>
           <ListaProductos
             restauranteId={restaurante.id}
             mostrarBuscador
-            onAgregar={(product) => agregarProducto({
-              ...product,
-              id: Number(product.id),
-              restauranteId: restaurante.id,
-              tiempoEstimadoMin: restaurante.tiempoEstimadoMin || 15,
-              imagenUrl: product.imagenUrl,
-              adiciones: product.adiciones ?? [],
-            })}
+            cafeteriaCerrada={estaCerrado}
+            onAgregar={
+              estaCerrado
+                ? undefined
+                : (product) =>
+                    agregarProducto({
+                      ...product,
+                      id: Number(product.id),
+                      restauranteId: restaurante.id,
+                      tiempoEstimadoMin: restaurante.tiempoEstimadoMin || 15,
+                      imagenUrl: product.imagenUrl,
+                      adiciones: product.adiciones ?? [],
+                    })
+            }
           />
         </div>
 

@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import { useCart } from '../context/useCart'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { apiFetch, getApiBaseUrl } from '../auth'
 import './ResumenPedido.css'
 
 function obtenerSugerencias(producto: { nombre: string; descripcion?: string }): string[] {
@@ -84,6 +86,28 @@ function ResumenPedido({
   const tiempoEstimadoMin =
     items.length > 0 ? Math.max(15, ...items.map((item) => item.tiempoEstimadoMin || 15)) : 15
   const restauranteActivoId = items[0]?.restauranteId
+  const [cafeteriaCerrada, setCafeteriaCerrada] = useState(false)
+
+  useEffect(() => {
+    if (!restauranteActivoId) {
+      setCafeteriaCerrada(false)
+      return
+    }
+    let cancelled = false
+    void apiFetch(`${getApiBaseUrl()}/api/restaurantes`)
+      .then((res) => (res.ok ? (res.json() as Promise<Array<{ id: number; estado?: string }>>) : []))
+      .then((lista) => {
+        if (cancelled) return
+        const actual = lista.find((r) => Number(r.id) === Number(restauranteActivoId))
+        setCafeteriaCerrada(actual?.estado?.trim().toLowerCase() === 'cerrado')
+      })
+      .catch(() => {
+        if (!cancelled) setCafeteriaCerrada(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [restauranteActivoId, location.pathname])
 
   const subtotalBase = items.reduce(
     (acc, item) => acc + Number(item.precio) * item.cantidad,
@@ -152,6 +176,12 @@ function ResumenPedido({
       {cartError && (
         <p className="cart-error" role="alert">
           {cartError}
+        </p>
+      )}
+
+      {cafeteriaCerrada && items.length > 0 && (
+        <p className="cart-error" role="alert">
+          Esta cafetería se encuentra cerrada en este momento. No es posible confirmar el pedido hasta que vuelva a abrir.
         </p>
       )}
 
@@ -306,9 +336,10 @@ function ResumenPedido({
           <button
             type="button"
             className="checkout-button"
-            onClick={() => navigate(checkoutPath)}
+            disabled={cafeteriaCerrada}
+            onClick={() => !cafeteriaCerrada && navigate(checkoutPath)}
           >
-            {checkoutLabel}
+            {cafeteriaCerrada ? 'Cafetería cerrada' : checkoutLabel}
           </button>
         )}
         {items.length > 0 && (

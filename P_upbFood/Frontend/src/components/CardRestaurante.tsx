@@ -26,6 +26,7 @@ const MONTANA_IMAGE =
 
 function CardRestaurante({ restaurante, seleccionado, onClick }: CardRestauranteProps) {
   const estadoClass = restaurante.estado.toLowerCase().replace(' ', '-')
+  const estaCerrado = restaurante.estado.trim().toLowerCase() === 'cerrado'
   const rawImage = restaurante.imagenUrl || restaurante.imagen
   const imagenUrl = rawImage
     ? rawImage
@@ -33,14 +34,20 @@ function CardRestaurante({ restaurante, seleccionado, onClick }: CardRestaurante
       ? MONTANA_IMAGE
       : DEFAULT_IMAGE
 
+  const handleActivate = () => {
+    if (estaCerrado || !onClick) return
+    onClick()
+  }
+
   return (
     <article 
-      className={`restaurant-card ${seleccionado ? 'restaurant-card--selected' : ''}`}
-      onClick={onClick}
+      className={`restaurant-card ${seleccionado ? 'restaurant-card--selected' : ''} ${estaCerrado ? 'restaurant-card--closed' : ''}`}
+      onClick={handleActivate}
       role="button"
-      tabIndex={0}
+      aria-disabled={estaCerrado}
+      tabIndex={estaCerrado ? -1 : 0}
       onKeyDown={(e) => {
-        if ((e.key === 'Enter' || e.key === ' ') && onClick) {
+        if ((e.key === 'Enter' || e.key === ' ') && !estaCerrado && onClick) {
           e.preventDefault()
           onClick()
         }
@@ -66,7 +73,11 @@ function CardRestaurante({ restaurante, seleccionado, onClick }: CardRestaurante
         </p>
 
         <div className="restaurant-card__selection">
-          {seleccionado ? (
+          {estaCerrado ? (
+            <span className="restaurant-card__selection--closed">
+              Cafetería cerrada · Pedidos deshabilitados
+            </span>
+          ) : seleccionado ? (
             <span className="restaurant-card__selection--active">
               Menú seleccionado
             </span>
