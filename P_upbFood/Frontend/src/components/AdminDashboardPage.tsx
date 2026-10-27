@@ -91,11 +91,16 @@ type HistorialPedido = {
 type FiltroHistorial = 'todos' | 'activos' | 'entregados' | 'cancelados'
 type AdminTab = 'estadisticas' | 'historial' | 'menu' | 'personal'
 
-const CATEGORIAS_MENU = [
+type CategoriaMenuItem = {
+  id: string
+  nombre: string
+}
+
+const CATEGORIAS_BASE: CategoriaMenuItem[] = [
   { id: '1', nombre: 'Almuerzos' },
   { id: '2', nombre: 'Bebidas' },
   { id: '3', nombre: 'Snacks' },
-] as const
+]
 
 const formatMoney = formatCOP
 
@@ -197,6 +202,10 @@ export default function AdminDashboardPage({
   const [productPrice, setProductPrice] = useState('')
   const [productImageUrl, setProductImageUrl] = useState('')
   const [categoriaId, setCategoriaId] = useState('1')
+  const [categoriasMenu, setCategoriasMenu] = useState<CategoriaMenuItem[]>(CATEGORIAS_BASE)
+  const [mostrarFormCategoria, setMostrarFormCategoria] = useState(false)
+  const [nuevaCategoriaNombre, setNuevaCategoriaNombre] = useState('')
+  const [guardandoCategoria, setGuardandoCategoria] = useState(false)
   const [disponible, setDisponible] = useState(true)
   const [productError, setProductError] = useState('')
   const [productSuccess, setProductSuccess] = useState('')
@@ -417,6 +426,70 @@ export default function AdminDashboardPage({
   useEffect(() => {
     void fetchProducts()
   }, [fetchProducts])
+
+  // Carga categorías del catálogo
+  const fetchCategorias = useCallback(async () => {
+    try {
+      const response = await apiFetch(`${getApiBaseUrl()}/api/categorias`)
+      if (!response.ok) return
+      const data = (await response.json()) as CategoriaMenuItem[]
+      if (Array.isArray(data) && data.length > 0) {
+        setCategoriasMenu(
+          data.map((cat) => ({ id: String(cat.id), nombre: String(cat.nombre) })),
+        )
+      }
+    } catch (error) {
+      console.error('Error al cargar categorías:', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    void fetchCategorias()
+  }, [fetchCategorias])
+
+  const handleCrearCategoria = async () => {
+    const nombreLimpio = nuevaCategoriaNombre.trim()
+    if (!nombreLimpio) {
+      setProductError('Escribe el nombre de la nueva categoría.')
+      return
+    }
+    setGuardandoCategoria(true)
+    setProductError('')
+    try {
+      const response = await apiFetch(`${getApiBaseUrl()}/api/categorias`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: nombreLimpio,
+          restauranteId: selectedRestauranteId,
+        }),
+      })
+      const data = (await response.json().catch(() => null)) as {
+        id?: string | number
+        nombre?: string
+        message?: string
+      } | null
+      if (!response.ok || !data?.id) {
+        throw new Error(data?.message ?? 'No se pudo crear la categoría.')
+      }
+      const nuevaCat: CategoriaMenuItem = {
+        id: String(data.id),
+        nombre: String(data.nombre ?? nombreLimpio),
+      }
+      setCategoriasMenu((prev) =>
+        prev.some((c) => c.id === nuevaCat.id) ? prev : [...prev, nuevaCat],
+      )
+      setCategoriaId(nuevaCat.id)
+      setNuevaCategoriaNombre('')
+      setMostrarFormCategoria(false)
+    } catch (error) {
+      setProductError(
+        error instanceof Error ? error.message : 'No se pudo crear la categoría.',
+      )
+    } finally {
+      setGuardandoCategoria(false)
+    }
+  }
 
   // Carga extras de la cafetería
   const fetchRestaurantExtras = useCallback(async () => {
@@ -1690,7 +1763,7 @@ export default function AdminDashboardPage({
                   <div className="admin-form-group">
                     <label>Categoría</label>
                     <div className="admin-category-pills">
-                      {CATEGORIAS_MENU.map((cat) => (
+                      {categoriasMenu.map((cat) => (
                         <button
                           key={cat.id}
                           type="button"
@@ -1700,7 +1773,34 @@ export default function AdminDashboardPage({
                           {cat.nombre}
                         </button>
                       ))}
+                      <button
+                        type="button"
+                        className="admin-add-category-btn"
+                        onClick={() => setMostrarFormCategoria((prev) => !prev)}
+                        title="Añadir una nueva categoría de comida"
+                      >
+                        {mostrarFormCategoria ? 'Cancelar' : '+ Categoría'}
+                      </button>
                     </div>
+                    {mostrarFormCategoria && (
+                      <div className="admin-new-category-inline">
+                        <input
+                          type="text"
+                          value={nuevaCategoriaNombre}
+                          onChange={(e) => setNuevaCategoriaNombre(e.target.value)}
+                          placeholder="Ej: Postres, Desayunos..."
+                          maxLength={50}
+                        />
+                        <button
+                          type="button"
+                          className="mini-button"
+                          disabled={guardandoCategoria}
+                          onClick={() => void handleCrearCategoria()}
+                        >
+                          {guardandoCategoria ? '...' : 'Añadir'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1950,7 +2050,7 @@ export default function AdminDashboardPage({
                   >
                     Todos ({products.length})
                   </button>
-                  {CATEGORIAS_MENU.map((cat) => {
+                  {categoriasMenu.map((cat) => {
                     const count = products.filter((p) => String(p.categoriaId) === cat.id).length
                     return (
                       <button
@@ -1984,7 +2084,7 @@ export default function AdminDashboardPage({
                     const isToggling = togglingProductId === product.id
                     const extrasCount = product.ingredientesExtra?.length ?? 0
                     const categoryLabel =
-                      CATEGORIAS_MENU.find((c) => c.id === String(product.categoriaId))?.nombre ??
+                      categoriasMenu.find((c) => c.id === String(product.categoriaId))?.nombre ??
                       'Menú'
 
                     return (

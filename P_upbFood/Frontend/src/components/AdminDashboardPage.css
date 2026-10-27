@@ -766,6 +766,35 @@
   color: #ffffff;
 }
 
+.admin-add-category-btn {
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1.5px dashed #0f766e;
+  background: #f0fdf9;
+  color: #0f766e;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.admin-add-category-btn:hover {
+  background: #ccfbf1;
+}
+
+.admin-new-category-inline {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+  margin-top: 0.4rem;
+}
+
+.admin-new-category-inline input {
+  flex: 1;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.82rem;
+}
+
 /* Interruptor moderno de disponibilidad */
 .admin-toggle-switch {
   display: inline-flex;
@@ -981,6 +1010,8 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 0.2rem;
+  background: #f0ede8;
+  color: #123e36;
 }
 
 .admin-product-category-badge.cat-1 {

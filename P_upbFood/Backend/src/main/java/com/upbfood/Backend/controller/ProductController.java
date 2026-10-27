@@ -56,6 +56,64 @@ public class ProductController {
         return getProductsByRestaurant(restauranteId);
     }
 
+    @GetMapping("/categorias")
+    public ResponseEntity<List<Map<String, Object>>> listCategorias() {
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                """
+                SELECT CAST(tipo_producto_id AS TEXT) AS id,
+                       nombre_tipo_producto AS nombre
+                FROM tipo_producto
+                WHERE tipo_producto_id <> 4
+                ORDER BY tipo_producto_id ASC
+                """);
+        return ResponseEntity.ok(rows);
+    }
+
+    @Transactional
+    @PostMapping("/categorias")
+    public ResponseEntity<Map<String, Object>> createCategoria(
+            @RequestBody Map<String, Object> request) {
+        Object restObj = request.get("restauranteId");
+        if (restObj instanceof Number restNum) {
+            authorizationService.requireOwnerForRestaurant(restNum.intValue());
+        } else {
+            throw new IllegalArgumentException("Se requiere el identificador de la cafetería.");
+        }
+
+        String nombre = String.valueOf(request.getOrDefault("nombre", "")).trim();
+        if (nombre.isBlank() || nombre.length() > 50) {
+            throw new IllegalArgumentException("El nombre de la categoría debe tener entre 1 y 50 caracteres.");
+        }
+        if ("Adición".equalsIgnoreCase(nombre) || "Adicion".equalsIgnoreCase(nombre)) {
+            throw new IllegalArgumentException("Ese nombre está reservado para los ingredientes extra.");
+        }
+
+        List<Map<String, Object>> existentes = jdbcTemplate.queryForList(
+                """
+                SELECT CAST(tipo_producto_id AS TEXT) AS id,
+                       nombre_tipo_producto AS nombre
+                FROM tipo_producto
+                WHERE LOWER(TRIM(nombre_tipo_producto)) = LOWER(TRIM(?))
+                  AND tipo_producto_id <> 4
+                LIMIT 1
+                """,
+                nombre);
+
+        if (!existentes.isEmpty()) {
+            return ResponseEntity.ok(existentes.get(0));
+        }
+
+        Integer nuevoId = jdbcTemplate.queryForObject(
+                "SELECT fn_tipo_producto_crear(?)",
+                Integer.class,
+                nombre);
+
+        Map<String, Object> nuevaCategoria = new HashMap<>();
+        nuevaCategoria.put("id", String.valueOf(nuevoId));
+        nuevaCategoria.put("nombre", nombre);
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevaCategoria);
+    }
+
     
         @GetMapping("/productos/admin")
         public ResponseEntity<List<Map<String, Object>>> listProductosAdmin(
