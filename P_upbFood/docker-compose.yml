@@ -4,6 +4,8 @@ services:
     container_name: upbfood-db
     restart: unless-stopped
     environment:
+      TZ: America/Bogota
+      PGTZ: America/Bogota
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -30,6 +32,7 @@ services:
     
     
     environment:
+      TZ: America/Bogota
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
       APP_NOTIFICACIONES_CORREO_DESTINO: ${APP_NOTIFICACIONES_CORREO_DESTINO}

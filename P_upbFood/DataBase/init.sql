@@ -280,6 +280,18 @@ CREATE TABLE pago (
     fecha         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX IF NOT EXISTS idx_pedido_restaurante_fecha
+    ON pedido (restaurante_id, fecha DESC);
+
+CREATE INDEX IF NOT EXISTS idx_pedido_restaurante_estado
+    ON pedido (restaurante_id, estado);
+
+CREATE INDEX IF NOT EXISTS idx_detalle_pedido_pedido_id
+    ON detalle_pedido (pedido_id);
+
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_admin_id
+    ON refresh_tokens (administrador_id);
+
 
 -- ----------------------------------------------------------------------------
 -- 3. FUNCIONES ALMACENADAS (PL/pgSQL)
