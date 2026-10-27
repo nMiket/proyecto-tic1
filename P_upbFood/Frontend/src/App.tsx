@@ -7,7 +7,6 @@ import {
   Navigate,
   Route,
   Routes,
-  useLocation,
   useNavigate,
 } from 'react-router-dom'
 import ListaRestaurantes from './components/ListaRestaurantes'
@@ -34,11 +33,7 @@ export function App() {
   const [restauranteId, setRestauranteId] = useState<number | null>(null)
   const [asignaciones, setAsignaciones] = useState<AsignacionRestaurante[]>([])
 
-  const location = useLocation()
   const navigate = useNavigate()
-  const esRutaAdmin =
-    location.pathname === '/admin' ||
-    location.pathname.startsWith('/admin/')
 
   const tieneRolDueno = asignaciones.some(
     (asignacion) => Number(asignacion.tipoAdministradorId) === 1
@@ -55,9 +50,17 @@ const rutaPanelPrincipal = soloCocina
   ? '/admin/cocina'
   : '/admin/dashboard'
 
-  const restauranteCocinaId = asignaciones.find(
-    (asignacion) => Number(asignacion.tipoAdministradorId) === 2
-  )?.restauranteId ?? null
+  // El dueno (rol 1) tambien puede ver la vista de cocina de su restaurante.
+  // Primero se busca asignacion de cocinero; si no existe, se usa la del dueno.
+  const restauranteCocinaId =
+    asignaciones.find(
+      (asignacion) => Number(asignacion.tipoAdministradorId) === 2
+    )?.restauranteId ??
+    asignaciones.find(
+      (asignacion) => Number(asignacion.tipoAdministradorId) === 1
+    )?.restauranteId ??
+    restauranteId ??
+    null
 
   useEffect(() => {
     let cancelled = false
@@ -118,14 +121,7 @@ const rutaPanelPrincipal = soloCocina
         </Link>
 
         <div className="nav-actions" aria-label="Navegación principal">
-          {esRutaAdmin ? (
-            <NavLink
-              to={isLoggedIn ? rutaPanelPrincipal : '/admin'}
-              className={({ isActive }) => (isActive ? 'active' : '')}
-            >
-              {soloCocina ? 'Cocina' : 'Panel del restaurante'}
-            </NavLink>
-          ) : !isLoggedIn ? (
+          {!isLoggedIn ? (
             <>
               <NavLink
                 to="/"
@@ -151,7 +147,8 @@ const rutaPanelPrincipal = soloCocina
             </>
           ) : (
             <>
-              {isLoggedIn && tieneRolDueno && (
+              {/* El panel de administración solo es visible para el dueño */}
+              {tieneRolDueno && (
                 <NavLink
                   to="/admin/dashboard"
                   className={({ isActive }) => (isActive ? 'active' : '')}
@@ -160,7 +157,8 @@ const rutaPanelPrincipal = soloCocina
                 </NavLink>
               )}
 
-              {isLoggedIn && tieneRolCocina && restauranteCocinaId !== null && (
+              {/* El panel de cocina es visible tanto para el administrador como para el rol de cocina */}
+              {(tieneRolDueno || tieneRolCocina) && restauranteCocinaId !== null && (
                 <NavLink
                   to="/admin/cocina"
                   className={({ isActive }) => (isActive ? 'active' : '')}
@@ -230,7 +228,7 @@ const rutaPanelPrincipal = soloCocina
           <Route
             path="/admin/cocina"
             element={
-              isLoggedIn && tieneRolCocina && restauranteCocinaId !== null ? (
+              isLoggedIn && (tieneRolDueno || tieneRolCocina) && restauranteCocinaId !== null ? (
                 <DashboardCocina restauranteId={restauranteCocinaId} onLogout={handleLogout} />
               ) : (
                 <Navigate

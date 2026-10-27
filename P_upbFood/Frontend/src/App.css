@@ -1319,3 +1319,197 @@
 .restaurant-extra-row > input { min-width: 0; width: 100%; box-sizing: border-box; }
 .restaurant-extra-row > button { width: fit-content; padding: 8px 12px; }
 @media (max-width: 560px) { .restaurant-extra-row { grid-template-columns: 1fr; } }
+
+.dashboard-subtitle {
+  margin: 8px 0 0;
+  max-width: 520px;
+  color: #767961;
+  font-size: 0.95rem;
+}
+
+.admin-cafe-switcher {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0 0 24px;
+  padding: 18px 20px;
+  border: 1px solid #e5e5e7;
+  border-radius: 16px;
+  background: #fafbf3;
+}
+
+.admin-cafe-switcher label {
+  display: block;
+  margin-bottom: 8px;
+  color: #1b1c1a;
+  font-weight: 700;
+}
+
+.admin-cafe-switcher select,
+.admin-cafe-switcher p {
+  margin: 0;
+  min-width: min(280px, 100%);
+  color: #1b1c1a;
+  font-weight: 600;
+}
+
+.admin-cafe-switcher span {
+  max-width: 280px;
+  color: #767961;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.admin-staff-panel {
+  margin-bottom: 24px;
+}
+
+.admin-quick-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.admin-quick-actions button {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 11px 16px;
+  background: #c0d901;
+  color: #121212;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-quick-actions button:hover {
+  background: #d5ef2b;
+}
+
+.admin-quick-actions .secondary-button {
+  background: #1d1d1b;
+  color: #ffffff;
+}
+
+.admin-quick-actions .secondary-button:hover {
+  background: #333330;
+}
+
+.admin-insight-panels {
+  margin: 0 0 26px;
+}
+
+.admin-top-products {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+}
+
+.admin-top-products li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #ecece4;
+  color: #464834;
+}
+
+.admin-top-products li:last-child {
+  border-bottom: none;
+}
+
+.admin-history-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-history-filters button {
+  border: 1px solid #c7c9ad;
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: #ffffff;
+  color: #464834;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-history-filters button.is-active {
+  border-color: #c0d901;
+  background: #c0d901;
+  color: #121212;
+}
+
+.admin-history-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  max-height: 360px;
+  overflow: auto;
+}
+
+.admin-history-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e5e5e7;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.admin-history-list strong {
+  display: block;
+  color: #1b1c1a;
+}
+
+.admin-history-list small {
+  color: #767961;
+}
+
+.admin-history-meta {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
+.admin-status-chip {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.admin-status-chip.is-active {
+  background: #eef6b8;
+  color: #4d5900;
+}
+
+.admin-status-chip.is-ready {
+  background: #e8f1ff;
+  color: #1d4f91;
+}
+
+.admin-status-chip.is-delivered {
+  background: #e5f5ef;
+  color: #176447;
+}
+
+.admin-status-chip.is-cancelled {
+  background: #ffe4e1;
+  color: #b42318;
+}

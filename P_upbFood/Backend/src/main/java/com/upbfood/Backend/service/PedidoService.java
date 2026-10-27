@@ -287,4 +287,123 @@ public class PedidoService {
                 pedidoId
         );
     }
+
+    public List<Map<String, Object>> obtenerHistorial(Integer restauranteId) {
+        return jdbcTemplate.queryForList(
+                """
+                SELECT pedido_id,
+                       nombre_cliente,
+                       correo_cliente,
+                       telefono_cliente,
+                       estado,
+                       total,
+                       fecha,
+                       hora_recogida
+                FROM pedido
+                WHERE restaurante_id = ?
+                  AND estado IN (
+                      'PAGADO',
+                      'EN_PREPARACION',
+                      'LISTO',
+                      'ENTREGADO',
+                      'CANCELADO'
+                  )
+                ORDER BY fecha DESC
+                LIMIT 80
+                """,
+                restauranteId
+        );
+    }
+
+    public Map<String, Object> obtenerEstadisticas(Integer restauranteId) {
+        Map<String, Object> resumen = jdbcTemplate.queryForMap(
+                """
+                SELECT
+                    COUNT(*) FILTER (
+                        WHERE estado IN ('PAGADO', 'EN_PREPARACION', 'LISTO')
+                    ) AS pedidos_activos,
+                    COUNT(*) FILTER (WHERE estado = 'EN_PREPARACION') AS en_preparacion,
+                    COUNT(*) FILTER (WHERE estado = 'LISTO') AS listos,
+                    COUNT(*) FILTER (
+                        WHERE estado NOT IN ('PENDIENTE', 'EN_PAGO')
+                          AND (fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota')::date = (now() AT TIME ZONE 'America/Bogota')::date
+                    ) AS pedidos_hoy,
+                    COUNT(*) FILTER (
+                        WHERE estado = 'ENTREGADO'
+                          AND (fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota')::date = (now() AT TIME ZONE 'America/Bogota')::date
+                    ) AS entregados_hoy,
+                    COUNT(*) FILTER (
+                        WHERE estado = 'CANCELADO'
+                          AND (fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota')::date = (now() AT TIME ZONE 'America/Bogota')::date
+                    ) AS cancelados_hoy,
+                    COUNT(DISTINCT correo_cliente) FILTER (
+                        WHERE estado IN (
+                            'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
+                        )
+                          AND (fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota')::date = (now() AT TIME ZONE 'America/Bogota')::date
+                    ) AS clientes_hoy,
+                    COALESCE(SUM(total) FILTER (
+                        WHERE estado IN (
+                            'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
+                        )
+                          AND (fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota')::date = (now() AT TIME ZONE 'America/Bogota')::date
+                    ), 0) AS ingresos_hoy,
+                    COALESCE(SUM(total) FILTER (
+                        WHERE estado IN (
+                            'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
+                        )
+                          AND date_trunc('month', fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota') = date_trunc(
+                              'month', now() AT TIME ZONE 'America/Bogota'
+                          )
+                    ), 0) AS ingresos_mes,
+                    COALESCE(SUM(total) FILTER (
+                        WHERE estado IN (
+                            'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
+                        )
+                          AND date_trunc('month', fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota') = date_trunc(
+                              'month', now() AT TIME ZONE 'America/Bogota'
+                          ) - INTERVAL '1 month'
+                    ), 0) AS ingresos_mes_anterior
+                FROM pedido
+                WHERE restaurante_id = ?
+                """,
+                restauranteId
+        );
+
+        List<Map<String, Object>> productosMasVendidos = jdbcTemplate.queryForList(
+                """
+                SELECT pr.nombre_producto AS nombre,
+                       SUM(dp.cantidad) AS unidades
+                FROM detalle_pedido dp
+                JOIN producto pr ON pr.producto_id = dp.producto_id
+                JOIN pedido p ON p.pedido_id = dp.pedido_id
+                WHERE p.restaurante_id = ?
+                  AND p.estado IN (
+                      'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
+                  )
+                GROUP BY pr.nombre_producto
+                ORDER BY unidades DESC, nombre ASC
+                LIMIT 5
+                """,
+                restauranteId
+        );
+
+        Map<String, Object> estadisticas = new LinkedHashMap<>();
+        estadisticas.put("pedidosActivos", toInt(resumen.get("pedidos_activos")));
+        estadisticas.put("enPreparacion", toInt(resumen.get("en_preparacion")));
+        estadisticas.put("listos", toInt(resumen.get("listos")));
+        estadisticas.put("pedidosHoy", toInt(resumen.get("pedidos_hoy")));
+        estadisticas.put("entregadosHoy", toInt(resumen.get("entregados_hoy")));
+        estadisticas.put("canceladosHoy", toInt(resumen.get("cancelados_hoy")));
+        estadisticas.put("clientesHoy", toInt(resumen.get("clientes_hoy")));
+        estadisticas.put("ingresosHoy", resumen.get("ingresos_hoy"));
+        estadisticas.put("ingresosMes", resumen.get("ingresos_mes"));
+        estadisticas.put("ingresosMesAnterior", resumen.get("ingresos_mes_anterior"));
+        estadisticas.put("productosMasVendidos", productosMasVendidos);
+        return estadisticas;
+    }
+
+    private static int toInt(Object value) {
+        return value instanceof Number number ? number.intValue() : 0;
+    }
 }

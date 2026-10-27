@@ -108,7 +108,8 @@ CREATE TABLE restaurante (
     ubicacion_restaurante  VARCHAR(50) NOT NULL,
     estado                 VARCHAR(20) NOT NULL DEFAULT 'Abierto'
         CHECK (estado IN ('Abierto', 'Cerrado', 'Alta demanda')),
-    tiempo_pedido          INTEGER NOT NULL DEFAULT 15 CHECK (tiempo_pedido > 0)
+    tiempo_pedido          INTEGER NOT NULL DEFAULT 15 CHECK (tiempo_pedido > 0),
+    imagen_url             TEXT
 );
 
 CREATE TABLE administrador (

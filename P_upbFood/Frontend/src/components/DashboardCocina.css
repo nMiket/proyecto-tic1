@@ -15,6 +15,25 @@
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
+.cocina-restaurante-switcher {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  color: #767961;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.cocina-restaurante-switcher select {
+  min-width: min(280px, 100%);
+  border: 1.5px solid #0f766e;
+  border-radius: 12px;
+  padding: 8px 12px;
+  background: #ffffff;
+  color: #123e36;
+  font-weight: 700;
+}
+
 .kanban-board {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -22,40 +41,52 @@
 }
 
 .kanban-column {
-  background-color: #f5f3ef;
+  background-color: #fbf9f5;
   padding: 1.5rem;
-  border-radius: 16px;
+  border-radius: 1.25rem;
   min-height: 500px;
-  border: 1px solid #e5e5e7;
+  border: 1px solid #e5e2de;
 }
 
 .kanban-column h2 {
   margin: 0 0 1rem;
   font-size: 1.25rem;
-  color: #1b1c1a;
+  color: #123e36;
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 .empty-column {
   margin: 0;
   padding: 1rem;
-  border: 1px dashed #c7c9ad;
+  border: 1px dashed #d5d1cb;
   border-radius: 10px;
-  background: rgba(255,255,255,0.5);
-  color: #767961;
+  background: rgba(255, 255, 255, 0.7);
+  color: #64748b;
+  text-align: center;
 }
 
 .pedido-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 1rem;
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 1.15rem;
   margin-bottom: 1rem;
-  box-shadow: 0 8px 18px rgba(17, 24, 39, 0.06);
-  border-left: 4px solid #c0d901;
+  box-shadow: 0 4px 14px rgba(17, 24, 39, 0.05);
+  border: 1px solid #e5e2de;
+  border-left: 5px solid #0f766e;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pedido-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.08);
 }
 
 .pedido-card.en-preparacion {
-  border-left-color: #bccdfc;
+  border-left-color: #0284c7;
+}
+
+.pedido-card.listo {
+  border-left-color: #006c47;
 }
 
 .pedido-card__header {
@@ -71,24 +102,24 @@
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #0d7377;
+  color: #0f766e;
   font-weight: 700;
 }
 
 .pedido-card__header h3 {
   margin: 0.25rem 0 0;
   font-size: 1.15rem;
-  color: #1b1c1a;
+  color: #123e36;
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 .pedido-card__badge {
-  background: #c0d901;
-  color: #121212;
+  background: #e6f4f1;
+  color: #0f766e;
   border-radius: 999px;
   padding: 0.32rem 0.7rem;
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .pedido-card__meta,
@@ -100,7 +131,7 @@
 .pedido-card__meta p,
 .pedido-card__observaciones p {
   margin: 0;
-  color: #767961;
+  color: #64748b;
   line-height: 1.5;
 }
 
@@ -108,13 +139,13 @@
 .pedido-card__observaciones strong {
   display: block;
   margin-bottom: 0.35rem;
-  color: #1b1c1a;
+  color: #123e36;
 }
 
 .pedido-card__productos ul {
   margin: 0;
   padding-left: 1.2rem;
-  color: #333;
+  color: #333333;
 }
 
 .pedido-card__productos li,
@@ -130,21 +161,21 @@
   width: 100%;
   padding: 0.75rem 1rem;
   border: none;
-  border-radius: 999px;
-  background: #1d1d1b;
-  color: white;
+  border-radius: 0.75rem;
+  background: #0f766e;
+  color: #ffffff;
   cursor: pointer;
   font-weight: 700;
-  transition: transform 0.18s ease, opacity 0.18s ease;
+  font-size: 0.9rem;
+  transition: all 0.18s ease;
 }
 
 .pedido-card button:hover {
-  background: #586400;
-  transform: translateY(-1px);
+  background: #123e36;
 }
 
 .pedido-card__secondary {
-  background: #586400 !important;
+  background: #123e36 !important;
 }
 
 @media (max-width: 700px) {
@@ -157,96 +188,319 @@
   }
 }
 
+/* ============================================================== */
+/* GESTIÓN DE DISPONIBILIDAD DE PRODUCTOS EN COCINA               */
+/* ============================================================== */
 .cocina-productos {
   margin: 0 0 2rem;
   padding: 1.5rem;
-  background: #fff;
-  border: 1px solid #e5e5e7;
-  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #e5e2de;
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
 }
 
-.cocina-productos__heading h2 {
-  margin: 0;
-  color: #1b1c1a;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-}
-
-.cocina-productos__heading p {
-  margin: 0.4rem 0 1rem;
-  color: #767961;
-}
-
-.cocina-productos__list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 0.75rem;
-}
-
-.cocina-producto {
+.cocina-productos__top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 1rem;
-  padding: 1rem;
-  border: 1px solid #e5e5e7;
-  border-radius: 12px;
 }
 
-.cocina-producto__info {
-  display: grid;
-  gap: 0.3rem;
-  min-width: 0;
+.cocina-productos__title-group h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #123e36;
+  letter-spacing: -0.01em;
 }
 
-.cocina-producto__info strong {
-  color: #1b1c1a;
-  overflow-wrap: anywhere;
+.cocina-productos__title-group p {
+  margin: 0.25rem 0 0;
+  color: #64748b;
+  font-size: 0.88rem;
 }
 
-.cocina-producto__info span {
-  color: #767961;
-  font-size: 0.9rem;
-}
-
-.cocina-producto__toggle {
+.cocina-productos__stats-bar {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-  color: #0d7377;
-  font-size: 0.85rem;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.cocina-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
   font-weight: 700;
 }
 
-.cocina-producto__toggle input {
-  width: 18px;
-  height: 18px;
-  accent-color: #0d7377;
+.cocina-stat-chip.available {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.cocina-stat-chip.out-of-stock {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.cocina-collapse-btn {
+  padding: 0.45rem 0.9rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid #d5d1cb;
+  background: #fbf9f5;
+  color: #123e36;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cocina-collapse-btn:hover {
+  background: #ffffff;
+  border-color: #0f766e;
+  color: #0f766e;
+}
+
+.cocina-productos__toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin: 1.25rem 0 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f0ede8;
+}
+
+.cocina-search-input {
+  flex: 1;
+  min-width: 250px;
+}
+
+.cocina-search-input input {
+  width: 100%;
+  padding: 0.55rem 0.9rem;
+  border: 1.5px solid #d5d1cb;
+  border-radius: 0.75rem;
+  background: #fbf9f5;
+  font-size: 0.88rem;
+  color: #123e36;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.cocina-search-input input:focus {
+  border-color: #0f766e;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+}
+
+.cocina-filters-strip {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.cocina-filter-btn {
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid #d5d1cb;
+  background: #ffffff;
+  color: #4b5563;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cocina-filter-btn:hover {
+  border-color: #0f766e;
+  color: #0f766e;
+}
+
+.cocina-filter-btn.is-active {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
+}
+
+.cocina-filter-btn.is-warning.is-active {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  color: #ffffff;
+}
+
+.cocina-productos__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.85rem;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.cocina-producto-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border: 1.5px solid #e5e2de;
+  border-radius: 1rem;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.cocina-producto-card.is-out {
+  background: #fffafa;
+  border-color: #fecaca;
+}
+
+.cocina-producto-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.cocina-producto-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 0.75rem;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #eeebe6;
+  background: #f5f3ef;
+}
+
+.cocina-producto-card.is-out .cocina-producto-thumb {
+  filter: grayscale(0.6);
+  opacity: 0.85;
+}
+
+.cocina-producto-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cocina-producto-details strong {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #123e36;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cocina-producto-details span {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.cocina-producto-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  width: fit-content;
+}
+
+.cocina-producto-badge.available {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.cocina-producto-badge.out-of-stock {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.cocina-toggle-btn {
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.cocina-toggle-btn.mark-out {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
+.cocina-toggle-btn.mark-out:hover {
+  background: #fecaca;
+  color: #7f1d1d;
+}
+
+.cocina-toggle-btn.mark-available {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.cocina-toggle-btn.mark-available:hover {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.cocina-toggle-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .cocina-productos__error {
-  padding: 0.75rem;
-  color: #9b1c1c;
-  background: #fff1f0;
-  border-radius: 8px;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
+.cocina-productos-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: #fbf9f5;
+  border: 1.5px dashed #d5d1cb;
+  border-radius: 0.75rem;
+  color: #64748b;
+  font-size: 0.9rem;
+}
 
 .cocina-dashboard__logout {
   flex-shrink: 0;
-  padding: 0.7rem 1.1rem;
-  border: 1px solid #d8d9d2;
-  border-radius: 999px;
-  background: #fff;
-  color: #1b1c1a;
+  padding: 0.7rem 1.25rem;
+  border: 1.5px solid #d5d1cb;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  color: #123e36;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.18s ease, border-color 0.18s ease;
+  transition: all 0.18s ease;
 }
 
 .cocina-dashboard__logout:hover {
-  background: #f5f3ef;
-  border-color: #b8baae;
+  background: #fbf9f5;
+  border-color: #0f766e;
+  color: #0f766e;
 }
 
 @media (max-width: 520px) {

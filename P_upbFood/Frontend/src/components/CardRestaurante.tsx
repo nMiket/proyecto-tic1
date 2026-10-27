@@ -6,6 +6,7 @@ export interface Restaurante {
   id: number
   nombre: string
   imagen?: string
+  imagenUrl?: string
   ubicacion: string
   estado: EstadoRestaurante
   tiempoEstimadoMin: number
@@ -25,8 +26,9 @@ const MONTANA_IMAGE =
 
 function CardRestaurante({ restaurante, seleccionado, onClick }: CardRestauranteProps) {
   const estadoClass = restaurante.estado.toLowerCase().replace(' ', '-')
-  const imagenUrl = restaurante.imagen
-    ? restaurante.imagen
+  const rawImage = restaurante.imagenUrl || restaurante.imagen
+  const imagenUrl = rawImage
+    ? rawImage
     : restaurante.nombre.toLowerCase().includes('monta') || restaurante.nombre.toLowerCase().includes('boulevard')
       ? MONTANA_IMAGE
       : DEFAULT_IMAGE

@@ -13,6 +13,7 @@ type Restaurante = {
   estado?: string
   tiempoEstimadoMin?: number
   imagen?: string
+  imagenUrl?: string
 }
 
 const DEFAULT_IMAGE =
@@ -61,7 +62,7 @@ export default function RestaurantMenuPage() {
       </button>
 
       <header className="restaurant-menu__hero">
-        <img src={restaurante.imagen || DEFAULT_IMAGE} alt={`Imagen de ${restaurante.nombre}`} />
+        <img src={restaurante.imagenUrl || restaurante.imagen || DEFAULT_IMAGE} alt={`Imagen de ${restaurante.nombre}`} />
         <div className="restaurant-menu__hero-content">
           <span className="restaurant-menu__status">{restaurante.estado || 'Disponible'}</span>
           <p className="section-kicker">Menú de la cafetería</p>

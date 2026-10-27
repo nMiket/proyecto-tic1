@@ -29,6 +29,9 @@ public class Restaurant {
     @Column(name = "tiempo_pedido", nullable = false)
     private Integer tiempoEstimadoMin = 15;
 
+    @Column(name = "imagen_url", columnDefinition = "TEXT")
+    private String imagenUrl;
+
     public Integer getId() {
         return id;
     }
@@ -67,5 +70,21 @@ public class Restaurant {
 
     public void setTiempoEstimadoMin(Integer tiempoEstimadoMin) {
         this.tiempoEstimadoMin = tiempoEstimadoMin;
+    }
+
+    public String getImagenUrl() {
+        return imagenUrl;
+    }
+
+    public void setImagenUrl(String imagenUrl) {
+        this.imagenUrl = imagenUrl;
+    }
+
+    public String getImagen() {
+        return imagenUrl;
+    }
+
+    public void setImagen(String imagen) {
+        this.imagenUrl = imagen;
     }
 }
