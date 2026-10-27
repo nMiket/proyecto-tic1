@@ -170,45 +170,54 @@ export default function FormularioCliente() {
 
                 <form onSubmit={guardarCliente} noValidate>
                     <div className="campo">
-                        <label>Nombre completo</label>
+                        <label htmlFor="cliente-nombre">Nombre completo</label>
                         <input
+                            id="cliente-nombre"
                             type="text"
                             placeholder="Ej. Julián Miranda"
                             value={nombre}
+                            aria-invalid={Boolean(errores.nombre)}
+                            aria-describedby={errores.nombre ? "error-cliente-nombre" : undefined}
                             onChange={(e) => setNombre(e.target.value)}
                         />
                         {errores.nombre && (
-                            <span className="error">
+                            <span id="error-cliente-nombre" className="error" role="alert">
                                 {errores.nombre}
                             </span>
                         )}
                     </div>
 
                     <div className="campo">
-                        <label>Teléfono</label>
+                        <label htmlFor="cliente-telefono">Teléfono</label>
                         <input
+                            id="cliente-telefono"
                             type="text"
                             placeholder="Ej. 3001234567"
                             value={telefono}
+                            aria-invalid={Boolean(errores.telefono)}
+                            aria-describedby={errores.telefono ? "error-cliente-telefono" : undefined}
                             onChange={(e) => setTelefono(e.target.value)}
                         />
                         {errores.telefono && (
-                            <span className="error">
+                            <span id="error-cliente-telefono" className="error" role="alert">
                                 {errores.telefono}
                             </span>
                         )}
                     </div>
 
                     <div className="campo">
-                        <label>Correo</label>
+                        <label htmlFor="cliente-correo">Correo</label>
                         <input
+                            id="cliente-correo"
                             type="email"
                             placeholder="Ej. nombre.apellido@upb.edu.co"
                             value={correo}
+                            aria-invalid={Boolean(errores.correo)}
+                            aria-describedby={errores.correo ? "error-cliente-correo" : undefined}
                             onChange={(e) => setCorreo(e.target.value)}
                         />
                         {errores.correo && (
-                            <span className="error">
+                            <span id="error-cliente-correo" className="error" role="alert">
                                 {errores.correo}
                             </span>
                         )}

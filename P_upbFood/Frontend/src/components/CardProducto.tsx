@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Producto, IngredienteExtra } from '../types/Producto'
 import './CardProducto.css'
 
@@ -26,6 +26,17 @@ export const CardProducto = ({ producto, onAgregar }: CardProductoProps) => {
     setSeleccionados([])
     setCantidad(1)
   }
+
+  useEffect(() => {
+    if (!modalAbierto) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        cerrarModal()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [modalAbierto])
 
   const confirmarProducto = () => {
     if (!onAgregar || !disponible) return

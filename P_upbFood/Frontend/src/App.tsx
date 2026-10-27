@@ -641,10 +641,46 @@ function PedidoPage() {
 }
 
 function HistorialPage() {
+  const ultimoPedido = (() => {
+    try {
+      const raw = localStorage.getItem('upbfood.lastOrder')
+      if (!raw) return null
+      return JSON.parse(raw) as {
+        id?: number
+        codigoSeguimiento?: string
+        total?: number
+        clienteNombre?: string
+      }
+    } catch {
+      return null
+    }
+  })()
+
   return (
     <section className="hero-card">
-      <h1>Historial</h1>
-      <p>Aquí aparecerán tus pedidos anteriores.</p>
+      <h1>Mi último pedido</h1>
+      {ultimoPedido?.codigoSeguimiento ? (
+        <div>
+          <p>
+            Pedido <strong>#{ultimoPedido.id}</strong> · Total:{' '}
+            <strong>${Number(ultimoPedido.total ?? 0).toLocaleString('es-CO')}</strong>
+          </p>
+          <p>Código de seguimiento: <strong>{ultimoPedido.codigoSeguimiento}</strong></p>
+          <Link
+            className="directory-tracking-cta"
+            to={`/seguimiento/${ultimoPedido.codigoSeguimiento}`}
+          >
+            Ver estado en tiempo real
+          </Link>
+        </div>
+      ) : (
+        <div>
+          <p>Aún no tienes pedidos recientes guardados en este navegador.</p>
+          <Link className="directory-tracking-cta" to="/seguimiento">
+            Buscar un pedido por código o número
+          </Link>
+        </div>
+      )}
     </section>
   )
 }

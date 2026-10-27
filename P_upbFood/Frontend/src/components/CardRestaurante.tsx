@@ -39,7 +39,12 @@ function CardRestaurante({ restaurante, seleccionado, onClick }: CardRestaurante
       onClick={onClick}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && onClick && onClick()}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && onClick) {
+          e.preventDefault()
+          onClick()
+        }
+      }}
     >
       <img
         className="restaurant-card__image"

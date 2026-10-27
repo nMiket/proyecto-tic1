@@ -434,6 +434,7 @@ export function DashboardCocina({ restauranteId, onLogout }: DashboardCocinaProp
                 <input
                   type="search"
                   placeholder="Buscar producto para agotar o habilitar..."
+                  aria-label="Buscar producto para agotar o habilitar"
                   value={searchProducto}
                   onChange={(e) => setSearchProducto(e.target.value)}
                 />
