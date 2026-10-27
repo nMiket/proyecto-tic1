@@ -113,7 +113,9 @@ const rutaPanelPrincipal = soloCocina
     <main className="app-shell">
       <nav className="topbar">
         <Link to="/" className="brand">
-          <img src="/favicon.svg" alt="" className="brand-logo-icon" aria-hidden="true" />
+          <span className="brand-logo-badge" aria-hidden="true">
+            <img src="/assets/branding/UPBFood.svg" alt="" className="brand-logo-icon" />
+          </span>
           <span className="brand-copy">
             <strong>UPB Food</strong>
             <small>Comunidad universitaria</small>
@@ -268,14 +270,13 @@ function HomePage() {
         </div>
         <div
           className="identity-logo-panel"
-          aria-label="Espacios reservados para identidad visual"
+          aria-label="Identidad visual UPB Food"
         >
-          <span className="identity-logo-slot">
-            <img src="/assets/branding/upb-logo.svg" alt="Universidad Pontificia Bolivariana" className="identity-logo-img" />
-          </span>
-          <span className="identity-logo-slot identity-logo-slot--food">
-            <img src="/assets/branding/upb-food-logo.svg" alt="UPB Food" className="identity-logo-img" />
-          </span>
+          <img
+            src="/assets/branding/UPBFood.svg"
+            alt="UPB Food · Universidad Pontificia Bolivariana"
+            className="identity-logo-img"
+          />
         </div>
       </section>
 
@@ -295,7 +296,7 @@ function SiteFooter() {
     <footer className="site-footer">
       <div className="site-footer__brand">
         <div className="footer-logo-placeholder">
-          <img src="/favicon.svg" alt="UPB Food" className="footer-logo-img" />
+          <img src="/assets/branding/UPBFood.svg" alt="UPB Food" className="footer-logo-img" />
         </div>
         <div>
           <strong>UPB Food</strong>
