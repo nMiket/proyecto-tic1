@@ -37,10 +37,11 @@ class AdminAuthorizationServiceTest {
                 .thenReturn(Optional.of(admin));
 
         AdministradorRestaurante assignment = assignment(1, admin.getId());
+        assignment.setEstado("Activo");
 
-        when(restaurantRepository.existsById(
+        when(restaurantRepository.findById(
                 new AdministradorRestauranteId(admin.getId(), 1)))
-                .thenReturn(true);
+                .thenReturn(Optional.of(assignment));
 
         authenticate(admin.getEmail());
 

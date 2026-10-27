@@ -104,7 +104,7 @@ class ProductControllerTest {
                 response.getBody().get("precio")
         );
 
-        verify(authorizationService).requireAdminForRestaurant(1);
+        verify(authorizationService).requireOwnerForRestaurant(1);
         verify(productRepository).save(any(Product.class));
         verify(menuRepository).save(any(ProductoRestaurante.class));
     }
@@ -158,13 +158,13 @@ class ProductControllerTest {
                 response.getBody().get("precio")
         );
         assertEquals(false, response.getBody().get("disponible"));
-        assertEquals(2, response.getBody().get("tipoProductoId"));
+        assertEquals(2, response.getBody().get("categoriaId"));
 
-        verify(authorizationService).requireAdminForRestaurant(1);
+        verify(authorizationService).requireOwnerForRestaurant(1);
     }
 
     @Test
-    void deleteProductDeactivatesProductInRestaurantMenu() {
+    void deleteProductRemovesProductFromRestaurantMenu() {
         ProductRepository productRepository = mock(ProductRepository.class);
         ProductoRestauranteRepository menuRepository =
                 mock(ProductoRestauranteRepository.class);
@@ -181,20 +181,18 @@ class ProductControllerTest {
         when(menuRepository.findById(
                 new ProductoRestauranteId(1, 7)
         )).thenReturn(Optional.of(menuItem));
-        when(menuRepository.save(menuItem)).thenReturn(menuItem);
 
         ResponseEntity<Map<String, Object>> response =
                 controller.deleteProduct(7, 1);
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(
-                "Producto desactivado en el menú correctamente.",
+                "Producto retirado del restaurante correctamente.",
                 response.getBody().get("message")
         );
-        assertEquals(false, menuItem.getDisponible());
 
-        verify(authorizationService).requireAdminForRestaurant(1);
-        verify(menuRepository).save(menuItem);
+        verify(authorizationService).requireOwnerForRestaurant(1);
+        verify(menuRepository).delete(menuItem);
     }
 
     private Product product(
