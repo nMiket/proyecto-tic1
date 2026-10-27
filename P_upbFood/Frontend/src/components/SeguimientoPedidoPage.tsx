@@ -48,16 +48,78 @@ function formatearFecha(valor?: string | null) {
 
 export default function SeguimientoPedidoPage() {
   const { codigo } = useParams()
+  const [modoBusqueda, setModoBusqueda] = useState<'codigo' | 'datos'>('codigo')
   const [codigoSeguimiento, setCodigoSeguimiento] = useState(codigo ?? '')
+  const [numeroPedido, setNumeroPedido] = useState('')
+  const [contactoCliente, setContactoCliente] = useState('')
   const [pedido, setPedido] = useState<PedidoConsultado | null>(null)
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
+
+  const ultimoPedidoGuardado = (() => {
+    try {
+      const raw = localStorage.getItem('upbfood.lastOrder')
+      if (!raw) return null
+      const parsed = JSON.parse(raw) as { id?: number; codigoSeguimiento?: string }
+      return parsed?.codigoSeguimiento ? parsed : null
+    } catch {
+      return null
+    }
+  })()
 
   const consultar = async (event?: FormEvent, codigoDesdeRuta?: string, silenciosa = false) => {
     event?.preventDefault()
     if (!silenciosa) {
       setError('')
       setPedido(null)
+    }
+
+    if (!codigoDesdeRuta && modoBusqueda === 'datos') {
+      const idNum = Number(numeroPedido.trim())
+      const contacto = contactoCliente.trim()
+      if (!Number.isInteger(idNum) || idNum <= 0) {
+        if (!silenciosa) setError('Ingresa un número de pedido válido (ej. 12).')
+        return
+      }
+      if (!contacto) {
+        if (!silenciosa) setError('Ingresa el correo o teléfono que usaste al crear el pedido.')
+        return
+      }
+
+      if (!silenciosa) setCargando(true)
+      try {
+        const params = new URLSearchParams({ pedidoId: String(idNum) })
+        if (contacto.includes('@')) {
+          params.set('correo', contacto)
+        } else {
+          params.set('telefono', contacto)
+        }
+        const response = await fetch(`${getApiBaseUrl()}/api/pedidos/consulta?${params.toString()}`, {
+          headers: { Accept: 'application/json' },
+        })
+        const data = (await response.json().catch(() => null)) as
+          | ({ message?: string; detail?: string } & Partial<PedidoConsultado>)
+          | null
+
+        if (!response.ok) {
+          if (silenciosa) return
+          throw new Error(
+            data?.message ??
+              data?.detail ??
+              'No encontramos un pedido con esos datos. Verifica el número y tu correo o teléfono.',
+          )
+        }
+        setPedido(data as PedidoConsultado)
+      } catch (requestError) {
+        if (!silenciosa) {
+          setError(
+            requestError instanceof Error ? requestError.message : 'No se pudo consultar el pedido.',
+          )
+        }
+      } finally {
+        if (!silenciosa) setCargando(false)
+      }
+      return
     }
 
     const codigoLimpio = (codigoDesdeRuta ?? codigoSeguimiento).trim()
@@ -139,14 +201,105 @@ export default function SeguimientoPedidoPage() {
             <p>Puedes usar cualquiera de las dos formas de búsqueda.</p>
           </div>
 
-          <label>
-            Código de seguimiento
-            <input
-              value={codigoSeguimiento}
-              onChange={(event) => setCodigoSeguimiento(event.target.value)}
-              placeholder="Ej. 5eee1287-4692-4a8e..."
-            />
-          </label>
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.85rem' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setModoBusqueda('codigo')
+                setError('')
+              }}
+              style={{
+                flex: 1,
+                padding: '0.5rem 0.75rem',
+                fontSize: '0.82rem',
+                borderRadius: '0.6rem',
+                border: modoBusqueda === 'codigo' ? '1px solid #0f766e' : '1px solid #cbd5e1',
+                background: modoBusqueda === 'codigo' ? '#f0fdfa' : '#ffffff',
+                color: modoBusqueda === 'codigo' ? '#0f766e' : '#475569',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Por código UUID
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setModoBusqueda('datos')
+                setError('')
+              }}
+              style={{
+                flex: 1,
+                padding: '0.5rem 0.75rem',
+                fontSize: '0.82rem',
+                borderRadius: '0.6rem',
+                border: modoBusqueda === 'datos' ? '1px solid #0f766e' : '1px solid #cbd5e1',
+                background: modoBusqueda === 'datos' ? '#f0fdfa' : '#ffffff',
+                color: modoBusqueda === 'datos' ? '#0f766e' : '#475569',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Por # pedido + contacto
+            </button>
+          </div>
+
+          {modoBusqueda === 'codigo' ? (
+            <label>
+              Código de seguimiento
+              <input
+                value={codigoSeguimiento}
+                onChange={(event) => setCodigoSeguimiento(event.target.value)}
+                placeholder="Ej. 5eee1287-4692-4a8e..."
+              />
+            </label>
+          ) : (
+            <>
+              <label>
+                Número de pedido
+                <input
+                  type="number"
+                  min={1}
+                  value={numeroPedido}
+                  onChange={(event) => setNumeroPedido(event.target.value)}
+                  placeholder="Ej. 15"
+                />
+              </label>
+              <label>
+                Correo o teléfono registrado
+                <input
+                  value={contactoCliente}
+                  onChange={(event) => setContactoCliente(event.target.value)}
+                  placeholder="Ej. estudiante@upb.edu.co o 3001234567"
+                />
+              </label>
+            </>
+          )}
+
+          {ultimoPedidoGuardado?.codigoSeguimiento && (
+            <button
+              type="button"
+              onClick={() => {
+                const code = String(ultimoPedidoGuardado.codigoSeguimiento)
+                setModoBusqueda('codigo')
+                setCodigoSeguimiento(code)
+                void consultar(undefined, code)
+              }}
+              style={{
+                marginTop: '0.25rem',
+                marginBottom: '0.5rem',
+                background: '#f8fafc',
+                color: '#0f766e',
+                border: '1px dashed #99f6e4',
+                padding: '0.45rem 0.75rem',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+              }}
+            >
+              Consultar mi último pedido reciente
+              {ultimoPedidoGuardado.id ? ` (#${ultimoPedidoGuardado.id})` : ''}
+            </button>
+          )}
 
           {error && <p className="tracking-error" role="alert">{error}</p>}
           <button type="submit" disabled={cargando}>

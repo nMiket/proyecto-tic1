@@ -19,9 +19,31 @@ const mediosPago: MedioPago[] = [
     { id: 3, nombre: "Transferencia" },
 ];
 
+function obtenerPedidoRespaldo(): PagoState | null {
+    try {
+        const raw = localStorage.getItem("upbfood.lastOrder");
+        if (!raw) return null;
+        const data = JSON.parse(raw) as {
+            id?: number;
+            pedidoId?: number;
+            codigoSeguimiento?: string;
+            total?: number;
+        };
+        const pedidoId = data.pedidoId ?? data.id;
+        if (!pedidoId || !data.codigoSeguimiento) return null;
+        return {
+            pedidoId: Number(pedidoId),
+            codigoSeguimiento: String(data.codigoSeguimiento),
+            total: Number(data.total ?? 0),
+        };
+    } catch {
+        return null;
+    }
+}
+
 export default function PagoPage() {
     const location = useLocation();
-    const state = (location.state as PagoState | null) ?? null;
+    const state = (location.state as PagoState | null) ?? obtenerPedidoRespaldo();
 
     const [tipoPagoId, setTipoPagoId] = useState(1);
     const [procesando, setProcesando] = useState(false);

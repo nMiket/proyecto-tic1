@@ -1,5 +1,27 @@
-import { createContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { IngredienteExtra } from '../types/Producto'
+
+const CART_STORAGE_KEY = 'upbfood.cart'
+
+function loadInitialCart(): CartItem[] {
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (item): item is CartItem =>
+        Boolean(item) &&
+        typeof item === 'object' &&
+        typeof (item as CartItem).id === 'number' &&
+        typeof (item as CartItem).restauranteId === 'number' &&
+        typeof (item as CartItem).cantidad === 'number' &&
+        typeof (item as CartItem).cartKey === 'string',
+    )
+  } catch {
+    return []
+  }
+}
 
 export type CartProduct = {
   id: number
@@ -42,8 +64,20 @@ function getUnitTotal(item: CartProduct) {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([])
+  const [items, setItems] = useState<CartItem[]>(() => loadInitialCart())
   const [cartError, setCartError] = useState('')
+
+  useEffect(() => {
+    try {
+      if (items.length === 0) {
+        localStorage.removeItem(CART_STORAGE_KEY)
+      } else {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
+      }
+    } catch {
+      // Ignorar errores de almacenamiento privado o cuota llena
+    }
+  }, [items])
 
   const value = useMemo<CartContextValue>(() => {
     const totalItems = items.reduce((sum, item) => sum + item.cantidad, 0)

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, getApiBaseUrl } from "../auth";
 import { useCart } from "../context/useCart";
@@ -42,7 +42,10 @@ export default function FormularioCliente() {
     const [telefono, setTelefono] = useState("");
     const [correo, setCorreo] = useState("");
     const [horaRecogida, setHoraRecogida] = useState("");
-    const opcionesHora = crearOpcionesHora(tiempoPreparacionMin);
+    const opcionesHora = useMemo(
+        () => crearOpcionesHora(tiempoPreparacionMin),
+        [tiempoPreparacionMin]
+    );
 
     const [errores, setErrores] = useState({
         nombre: "",
