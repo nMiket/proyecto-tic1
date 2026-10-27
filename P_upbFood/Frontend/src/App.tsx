@@ -257,7 +257,17 @@ function HomePage() {
   return (
     <>
       <section className="restaurant-directory-hero">
-        <div>
+        <div className="restaurant-directory-hero__content">
+          <div
+            className="identity-logo-panel"
+            aria-label="Identidad visual UPB Food"
+          >
+            <img
+              src="/assets/branding/UPBFood.svg"
+              alt="UPB Food · Universidad Pontificia Bolivariana"
+              className="identity-logo-img"
+            />
+          </div>
           <p className="section-kicker">UPB Food · Alimentación en campus</p>
           <h1>¿Dónde quieres comer hoy?</h1>
           <p>
@@ -267,16 +277,6 @@ function HomePage() {
           <Link className="directory-tracking-cta" to="/seguimiento">
             Ya hice un pedido · Consultar estado
           </Link>
-        </div>
-        <div
-          className="identity-logo-panel"
-          aria-label="Identidad visual UPB Food"
-        >
-          <img
-            src="/assets/branding/UPBFood.svg"
-            alt="UPB Food · Universidad Pontificia Bolivariana"
-            className="identity-logo-img"
-          />
         </div>
       </section>
 
