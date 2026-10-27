@@ -25,8 +25,8 @@ type PedidoConsultado = {
 
 const estados = ['PENDIENTE', 'EN_PAGO', 'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO']
 const etiquetasEstado: Record<string, string> = {
-  PENDIENTE: 'Recibido',
-  EN_PAGO: 'Pago pendiente',
+  PENDIENTE: 'Pendiente de pago',
+  EN_PAGO: 'Procesando pago',
   PAGADO: 'Pagado',
   EN_PREPARACION: 'En preparación',
   LISTO: 'Listo para recoger',
@@ -300,6 +300,23 @@ export default function SeguimientoPedidoPage() {
                   {etiquetasEstado[pedido.estado] ?? pedido.estado}
                 </span>
               </div>
+
+              {(pedido.estado === 'PENDIENTE' || pedido.estado === 'EN_PAGO') && (
+                <div style={{ background: '#fffbeb', border: '1.5px solid #fcd34d', padding: '1rem', borderRadius: '0.85rem', margin: '1rem 0' }}>
+                  <p style={{ margin: 0, fontWeight: 800, color: '#92400e' }}>
+                    ⚠️ Pago pendiente
+                  </p>
+                  <p style={{ margin: '0.25rem 0 0.75rem', fontSize: '0.875rem', color: '#78350f' }}>
+                    Este pedido no pasará a cocina hasta que se confirme el pago con Stripe.
+                  </p>
+                  <Link
+                    to={`/pago?codigo=${encodeURIComponent(pedido.codigoSeguimiento)}&pedidoId=${pedido.id}&total=${pedido.total}`}
+                    style={{ display: 'inline-block', background: '#0f766e', color: '#ffffff', textDecoration: 'none', fontWeight: 700, padding: '0.6rem 1.25rem', borderRadius: '0.5rem', fontSize: '0.875rem' }}
+                  >
+                    Pagar con Stripe ahora
+                  </Link>
+                </div>
+              )}
 
               <div className="tracking-summary">
                 <div><span>Total</span><strong>${Number(pedido.total).toLocaleString('es-CO')}</strong></div>

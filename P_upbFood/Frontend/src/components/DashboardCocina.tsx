@@ -139,17 +139,11 @@ export function DashboardCocina({ restauranteId, onLogout }: DashboardCocinaProp
           body: JSON.stringify({ disponible }),
         },
       )
-      if (!res.ok) {
-        setErrorProductos(await mensajeErrorProducto(res))
-        return
-      }
-      const data = (await res.json()) as { disponible: boolean }
-      setProductos((actuales) =>
-        actuales.map((p) => (p.id === id ? { ...p, disponible: data.disponible } : p)),
-      )
+      if (!res.ok) setErrorProductos(await mensajeErrorProducto(res))
+      setProductos((prev) => prev.map((p) => (p.id === id ? { ...p, disponible } : p)))
     } catch (err) {
-      console.error('Error al cambiar disponibilidad:', err)
-      setErrorProductos('No se pudo conectar con el servidor. La disponibilidad no se ha guardado.')
+      console.error('Error al actualizar disponibilidad:', err)
+      setErrorProductos('No se pudo actualizar el producto en este momento.')
     } finally {
       setActualizandoProductoId(null)
     }
@@ -175,9 +169,7 @@ export function DashboardCocina({ restauranteId, onLogout }: DashboardCocinaProp
     }
   }
 
-  const nuevos = pedidos.filter(
-    (p) => p.estado === 'PAGADO' || p.estado === 'PENDIENTE' || p.estado === 'EN_PAGO',
-  )
+  const nuevos = pedidos.filter((p) => p.estado === 'PAGADO')
   const enPreparacion = pedidos.filter((p) => p.estado === 'EN_PREPARACION')
   const listos = pedidos.filter((p) => p.estado === 'LISTO')
 
@@ -208,223 +200,129 @@ export function DashboardCocina({ restauranteId, onLogout }: DashboardCocinaProp
 
   const cambiarEstadoRestaurante = async (nuevoEstado: string) => {
     try {
-      const res = await apiFetch(
-        `${getApiBaseUrl()}/api/admin/restaurantes/${selectedRestauranteId}`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ estado: nuevoEstado }),
-        },
-      )
+      const res = await apiFetch(`${getApiBaseUrl()}/api/admin/restaurantes/${selectedRestauranteId}/estado`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: nuevoEstado }),
+      })
       if (res.ok) {
-        const data = (await res.json()) as RestauranteCocina
         setRestaurantes((prev) =>
-          prev.map((r) => (r.id === selectedRestauranteId ? { ...r, ...data } : r)),
+          prev.map((r) =>
+            Number(r.id) === Number(selectedRestauranteId) ? { ...r, estado: nuevoEstado } : r,
+          ),
         )
       }
     } catch (err) {
-      console.error('Error al actualizar estado del restaurante:', err)
+      console.error('Error al cambiar estado de la cafetería:', err)
     }
   }
 
   return (
-    <div className="cocina-dashboard">
-      <header className="cocina-dashboard__header">
-        <div>
-          <p className="eyebrow">Cocina</p>
-          <h1>Dashboard de Cocina</h1>
-          {restaurantes.length > 1 ? (
-            <label className="cocina-restaurante-switcher">
-              Cafetería activa
+    <div className="dashboard-cocina">
+      {/* BARRA SUPERIOR ESTILO BRANDING INSTITUCIONAL */}
+      <header className="cocina-topbar">
+        <div className="cocina-topbar__brand">
+          <span className="cocina-topbar__icon">🍽️</span>
+          <div>
+            <h1>Dashboard de Cocina</h1>
+            <p>
+              {restauranteActual?.nombre ?? 'Cafetería UPB'} · Ubicación:{' '}
+              {restauranteActual?.ubicacion ?? 'Campus'}
+            </p>
+          </div>
+        </div>
+
+        <div className="cocina-topbar__actions">
+          {restaurantes.length > 1 && (
+            <div className="cocina-selector-group">
+              <label htmlFor="select-cafeteria">Cafetería:</label>
               <select
+                id="select-cafeteria"
                 value={selectedRestauranteId}
-                onChange={(event) => setSelectedRestauranteId(Number(event.target.value))}
+                onChange={(e) => setSelectedRestauranteId(Number(e.target.value))}
               >
-                {restaurantes.map((restaurante) => (
-                  <option key={restaurante.id} value={restaurante.id}>
-                    {restaurante.nombre} ({restaurante.ubicacion})
+                {restaurantes.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.nombre}
                   </option>
                 ))}
               </select>
-            </label>
-          ) : (
-            <p>
-              {restaurantes[0]
-                ? `${restaurantes[0].nombre} (${restaurantes[0].ubicacion})`
-                : `Restaurante #${selectedRestauranteId}`}
-            </p>
-          )}
-
-          {restauranteActual && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.6rem',
-                marginTop: '0.5rem',
-                flexWrap: 'wrap',
-              }}
-            >
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  padding: '0.2rem 0.65rem',
-                  fontSize: '0.74rem',
-                  fontWeight: 700,
-                  borderRadius: '999px',
-                  background:
-                    restauranteActual.estado === 'Abierto'
-                      ? '#ecfdf5'
-                      : restauranteActual.estado === 'Alta demanda'
-                        ? '#fefce8'
-                        : '#fef2f2',
-                  color:
-                    restauranteActual.estado === 'Abierto'
-                      ? '#065f46'
-                      : restauranteActual.estado === 'Alta demanda'
-                        ? '#854d0e'
-                        : '#991b1b',
-                  border: `1px solid ${
-                    restauranteActual.estado === 'Abierto'
-                      ? '#a7f3d0'
-                      : restauranteActual.estado === 'Alta demanda'
-                        ? '#fde047'
-                        : '#fecaca'
-                  }`,
-                }}
-              >
-                {restauranteActual.estado ?? 'Abierto'}
-              </span>
-
-              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
-                Tiempo estimado: {restauranteActual.tiempoEstimadoMin ?? 15} min
-              </span>
-
-              <div style={{ display: 'inline-flex', gap: '0.3rem' }}>
-                {restauranteActual.estado !== 'Abierto' && (
-                  <button
-                    type="button"
-                    onClick={() => void cambiarEstadoRestaurante('Abierto')}
-                    style={{
-                      fontSize: '0.72rem',
-                      padding: '0.2rem 0.5rem',
-                      borderRadius: '0.4rem',
-                      border: '1px solid #a7f3d0',
-                      background: '#ecfdf5',
-                      color: '#065f46',
-                      cursor: 'pointer',
-                      fontWeight: 700,
-                    }}
-                  >
-                    Abrir
-                  </button>
-                )}
-                {restauranteActual.estado !== 'Alta demanda' && (
-                  <button
-                    type="button"
-                    onClick={() => void cambiarEstadoRestaurante('Alta demanda')}
-                    style={{
-                      fontSize: '0.72rem',
-                      padding: '0.2rem 0.5rem',
-                      borderRadius: '0.4rem',
-                      border: '1px solid #fde047',
-                      background: '#fefce8',
-                      color: '#854d0e',
-                      cursor: 'pointer',
-                      fontWeight: 700,
-                    }}
-                  >
-                    Alta demanda
-                  </button>
-                )}
-                {restauranteActual.estado !== 'Cerrado' && (
-                  <button
-                    type="button"
-                    onClick={() => void cambiarEstadoRestaurante('Cerrado')}
-                    style={{
-                      fontSize: '0.72rem',
-                      padding: '0.2rem 0.5rem',
-                      borderRadius: '0.4rem',
-                      border: '1px solid #fecaca',
-                      background: '#fef2f2',
-                      color: '#991b1b',
-                      cursor: 'pointer',
-                      fontWeight: 700,
-                    }}
-                  >
-                    Cerrar
-                  </button>
-                )}
-              </div>
             </div>
           )}
-        </div>
-        <button
-          type="button"
-          className="cocina-dashboard__logout"
-          onClick={() => void onLogout()}
-        >
-          Cerrar sesión
-        </button>
-      </header>
 
-      {error && (
-        <p className="empty-column" role="alert" style={{ marginBottom: '1.25rem' }}>
-          {error}
-        </p>
-      )}
-
-      {/* SECCIÓN MEJORADA DE DISPONIBILIDAD DE PRODUCTOS EN COCINA */}
-      <section className="cocina-productos" aria-label="Control de existencias de cocina">
-        <div className="cocina-productos__top-bar">
-          <div className="cocina-productos__title-group">
-            <h2>Disponibilidad de productos</h2>
-            <p>
-              Marca como agotado cualquier producto si se termina un ingrediente o plato para evitar que los clientes lo ordenen.
-            </p>
-          </div>
-
-          <div className="cocina-productos__stats-bar">
-            <span className="cocina-stat-chip available">
-              {disponiblesCount} disponibles
-            </span>
-            <span className="cocina-stat-chip out-of-stock">
-              {agotadosCount} agotados
-            </span>
+          {/* CONTROL OPERATIVO RÁPIDO: ESTADO EN VIVO */}
+          <div className="cocina-state-control">
             <button
               type="button"
-              className="cocina-collapse-btn"
-              onClick={() => setPanelProductosExpandido((prev) => !prev)}
+              className={`cocina-state-pill ${restauranteActual?.estado === 'Abierto' ? 'active-abierto' : ''}`}
+              onClick={() => void cambiarEstadoRestaurante('Abierto')}
             >
-              {panelProductosExpandido
-                ? 'Ocultar panel'
-                : `Gestionar existencias (${productos.length})`}
+              Abierto
+            </button>
+            <button
+              type="button"
+              className={`cocina-state-pill ${restauranteActual?.estado === 'Alta demanda' ? 'active-demanda' : ''}`}
+              onClick={() => void cambiarEstadoRestaurante('Alta demanda')}
+            >
+              Alta demanda
+            </button>
+            <button
+              type="button"
+              className={`cocina-state-pill ${restauranteActual?.estado === 'Cerrado' ? 'active-cerrado' : ''}`}
+              onClick={() => void cambiarEstadoRestaurante('Cerrado')}
+            >
+              Cerrado
             </button>
           </div>
-        </div>
 
-        {errorProductos && (
-          <div className="cocina-productos__error" role="alert">
-            {errorProductos}
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={onLogout}
+            style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      </header>
+
+      {error && <p className="error-message">{error}</p>}
+
+      {/* SECCIÓN DESPLEGABLE DE CONTROL DE PRODUCTOS Y EXISTENCIAS */}
+      <section className="cocina-panel-productos">
+        <div
+          className="cocina-panel-productos__header"
+          onClick={() => setPanelProductosExpandido((prev) => !prev)}
+        >
+          <div className="cocina-panel-title">
+            <span className="cocina-panel-icon">📦</span>
+            <div>
+              <h3>Control Rápido de Disponibilidad</h3>
+              <p>
+                {disponiblesCount} disponibles · {agotadosCount} agotados
+              </p>
+            </div>
           </div>
-        )}
+          <button type="button" className="cocina-panel-toggle-btn">
+            {panelProductosExpandido ? 'Ocultar catálogo ▲' : 'Ver productos agotados/disponibles ▼'}
+          </button>
+        </div>
 
         {panelProductosExpandido && (
           <>
-            <div className="cocina-productos__toolbar">
-              <div className="cocina-search-input">
-                <input
-                  type="search"
-                  placeholder="Buscar producto para agotar o habilitar..."
-                  aria-label="Buscar producto para agotar o habilitar"
-                  value={searchProducto}
-                  onChange={(e) => setSearchProducto(e.target.value)}
-                />
-              </div>
+            {errorProductos && <p className="error-message">{errorProductos}</p>}
 
-              <div className="cocina-filters-strip">
+            {/* Barra de filtros de platos */}
+            <div className="cocina-productos-toolbar">
+              <input
+                type="search"
+                placeholder="Buscar plato o bebida..."
+                value={searchProducto}
+                onChange={(e) => setSearchProducto(e.target.value)}
+                className="cocina-search-input"
+              />
+
+              <div className="cocina-filter-chips">
                 <button
                   type="button"
                   className={`cocina-filter-btn ${filtroDisponibilidad === 'todos' ? 'is-active' : ''}`}
@@ -434,17 +332,17 @@ export function DashboardCocina({ restauranteId, onLogout }: DashboardCocinaProp
                 </button>
                 <button
                   type="button"
-                  className={`cocina-filter-btn is-warning ${filtroDisponibilidad === 'agotados' ? 'is-active' : ''}`}
-                  onClick={() => setFiltroDisponibilidad('agotados')}
-                >
-                  Agotados ({agotadosCount})
-                </button>
-                <button
-                  type="button"
                   className={`cocina-filter-btn ${filtroDisponibilidad === 'disponibles' ? 'is-active' : ''}`}
                   onClick={() => setFiltroDisponibilidad('disponibles')}
                 >
                   Disponibles ({disponiblesCount})
+                </button>
+                <button
+                  type="button"
+                  className={`cocina-filter-btn ${filtroDisponibilidad === 'agotados' ? 'is-active' : ''}`}
+                  onClick={() => setFiltroDisponibilidad('agotados')}
+                >
+                  Agotados ({agotadosCount})
                 </button>
                 <button
                   type="button"

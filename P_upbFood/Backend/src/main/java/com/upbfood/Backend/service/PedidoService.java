@@ -27,13 +27,11 @@ public class PedidoService {
                     EnumSet.of(
                             EstadoPedido.EN_PAGO,
                             EstadoPedido.PAGADO,
-                            EstadoPedido.EN_PREPARACION,
                             EstadoPedido.CANCELADO
                     ),
                     EstadoPedido.EN_PAGO,
                     EnumSet.of(
                             EstadoPedido.PAGADO,
-                            EstadoPedido.EN_PREPARACION,
                             EstadoPedido.PENDIENTE,
                             EstadoPedido.CANCELADO
                     ),
@@ -380,12 +378,13 @@ public class PedidoService {
                 """
                 SELECT
                     COUNT(*) FILTER (
-                        WHERE estado IN ('PENDIENTE', 'EN_PAGO', 'PAGADO', 'EN_PREPARACION', 'LISTO')
+                        WHERE estado IN ('PAGADO', 'EN_PREPARACION', 'LISTO')
                     ) AS pedidos_activos,
                     COUNT(*) FILTER (WHERE estado = 'EN_PREPARACION') AS en_preparacion,
                     COUNT(*) FILTER (WHERE estado = 'LISTO') AS listos,
                     COUNT(*) FILTER (
-                        WHERE fecha::date = CURRENT_DATE
+                        WHERE estado IN ('PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO')
+                          AND fecha::date = CURRENT_DATE
                     ) AS pedidos_hoy,
                     COUNT(*) FILTER (
                         WHERE estado = 'ENTREGADO'
@@ -396,9 +395,7 @@ public class PedidoService {
                           AND fecha::date = CURRENT_DATE
                     ) AS cancelados_hoy,
                     COUNT(DISTINCT correo_cliente) FILTER (
-                        WHERE estado IN (
-                            'PENDIENTE', 'EN_PAGO', 'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
-                        )
+                        WHERE estado IN ('PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO')
                           AND fecha::date = CURRENT_DATE
                     ) AS clientes_hoy,
                     COALESCE(SUM(total) FILTER (
@@ -434,7 +431,7 @@ public class PedidoService {
                 JOIN pedido p ON p.pedido_id = dp.pedido_id
                 WHERE p.restaurante_id = ?
                   AND p.estado IN (
-                      'PENDIENTE', 'EN_PAGO', 'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
+                      'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
                   )
                 GROUP BY pr.nombre_producto
                 ORDER BY unidades DESC, nombre ASC

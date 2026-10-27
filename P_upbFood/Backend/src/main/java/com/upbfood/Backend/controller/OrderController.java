@@ -81,7 +81,10 @@ public class OrderController {
     }
 
     @PostMapping("/seguimiento/{codigo}/stripe-session")
-    public ResponseEntity<?> crearSesionStripe(@PathVariable UUID codigo) {
+    public ResponseEntity<?> crearSesionStripe(
+            @PathVariable UUID codigo,
+            @RequestHeader(value = "Origin", required = false) String origin,
+            @RequestHeader(value = "Referer", required = false) String referer) {
         Map<String, Object> pedido;
         try {
             pedido = pedidoService.obtenerPorCodigo(codigo);
@@ -100,7 +103,8 @@ public class OrderController {
                 pedidoId,
                 codigo,
                 nombreRestaurante,
-                total
+                total,
+                (origin != null && !origin.isBlank()) ? origin : referer
         );
         return ResponseEntity.ok(session);
     }
