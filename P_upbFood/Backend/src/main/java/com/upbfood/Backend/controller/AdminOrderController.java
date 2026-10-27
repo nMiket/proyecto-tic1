@@ -35,9 +35,7 @@ public class AdminOrderController {
         List<Map<String, Object>> pedidos =
                 pedidoService.obtenerActivos(restauranteId);
 
-        return ResponseEntity.ok(pedidos.stream()
-                .map(pedido -> mapearPedido(pedido, true))
-                .toList());
+        return ResponseEntity.ok(mapearListaPedidosConDetalles(pedidos));
     }
 
     @GetMapping("/historial")
@@ -46,11 +44,10 @@ public class AdminOrderController {
     ) {
         authorizationService.requireAdminForRestaurant(restauranteId);
 
-        return ResponseEntity.ok(
-                pedidoService.obtenerHistorial(restauranteId).stream()
-                        .map(pedido -> mapearPedido(pedido, true))
-                        .toList()
-        );
+        List<Map<String, Object>> pedidos =
+                pedidoService.obtenerHistorial(restauranteId);
+
+        return ResponseEntity.ok(mapearListaPedidosConDetalles(pedidos));
     }
 
     @GetMapping("/estadisticas")
@@ -82,9 +79,35 @@ public class AdminOrderController {
         return ResponseEntity.ok(actualizado);
     }
 
+    private List<Map<String, Object>> mapearListaPedidosConDetalles(
+            List<Map<String, Object>> pedidos
+    ) {
+        if (pedidos == null || pedidos.isEmpty()) {
+            return List.of();
+        }
+        List<Integer> pedidoIds = pedidos.stream()
+                .map(p -> p.get("pedido_id"))
+                .filter(Number.class::isInstance)
+                .map(id -> ((Number) id).intValue())
+                .toList();
+
+        Map<Integer, List<Map<String, Object>>> detallesPorPedido =
+                pedidoService.obtenerDetallesPorPedidos(pedidoIds);
+
+        return pedidos.stream()
+                .map(pedido -> {
+                    Object idObj = pedido.get("pedido_id");
+                    List<Map<String, Object>> detalles = (idObj instanceof Number num)
+                            ? detallesPorPedido.getOrDefault(num.intValue(), List.of())
+                            : List.of();
+                    return mapearPedido(pedido, detalles);
+                })
+                .toList();
+    }
+
     private Map<String, Object> mapearPedido(
             Map<String, Object> pedido,
-            boolean incluirDetalle
+            List<Map<String, Object>> detalles
     ) {
         Map<String, Object> response = new HashMap<>();
         Object pedidoId = pedido.get("pedido_id");
@@ -100,11 +123,7 @@ public class AdminOrderController {
         response.put("total", pedido.get("total"));
         response.put("fechaCreacion", pedido.get("fecha"));
         response.put("horaRecogida", pedido.get("hora_recogida"));
-        if (incluirDetalle && pedidoId instanceof Number number) {
-            response.put("details", pedidoService.obtenerDetalle(number.intValue()));
-        } else {
-            response.put("details", List.of());
-        }
+        response.put("details", detalles != null ? detalles : List.of());
         return response;
     }
 }

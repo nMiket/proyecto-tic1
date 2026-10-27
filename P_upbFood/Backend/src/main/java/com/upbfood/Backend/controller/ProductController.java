@@ -74,24 +74,82 @@ public class ProductController {
                 productoRestauranteRepository
                         .findByIdRestauranteIdOrderByIdProductoIdAsc(restauranteId);
 
+        if (asociaciones.isEmpty()) {
+            return ResponseEntity.ok(List.of());
+        }
+
+        List<Integer> productoIds = asociaciones.stream()
+                .map(a -> a.getId().getProductoId())
+                .toList();
+
+        Map<Integer, Product> productosPorId = new HashMap<>();
+        for (Product p : productRepository.findAllById(productoIds)) {
+            productosPorId.put(p.getId(), p);
+        }
+
+        Map<Integer, List<Map<String, Object>>> extrasPorProducto =
+                obtenerExtrasAgrupadosPorRestaurante(restauranteId);
+
         List<Map<String, Object>> response = new ArrayList<>();
 
         for (ProductoRestaurante asociacion : asociaciones) {
             Integer productoId = asociacion.getId().getProductoId();
 
-            Product product = productRepository.findById(productoId)
-                    .orElseThrow(() ->
-                            new IllegalStateException(
-                                    "No se encontró el producto asociado al restaurante."));
+            Product product = productosPorId.get(productoId);
+            if (product == null) {
+                product = productRepository.findById(productoId)
+                        .orElseThrow(() ->
+                                new IllegalStateException(
+                                        "No se encontró el producto asociado al restaurante."));
+            }
 
             // Las adiciones se administran por separado y no aparecen como productos del menú.
             if (product.getTipoProductoId() == 4) {
                 continue;
             }
-            response.add(toResponse(product, asociacion));
+            response.add(toResponse(
+                    product,
+                    asociacion,
+                    extrasPorProducto.getOrDefault(productoId, List.of())));
         }
 
         return ResponseEntity.ok(response);
+    }
+
+    private Map<Integer, List<Map<String, Object>>> obtenerExtrasAgrupadosPorRestaurante(
+            Integer restauranteId) {
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                """
+                SELECT pa.producto_id AS parent_producto_id,
+                       p.producto_id AS id,
+                       COALESCE(pr.nombre_personalizado, p.nombre_producto) AS nombre,
+                       pr.precio
+                FROM producto_adicion pa
+                JOIN producto_restaurante pr
+                  ON pr.restaurante_id = pa.restaurante_id AND pr.producto_id = pa.adicion_id
+                JOIN producto p ON p.producto_id = pr.producto_id
+                WHERE pa.restaurante_id = ?
+                  AND pr.disponible = TRUE
+                ORDER BY pa.producto_id, p.nombre_producto
+                """,
+                restauranteId);
+
+        Map<Integer, List<Map<String, Object>>> agrupados = new HashMap<>();
+        if (rows == null) {
+            return agrupados;
+        }
+        for (Map<String, Object> row : rows) {
+            Object parentObj = row.get("parent_producto_id");
+            if (!(parentObj instanceof Number parentNum)) {
+                continue;
+            }
+            Map<String, Object> extra = new HashMap<>();
+            extra.put("id", row.get("id"));
+            extra.put("nombre", row.get("nombre"));
+            extra.put("precio", row.get("precio"));
+            agrupados.computeIfAbsent(parentNum.intValue(), k -> new ArrayList<>()).add(extra);
+        }
+        return agrupados;
     }
 
     @GetMapping("/productos/extras")
@@ -425,6 +483,24 @@ public class ProductController {
     private Map<String, Object> toResponse(
             Product product,
             ProductoRestaurante asociacion) {
+        List<Map<String, Object>> extras = jdbcTemplate.queryForList(
+                """
+                SELECT p.producto_id AS id, COALESCE(pr.nombre_personalizado, p.nombre_producto) AS nombre, pr.precio
+                FROM producto_adicion pa
+                JOIN producto_restaurante pr
+                  ON pr.restaurante_id = pa.restaurante_id AND pr.producto_id = pa.adicion_id
+                JOIN producto p ON p.producto_id = pr.producto_id
+                WHERE pa.restaurante_id = ? AND pa.producto_id = ?
+                  AND pr.disponible = TRUE
+                ORDER BY p.nombre_producto
+                """, asociacion.getId().getRestauranteId(), product.getId());
+        return toResponse(product, asociacion, extras);
+    }
+
+    private Map<String, Object> toResponse(
+            Product product,
+            ProductoRestaurante asociacion,
+            List<Map<String, Object>> extras) {
 
         Map<String, Object> response = new HashMap<>();
 
@@ -438,19 +514,7 @@ public class ProductController {
         response.put("precio", asociacion.getPrecio());
         response.put("imagenUrl", asociacion.getImagenUrl());
         response.put("disponible", asociacion.getDisponible());
-
-        List<Map<String, Object>> extras = jdbcTemplate.queryForList(
-                """
-                SELECT p.producto_id AS id, COALESCE(pr.nombre_personalizado, p.nombre_producto) AS nombre, pr.precio
-                FROM producto_adicion pa
-                JOIN producto_restaurante pr
-                  ON pr.restaurante_id = pa.restaurante_id AND pr.producto_id = pa.adicion_id
-                JOIN producto p ON p.producto_id = pr.producto_id
-                WHERE pa.restaurante_id = ? AND pa.producto_id = ?
-                  AND pr.disponible = TRUE
-                ORDER BY p.nombre_producto
-                """, asociacion.getId().getRestauranteId(), product.getId());
-        response.put("ingredientesExtra", extras);
+        response.put("ingredientesExtra", extras != null ? extras : List.of());
 
         return response;
     }

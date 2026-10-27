@@ -210,6 +210,50 @@ public class PedidoService {
         );
     }
 
+    public Map<Integer, List<Map<String, Object>>> obtenerDetallesPorPedidos(List<Integer> pedidoIds) {
+        if (pedidoIds == null || pedidoIds.isEmpty()) {
+            return Map.of();
+        }
+        String placeholders = pedidoIds.stream()
+                .map(id -> "?")
+                .collect(java.util.stream.Collectors.joining(","));
+        String sql = """
+                SELECT dp.pedido_id,
+                       dp.detalle_pedido_id,
+                       p.nombre_producto,
+                       dp.cantidad,
+                       dp.precio_unitario,
+                       (SELECT string_agg(COALESCE(pr.nombre_personalizado, pa.nombre_producto), ', ' ORDER BY COALESCE(pr.nombre_personalizado, pa.nombre_producto))
+                          FROM detalle_pedido_adicion dpa
+                          JOIN producto pa ON pa.producto_id = dpa.adicion_id
+                          LEFT JOIN producto_restaurante pr
+                            ON pr.restaurante_id = dpa.restaurante_id AND pr.producto_id = dpa.adicion_id
+                         WHERE dpa.detalle_pedido_id = dp.detalle_pedido_id) AS adiciones,
+                       dp.observaciones,
+                       dp.cantidad * (dp.precio_unitario + COALESCE(
+                           (SELECT SUM(dpa.precio_adicion)
+                              FROM detalle_pedido_adicion dpa
+                             WHERE dpa.detalle_pedido_id = dp.detalle_pedido_id), 0)) AS subtotal
+                  FROM detalle_pedido dp
+                  JOIN producto p ON p.producto_id = dp.producto_id
+                 WHERE dp.pedido_id IN (%s)
+                 ORDER BY dp.pedido_id, dp.detalle_pedido_id
+                """.formatted(placeholders);
+
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, pedidoIds.toArray());
+        Map<Integer, List<Map<String, Object>>> agrupados = new LinkedHashMap<>();
+        for (Map<String, Object> row : rows) {
+            Object pedidoIdObj = row.get("pedido_id");
+            if (!(pedidoIdObj instanceof Number pedidoIdNum)) {
+                continue;
+            }
+            Map<String, Object> item = new LinkedHashMap<>(row);
+            item.remove("pedido_id");
+            agrupados.computeIfAbsent(pedidoIdNum.intValue(), k -> new java.util.ArrayList<>()).add(item);
+        }
+        return agrupados;
+    }
+
     public List<Map<String, Object>> obtenerActivos(Integer restauranteId) {
         return jdbcTemplate.queryForList(
                 """
