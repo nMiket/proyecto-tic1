@@ -8,17 +8,6 @@ type PagoState = {
     total?: number;
 };
 
-type MedioPago = {
-    id: number;
-    nombre: string;
-};
-
-const mediosPago: MedioPago[] = [
-    { id: 2, nombre: "Tarjeta (Pasarela Stripe Sandbox)" },
-    { id: 3, nombre: "Transferencia" },
-    { id: 1, nombre: "Efectivo" },
-];
-
 function obtenerPedidoRespaldo(searchParams: URLSearchParams): PagoState | null {
     const queryCodigo = searchParams.get("codigo");
     const queryPedidoId = searchParams.get("pedidoId");
@@ -59,7 +48,6 @@ export default function PagoPage() {
     const state =
         (location.state as PagoState | null) ?? obtenerPedidoRespaldo(searchParams);
 
-    const [tipoPagoId, setTipoPagoId] = useState(2);
     const [procesando, setProcesando] = useState(false);
     const [redirigiendoStripe, setRedirigiendoStripe] = useState(false);
     const [estadoPago, setEstadoPago] = useState<
@@ -95,7 +83,7 @@ export default function PagoPage() {
 
         verificadoStripeRef.current = true;
         setProcesando(true);
-        setMensaje("Verificando pago con Stripe Sandbox...");
+        setMensaje("Verificando pago con Stripe...");
 
         void apiFetch(
             `${getApiBaseUrl()}/api/pedidos/seguimiento/${codigoSeguimiento}/stripe-confirmar?sessionId=${encodeURIComponent(
@@ -117,7 +105,7 @@ export default function PagoPage() {
                 }
                 setEstadoPago("aprobado");
                 setMensaje(
-                    "¡Pago confirmado en Stripe Sandbox! Tu pedido ha sido marcado como pagado."
+                    "¡Pago confirmado en Stripe! Tu pedido ha sido registrado como pagado."
                 );
             })
             .catch(() => {
@@ -155,7 +143,7 @@ export default function PagoPage() {
                 setEstadoPago("rechazado");
                 setMensaje(
                     data?.message ??
-                        "No se pudo abrir la pasarela de Stripe. Puedes usar la simulación local."
+                        "No se pudo abrir la pasarela de Stripe. Inténtalo nuevamente."
                 );
                 setRedirigiendoStripe(false);
                 return;
@@ -165,67 +153,9 @@ export default function PagoPage() {
         } catch (error) {
             console.error(error);
             setMensaje(
-                "No se pudo conectar con Stripe. Verifica tu conexión o usa la simulación local."
+                "No se pudo conectar con Stripe. Verifica tu conexión e inténtalo nuevamente."
             );
             setRedirigiendoStripe(false);
-        }
-    };
-
-    const simularRechazo = () => {
-        setEstadoPago("rechazado");
-        setMensaje(
-            "El pago simulado fue rechazado. Tu pedido sigue pendiente de pago."
-        );
-    };
-
-    const simularAprobacion = async () => {
-        if (!pedidoId || !codigoSeguimiento || total <= 0) {
-            setMensaje("No se encontraron los datos completos del pedido.");
-            return;
-        }
-
-        setProcesando(true);
-        setMensaje("");
-
-        try {
-            const respuesta = await apiFetch(
-                `${getApiBaseUrl()}/api/pedidos/seguimiento/${codigoSeguimiento}/pago`,
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        tipoPagoId,
-                        monto: total,
-                    }),
-                }
-            );
-
-            if (!respuesta.ok) {
-                const error = (await respuesta.json().catch(() => null)) as {
-                    message?: string;
-                } | null;
-
-                setEstadoPago("rechazado");
-                setMensaje(
-                    error?.message ??
-                        "No se pudo registrar el pago. Puedes intentarlo nuevamente."
-                );
-                return;
-            }
-
-            setEstadoPago("aprobado");
-            setMensaje(
-                "¡Pago aprobado! Tu pedido ha sido registrado como pagado."
-            );
-        } catch (error) {
-            console.error(error);
-            setMensaje(
-                "No se pudo conectar con el servidor. Verifica el estado del pago antes de volver a intentarlo."
-            );
-        } finally {
-            setProcesando(false);
         }
     };
 
@@ -253,8 +183,8 @@ export default function PagoPage() {
                     <p className="eyebrow">Paso 3 de 3 · Pasarela de pago</p>
                     <h2>Portal de pago</h2>
                     <p>
-                        Paga con tarjeta en la pasarela de pruebas de Stripe o
-                        usa la confirmación rápida.
+                        Completa el pago de tu pedido de forma segura a través
+                        de la pasarela de Stripe.
                     </p>
                 </div>
 
@@ -278,24 +208,6 @@ export default function PagoPage() {
 
                 {estadoPago === "pendiente" || estadoPago === "rechazado" ? (
                     <>
-                        <div className="campo">
-                            <label htmlFor="medio-pago">Medio de pago</label>
-                            <select
-                                id="medio-pago"
-                                value={tipoPagoId}
-                                onChange={(e) =>
-                                    setTipoPagoId(Number(e.target.value))
-                                }
-                                disabled={procesando || redirigiendoStripe}
-                            >
-                                {mediosPago.map((medio) => (
-                                    <option key={medio.id} value={medio.id}>
-                                        {medio.nombre}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
                         <div
                             style={{
                                 padding: "12px 14px",
@@ -307,49 +219,31 @@ export default function PagoPage() {
                                 marginBottom: "14px",
                             }}
                         >
-                            <strong>Datos de prueba para Stripe Sandbox:</strong>
+                            <strong>Tarjeta de prueba (Stripe Sandbox):</strong>
                             <div style={{ marginTop: "4px" }}>
-                                Tarjeta: <code>4242 4242 4242 4242</code> ·
+                                Número: <code>4242 4242 4242 4242</code> ·
                                 Fecha: cualquier mes/año futuro (ej.{" "}
                                 <code>12/28</code>) · CVC: <code>123</code>
                             </div>
                         </div>
 
-                        <div style={{ display: "grid", gap: "10px" }}>
-                            <button
-                                type="button"
-                                onClick={() => void iniciarPagoStripe()}
-                                disabled={procesando || redirigiendoStripe}
-                                style={{
-                                    background: "#1d1d1b",
-                                    color: "#c0d901",
-                                    fontWeight: 700,
-                                }}
-                            >
-                                {redirigiendoStripe
-                                    ? "Abriendo Stripe Checkout..."
-                                    : "Pagar con Tarjeta en Stripe (Sandbox)"}
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => void simularAprobacion()}
-                                disabled={procesando || redirigiendoStripe}
-                            >
-                                {procesando
-                                    ? "Procesando..."
-                                    : "Simular pago aprobado (confirmación rápida)"}
-                            </button>
-
-                            <button
-                                type="button"
-                                className="secondary-button"
-                                onClick={simularRechazo}
-                                disabled={procesando || redirigiendoStripe}
-                            >
-                                Simular pago rechazado
-                            </button>
-                        </div>
+                        <button
+                            type="button"
+                            onClick={() => void iniciarPagoStripe()}
+                            disabled={procesando || redirigiendoStripe}
+                            style={{
+                                width: "100%",
+                                background: "#1d1d1b",
+                                color: "#c0d901",
+                                fontWeight: 700,
+                            }}
+                        >
+                            {redirigiendoStripe
+                                ? "Abriendo Stripe Checkout..."
+                                : procesando
+                                ? "Verificando pago..."
+                                : "Pagar con Stripe"}
+                        </button>
                     </>
                 ) : null}
 
