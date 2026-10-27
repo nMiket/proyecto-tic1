@@ -227,6 +227,7 @@ export default function AdminDashboardPage({
 
   // Personal de cocina
   const [administradoresCocina, setAdministradoresCocina] = useState<AdministradorCocinaItem[]>([])
+  const [editingAdminCocinaId, setEditingAdminCocinaId] = useState<number | null>(null)
   const [nombreAdminCocina, setNombreAdminCocina] = useState('')
   const [telefonoAdminCocina, setTelefonoAdminCocina] = useState('')
   const [correoAdminCocina, setCorreoAdminCocina] = useState('')
@@ -510,6 +511,7 @@ export default function AdminDashboardPage({
   // Resetea formularios al cambiar cafetería
   useEffect(() => {
     resetProductForm()
+    resetAdminCocinaForm()
     setBusquedaHistorial('')
     setCatalogSearch('')
   }, [selectedRestauranteId])
@@ -831,6 +833,27 @@ export default function AdminDashboardPage({
   }
 
   // Personal de cocina
+  const resetAdminCocinaForm = () => {
+    setEditingAdminCocinaId(null)
+    setNombreAdminCocina('')
+    setTelefonoAdminCocina('')
+    setCorreoAdminCocina('')
+    setPasswordAdminCocina('')
+    setShowPassword(false)
+  }
+
+  const handleEditarAdminCocina = (administrador: AdministradorCocinaItem) => {
+    setEditingAdminCocinaId(administrador.administradorId)
+    setNombreAdminCocina(administrador.nombre)
+    setTelefonoAdminCocina(administrador.telefono)
+    setCorreoAdminCocina(administrador.correo)
+    setPasswordAdminCocina('')
+    setShowPassword(false)
+    setAdminCocinaError('')
+    setAdminCocinaSuccess('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const handleCrearAdminCocina = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setAdminCocinaError('')
@@ -866,10 +889,7 @@ export default function AdminDashboardPage({
         )
       }
 
-      setNombreAdminCocina('')
-      setTelefonoAdminCocina('')
-      setCorreoAdminCocina('')
-      setPasswordAdminCocina('')
+      resetAdminCocinaForm()
       setAdminCocinaSuccess(
         'Cuenta de cocinero creada y persistida correctamente en la base de datos.',
       )
@@ -877,6 +897,58 @@ export default function AdminDashboardPage({
     } catch (error) {
       setAdminCocinaError(
         error instanceof Error ? error.message : 'No se pudo crear el administrador.',
+      )
+    } finally {
+      setSavingAdmin(false)
+    }
+  }
+
+  const handleActualizarAdminCocina = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setAdminCocinaError('')
+    setAdminCocinaSuccess('')
+
+    if (!esDueno || !selectedRestauranteId || editingAdminCocinaId === null) {
+      setAdminCocinaError('No tienes permisos para editar administradores de cocina.')
+      return
+    }
+
+    if (passwordAdminCocina.trim() && passwordAdminCocina.trim().length < 8) {
+      setAdminCocinaError('La nueva contraseña debe tener al menos 8 caracteres.')
+      return
+    }
+
+    setSavingAdmin(true)
+    try {
+      const response = await apiFetch(
+        `${getApiBaseUrl()}/api/admin/restaurantes/${selectedRestauranteId}/administradores-cocina/${editingAdminCocinaId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: nombreAdminCocina.trim(),
+            telefono: telefonoAdminCocina.trim(),
+            correo: correoAdminCocina.trim(),
+            password: passwordAdminCocina.trim() || null,
+          }),
+        },
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null)
+        throw new Error(
+          errorData?.message ??
+            errorData?.detail ??
+            'No se pudo actualizar el administrador de cocina.',
+        )
+      }
+
+      resetAdminCocinaForm()
+      setAdminCocinaSuccess('Datos del cocinero actualizados correctamente.')
+      await cargarAdministradoresCocina()
+    } catch (error) {
+      setAdminCocinaError(
+        error instanceof Error ? error.message : 'No se pudo actualizar el cocinero.',
       )
     } finally {
       setSavingAdmin(false)
@@ -907,6 +979,9 @@ export default function AdminDashboardPage({
         )
       }
 
+      if (editingAdminCocinaId === administrador.administradorId) {
+        resetAdminCocinaForm()
+      }
       setAdminCocinaSuccess(
         `Se retiró el acceso de ${administrador.nombre} a esta cafetería.`,
       )
@@ -2014,13 +2089,17 @@ export default function AdminDashboardPage({
       {activeTab === 'personal' && esDueno && (
         <section aria-label="Personal de cocina">
           <div className="admin-two-cols" style={{ alignItems: 'start' }}>
-            {/* Formulario estilizado para crear cocinero */}
+            {/* Formulario estilizado para crear o editar cocinero */}
             <div className="admin-panel-card">
-              <h3>Registro de Administrador de Cocina</h3>
+              <h3>
+                {editingAdminCocinaId !== null
+                  ? 'Editar Administrador de Cocina'
+                  : 'Registro de Administrador de Cocina'}
+              </h3>
               <p className="admin-panel-card-subtitle">
-                Crea una cuenta para el cocinero responsable. Esta cuenta tendrá acceso
-                exclusivo al panel de cocina (/admin/cocina) y se guardará de forma persistente
-                en la base de datos de {restauranteSeleccionado?.nombre ?? 'esta cafetería'}.
+                {editingAdminCocinaId !== null
+                  ? `Modifica los datos de contacto, correo o contraseña del cocinero asignado a ${restauranteSeleccionado?.nombre ?? 'esta cafetería'}.`
+                  : `Crea una cuenta para el cocinero responsable. Esta cuenta tendrá acceso exclusivo al panel de cocina (/admin/cocina) y se guardará de forma persistente en la base de datos de ${restauranteSeleccionado?.nombre ?? 'esta cafetería'}.`}
               </p>
 
               {adminCocinaSuccess && (
@@ -2036,7 +2115,11 @@ export default function AdminDashboardPage({
               )}
 
               <form
-                onSubmit={handleCrearAdminCocina}
+                onSubmit={
+                  editingAdminCocinaId !== null
+                    ? handleActualizarAdminCocina
+                    : handleCrearAdminCocina
+                }
                 style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
               >
                 <div className="admin-form-group">
@@ -2080,7 +2163,11 @@ export default function AdminDashboardPage({
                 </div>
 
                 <div className="admin-form-group">
-                  <label htmlFor="cocina-pass">Contraseña inicial *</label>
+                  <label htmlFor="cocina-pass">
+                    {editingAdminCocinaId !== null
+                      ? 'Nueva contraseña (opcional)'
+                      : 'Contraseña inicial *'}
+                  </label>
                   <div className="password-input-wrapper">
                     <input
                       id="cocina-pass"
@@ -2089,8 +2176,12 @@ export default function AdminDashboardPage({
                       onChange={(e) => setPasswordAdminCocina(e.target.value)}
                       minLength={8}
                       maxLength={72}
-                      placeholder="Mínimo 8 caracteres alfanuméricos"
-                      required
+                      placeholder={
+                        editingAdminCocinaId !== null
+                          ? 'Déjala en blanco para mantener la contraseña actual'
+                          : 'Mínimo 8 caracteres alfanuméricos'
+                      }
+                      required={editingAdminCocinaId === null}
                     />
                     <button
                       type="button"
@@ -2101,18 +2192,36 @@ export default function AdminDashboardPage({
                     </button>
                   </div>
                   <small style={{ color: '#64748b', fontSize: '0.78rem' }}>
-                    Esta contraseña será encriptada con algoritmo BCrypt en la base de datos.
+                    {editingAdminCocinaId !== null
+                      ? 'Solo completa este campo si deseas cambiar la contraseña del cocinero.'
+                      : 'Esta contraseña será encriptada con algoritmo BCrypt en la base de datos.'}
                   </small>
                 </div>
 
-                <button
-                  type="submit"
-                  className="admin-primary-btn"
-                  disabled={savingAdmin}
-                  style={{ marginTop: '0.5rem' }}
-                >
-                  {savingAdmin ? 'Guardando en base de datos...' : 'Crear cuenta de cocinero'}
-                </button>
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  <button
+                    type="submit"
+                    className="admin-primary-btn"
+                    disabled={savingAdmin}
+                  >
+                    {savingAdmin
+                      ? 'Guardando en base de datos...'
+                      : editingAdminCocinaId !== null
+                        ? 'Guardar cambios'
+                        : 'Crear cuenta de cocinero'}
+                  </button>
+
+                  {editingAdminCocinaId !== null && (
+                    <button
+                      type="button"
+                      className="admin-secondary-btn"
+                      onClick={resetAdminCocinaForm}
+                      disabled={savingAdmin}
+                    >
+                      Cancelar
+                    </button>
+                  )}
+                </div>
               </form>
             </div>
 
@@ -2159,14 +2268,24 @@ export default function AdminDashboardPage({
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        className="mini-button danger"
-                        onClick={() => handleRetirarAdminCocina(administrador)}
-                        title="Revocar asignación de este usuario en esta cafetería"
-                      >
-                        Retirar acceso
-                      </button>
+                      <div className="admin-card-actions">
+                        <button
+                          type="button"
+                          className="admin-card-btn edit"
+                          onClick={() => handleEditarAdminCocina(administrador)}
+                          title="Editar datos de este cocinero"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="mini-button danger"
+                          onClick={() => handleRetirarAdminCocina(administrador)}
+                          title="Revocar asignación de este usuario en esta cafetería"
+                        >
+                          Retirar acceso
+                        </button>
+                      </div>
                     </article>
                   ))}
                 </div>
