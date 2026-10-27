@@ -74,6 +74,9 @@ public class AprobacionSolicitudService {
         solicitud.setEstado("APROBADA");
         solicitud.setFechaRevision(LocalDateTime.now());
         solicitud.setObservacionRevision(null);
+        solicitud.setTokenAprobacionHash(null);
+        solicitud.setTokenRechazoHash(null);
+        solicitud.setTokenRevisionExpiracion(null);
         solicitudRepository.save(solicitud);
 
         return new ResultadoAprobacion(
@@ -83,6 +86,63 @@ public class AprobacionSolicitudService {
                 creada.enlace(),
                 creada.invitacion()
         );
+    }
+
+    @Transactional
+    public SolicitudRegistroRestaurante rechazarPorToken(String tokenHash, String observacion) {
+        SolicitudRegistroRestaurante solicitud =
+                validarSolicitudPorToken(tokenHash, "rechazar");
+        solicitud.setEstado("RECHAZADA");
+        solicitud.setFechaRevision(LocalDateTime.now());
+        solicitud.setObservacionRevision(
+                observacion == null || observacion.isBlank() ? null : observacion.trim()
+        );
+        solicitud.setTokenAprobacionHash(null);
+        solicitud.setTokenRechazoHash(null);
+        solicitud.setTokenRevisionExpiracion(null);
+        return solicitudRepository.save(solicitud);
+    }
+
+    @Transactional
+    public ResultadoAprobacion aprobarPorToken(String tokenHash) {
+        SolicitudRegistroRestaurante solicitud =
+                validarSolicitudPorToken(tokenHash, "aprobar");
+        return aprobar(solicitud.getId());
+    }
+
+    private SolicitudRegistroRestaurante validarSolicitudPorToken(String tokenHash, String accion) {
+        SolicitudRegistroRestaurante solicitud = solicitudRepository.buscarPorTokenRevision(tokenHash)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.GONE,
+                        "Esta solicitud ya fue resuelta, el enlace ya fue utilizado o no es válido."
+                ));
+
+        if (solicitud.getTokenRevisionExpiracion() == null
+                || !solicitud.getTokenRevisionExpiracion().isAfter(LocalDateTime.now())) {
+            throw new ResponseStatusException(
+                    HttpStatus.GONE,
+                    "El enlace ha vencido. Solicita que se envíe una nueva notificación."
+            );
+        }
+
+        if (!"PENDIENTE".equals(solicitud.getEstado())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Esta solicitud ya fue revisada."
+            );
+        }
+
+        boolean tokenAprobar = tokenHash.equals(solicitud.getTokenAprobacionHash());
+        boolean tokenRechazar = tokenHash.equals(solicitud.getTokenRechazoHash());
+
+        if (("aprobar".equals(accion) && !tokenAprobar)
+                || ("rechazar".equals(accion) && !tokenRechazar)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El enlace no corresponde a la decisión seleccionada."
+            );
+        }
+        return solicitud;
     }
 
     public record ResultadoAprobacion(

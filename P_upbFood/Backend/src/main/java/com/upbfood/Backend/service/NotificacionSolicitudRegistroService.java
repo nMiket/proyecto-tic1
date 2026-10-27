@@ -111,10 +111,16 @@ public class NotificacionSolicitudRegistroService {
                     enlaceRechazar);
 
             helper.setText(html, true);
-            mailSender.send(mensaje);
-            log.info("Correo de revisión enviado para solicitud {}", solicitud.getId());
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    mailSender.send(mensaje);
+                    log.info("Correo de revisión enviado para solicitud {}", solicitud.getId());
+                } catch (MailException e) {
+                    log.error("No se pudo enviar el correo de revisión para solicitud {}", solicitud.getId(), e);
+                }
+            });
         } catch (MessagingException | MailException e) {
-            log.error("No se pudo enviar el correo de revisión para solicitud {}", solicitud.getId(), e);
+            log.error("No se pudo preparar el correo de revisión para solicitud {}", solicitud.getId(), e);
         }
     }
 

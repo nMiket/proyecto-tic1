@@ -111,49 +111,15 @@ public class SolicitudRegistroRestauranteController {
     }
 
     // La decisión se ejecuta solo después de que el destinatario confirme en la página.
+    // La transacción de base de datos se confirma antes de invocar el envío SMTP externo (BE-04).
     @PostMapping("/revisar-correo")
-    @Transactional
     public ResponseEntity<Map<String, Object>> revisarDesdeCorreo(
             @Valid @RequestBody DecisionCorreoRequest request) {
         String tokenHash = notificacionService.hashToken(request.token());
 
-        SolicitudRegistroRestaurante solicitud = repository.buscarPorTokenRevision(tokenHash)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.GONE,
-                        "Esta solicitud ya fue resuelta, el enlace ya fue utilizado o no es válido."));
-
-        if (solicitud.getTokenRevisionExpiracion() == null
-                || !solicitud.getTokenRevisionExpiracion().isAfter(LocalDateTime.now())) {
-            throw new ResponseStatusException(
-                    HttpStatus.GONE,
-                    "El enlace ha vencido. Solicita que se envíe una nueva notificación.");
-        }
-
-        if (!"PENDIENTE".equals(solicitud.getEstado())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Esta solicitud ya fue revisada.");
-        }
-
-        boolean tokenAprobar = tokenHash.equals(solicitud.getTokenAprobacionHash());
-        boolean tokenRechazar = tokenHash.equals(solicitud.getTokenRechazoHash());
-
-        if (("aprobar".equals(request.accion()) && !tokenAprobar)
-                || ("rechazar".equals(request.accion()) && !tokenRechazar)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "El enlace no corresponde a la decisión seleccionada.");
-        }
-
         if ("rechazar".equals(request.accion())) {
-            solicitud.setEstado("RECHAZADA");
-            solicitud.setFechaRevision(LocalDateTime.now());
-            solicitud.setObservacionRevision(
-                    request.observacion() == null || request.observacion().isBlank()
-                            ? null
-                            : request.observacion().trim());
-            limpiarTokens(solicitud);
-            repository.save(solicitud);
+            SolicitudRegistroRestaurante solicitud =
+                    aprobacionService.rechazarPorToken(tokenHash, request.observacion());
             boolean correoEnviado = notificacionService.enviarNotificacionRechazo(solicitud);
 
             return ResponseEntity.ok(Map.of(
@@ -165,10 +131,7 @@ public class SolicitudRegistroRestauranteController {
         }
 
         AprobacionSolicitudService.ResultadoAprobacion resultado =
-                aprobacionService.aprobar(solicitud.getId());
-
-        limpiarTokens(solicitud);
-        repository.save(solicitud);
+                aprobacionService.aprobarPorToken(tokenHash);
 
         try {
             notificacionInvitacionService.enviarInvitacion(
@@ -187,11 +150,5 @@ public class SolicitudRegistroRestauranteController {
                     "restauranteId", resultado.restauranteId(),
                     "estado", "APROBADA"));
         }
-    }
-
-    private void limpiarTokens(SolicitudRegistroRestaurante solicitud) {
-        solicitud.setTokenAprobacionHash(null);
-        solicitud.setTokenRechazoHash(null);
-        solicitud.setTokenRevisionExpiracion(null);
     }
 }
