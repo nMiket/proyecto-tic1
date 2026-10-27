@@ -5,11 +5,13 @@ import com.upbfood.Backend.entity.AdminUser;
 import com.upbfood.Backend.entity.AdministradorRestaurante;
 import com.upbfood.Backend.entity.AdministradorRestauranteId;
 import com.upbfood.Backend.entity.InvitacionAdministrador;
+import com.upbfood.Backend.entity.Restaurant;
 import com.upbfood.Backend.entity.SolicitudRegistroRestaurante;
 import com.upbfood.Backend.repository.AdminUserRepository;
 import com.upbfood.Backend.repository.AdministradorRestauranteRepository;
 import com.upbfood.Backend.repository.InvitacionAdministradorRepository;
 import com.upbfood.Backend.repository.SolicitudRegistroRestauranteRepository;
+import com.upbfood.Backend.repository.RestaurantRepository;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,6 +32,7 @@ public class ActivacionInvitacionService {
     private final AdministradorRestauranteRepository asignacionRepository;
     private final InvitacionAdministradorService invitacionService;
     private final PasswordEncoder passwordEncoder;
+    private final RestaurantRepository restaurantRepository;
 
     public ActivacionInvitacionService(
             InvitacionAdministradorRepository invitacionRepository,
@@ -37,7 +40,8 @@ public class ActivacionInvitacionService {
             AdminUserRepository adminRepository,
             AdministradorRestauranteRepository asignacionRepository,
             InvitacionAdministradorService invitacionService,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            RestaurantRepository restaurantRepository
     ) {
         this.invitacionRepository = invitacionRepository;
         this.solicitudRepository = solicitudRepository;
@@ -45,6 +49,7 @@ public class ActivacionInvitacionService {
         this.asignacionRepository = asignacionRepository;
         this.invitacionService = invitacionService;
         this.passwordEncoder = passwordEncoder;
+        this.restaurantRepository = restaurantRepository;
     }
 
     @Transactional
@@ -112,12 +117,24 @@ public class ActivacionInvitacionService {
 
         AdminUser guardado = adminRepository.saveAndFlush(admin);
 
+        // La aprobación solo genera la invitación. El restaurante nace aquí,
+        // dentro de la misma transacción que valida y activa la contraseña.
+        Restaurant restaurante = new Restaurant();
+        restaurante.setNombre(solicitud.getNombreRestaurante());
+        restaurante.setUbicacion(solicitud.getUbicacionRestaurante());
+        restaurante.setTiempoEstimadoMin(solicitud.getTiempoPreparacionMin());
+        restaurante.setEstado("Abierto");
+        Restaurant restauranteGuardado = restaurantRepository.saveAndFlush(restaurante);
+
+        invitacion.setRestauranteId(restauranteGuardado.getId());
+        invitacionRepository.save(invitacion);
+
         AdministradorRestaurante asignacion =
                 new AdministradorRestaurante();
 
         asignacion.setId(new AdministradorRestauranteId(
                 guardado.getId(),
-                invitacion.getRestauranteId()
+                restauranteGuardado.getId()
         ));
         asignacion.setTipoAdministradorId(ROL_DUENO);
         asignacion.setEstado("Activo");

@@ -2,6 +2,7 @@ package com.upbfood.Backend.controller;
 
 import com.upbfood.Backend.dto.SolicitudRegistroRestauranteRequest;
 import com.upbfood.Backend.entity.SolicitudRegistroRestaurante;
+import com.upbfood.Backend.repository.AdminUserRepository;
 import com.upbfood.Backend.repository.SolicitudRegistroRestauranteRepository;
 import com.upbfood.Backend.service.AprobacionSolicitudService;
 import com.upbfood.Backend.service.NotificacionInvitacionService;
@@ -28,16 +29,19 @@ public class SolicitudRegistroRestauranteController {
     private final NotificacionSolicitudRegistroService notificacionService;
     private final AprobacionSolicitudService aprobacionService;
     private final NotificacionInvitacionService notificacionInvitacionService;
+    private final AdminUserRepository adminUserRepository;
 
     public SolicitudRegistroRestauranteController(
             SolicitudRegistroRestauranteRepository repository,
             NotificacionSolicitudRegistroService notificacionService,
             AprobacionSolicitudService aprobacionService,
-            NotificacionInvitacionService notificacionInvitacionService) {
+            NotificacionInvitacionService notificacionInvitacionService,
+            AdminUserRepository adminUserRepository) {
         this.repository = repository;
         this.notificacionService = notificacionService;
         this.aprobacionService = aprobacionService;
         this.notificacionInvitacionService = notificacionInvitacionService;
+        this.adminUserRepository = adminUserRepository;
     }
 
     public record DecisionCorreoRequest(
@@ -50,11 +54,18 @@ public class SolicitudRegistroRestauranteController {
     @PostMapping
     public ResponseEntity<Map<String, Object>> crearSolicitud(
             @Valid @RequestBody SolicitudRegistroRestauranteRequest request) {
+        String correo = request.getCorreoSolicitante().trim().toLowerCase();
+        if (adminUserRepository.findByEmail(correo).isPresent()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ya existe un restaurante registrado con este correo.");
+        }
+
         SolicitudRegistroRestaurante solicitud = new SolicitudRegistroRestaurante();
 
         solicitud.setNombreSolicitante(request.getNombreSolicitante().trim());
         solicitud.setTelefonoSolicitante(request.getTelefonoSolicitante().trim());
-        solicitud.setCorreoSolicitante(request.getCorreoSolicitante().trim().toLowerCase());
+        solicitud.setCorreoSolicitante(correo);
         solicitud.setNombreRestaurante(request.getNombreRestaurante().trim());
         solicitud.setUbicacionRestaurante(request.getUbicacionRestaurante().trim());
         solicitud.setTiempoPreparacionMin(request.getTiempoPreparacionMin());
@@ -141,13 +152,11 @@ public class SolicitudRegistroRestauranteController {
             return ResponseEntity.ok(Map.of(
                     "mensaje", "Solicitud aprobada. Se envió al solicitante el enlace para activar su cuenta de dueño.",
                     "solicitudId", resultado.solicitudId(),
-                    "restauranteId", resultado.restauranteId(),
                     "estado", "APROBADA"));
         } catch (IllegalStateException e) {
             return ResponseEntity.ok(Map.of(
                     "mensaje", "La solicitud fue aprobada, pero no se pudo enviar el enlace de activación al dueño. Revisa la configuración de correo.",
                     "solicitudId", resultado.solicitudId(),
-                    "restauranteId", resultado.restauranteId(),
                     "estado", "APROBADA"));
         }
     }

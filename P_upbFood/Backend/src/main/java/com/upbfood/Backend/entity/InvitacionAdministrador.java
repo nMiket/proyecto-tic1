@@ -16,7 +16,7 @@ public class InvitacionAdministrador {
     @Column(name = "solicitud_id", nullable = false, unique = true)
     private Long solicitudId;
 
-    @Column(name = "restaurante_id", nullable = false)
+    @Column(name = "restaurante_id")
     private Integer restauranteId;
 
     @Column(name = "correo_destino", nullable = false, length = 255)

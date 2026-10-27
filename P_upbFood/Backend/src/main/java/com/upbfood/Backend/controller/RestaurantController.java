@@ -6,14 +6,17 @@ import com.upbfood.Backend.entity.Restaurant;
 import com.upbfood.Backend.repository.AdministradorRestauranteRepository;
 import com.upbfood.Backend.repository.RestaurantRepository;
 import com.upbfood.Backend.security.AdminAuthorizationService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,14 +31,20 @@ public class RestaurantController {
     private final RestaurantRepository restaurantRepository;
     private final AdministradorRestauranteRepository administradorRestauranteRepository;
     private final AdminAuthorizationService authorizationService;
+    private final JdbcTemplate jdbcTemplate;
+    private final PasswordEncoder passwordEncoder;
 
     public RestaurantController(
             RestaurantRepository restaurantRepository,
             AdministradorRestauranteRepository administradorRestauranteRepository,
-            AdminAuthorizationService authorizationService) {
+            AdminAuthorizationService authorizationService,
+            JdbcTemplate jdbcTemplate,
+            PasswordEncoder passwordEncoder) {
         this.restaurantRepository = restaurantRepository;
         this.administradorRestauranteRepository = administradorRestauranteRepository;
         this.authorizationService = authorizationService;
+        this.jdbcTemplate = jdbcTemplate;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // Catálogo público: todos los restaurantes.
@@ -143,5 +152,53 @@ public class RestaurantController {
 
         Restaurant guardado = restaurantRepository.save(restaurant);
         return ResponseEntity.ok(guardado);
+    }
+
+    /**
+     * El dueño puede eliminar su restaurante únicamente si nunca se han
+     * registrado pedidos asociados a él. La validación vive aquí para que no
+     * pueda omitirse llamando directamente a la API.
+     */
+    @Transactional
+    @DeleteMapping("/admin/restaurantes/{id}")
+    public ResponseEntity<Void> deleteRestaurant(
+            @PathVariable Integer id,
+            @RequestBody DeleteRestaurantRequest request) {
+        AdminUser owner = authorizationService.requireOwnerForRestaurant(id);
+
+        if (request == null || request.password() == null || request.password().isBlank()
+                || !passwordEncoder.matches(request.password(), owner.getPasswordHash())) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED, "La contraseña del dueño no es correcta.");
+        }
+
+        if (!restaurantRepository.existsById(id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Restaurante no encontrado.");
+        }
+
+        Integer pedidos = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM pedido WHERE restaurante_id = ?",
+                Integer.class,
+                id);
+
+        if (pedidos != null && pedidos > 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "No se puede eliminar el restaurante porque tiene pedidos registrados.");
+        }
+
+        // No hay pedidos, por lo que se pueden quitar de forma segura sus
+        // relaciones y configuración antes de borrar el restaurante.
+        jdbcTemplate.update("DELETE FROM invitacion_administrador WHERE restaurante_id = ?", id);
+        jdbcTemplate.update("DELETE FROM producto_adicion WHERE restaurante_id = ?", id);
+        jdbcTemplate.update("DELETE FROM producto_restaurante WHERE restaurante_id = ?", id);
+        jdbcTemplate.update("DELETE FROM administrador_restaurante WHERE restaurante_id = ?", id);
+        restaurantRepository.deleteById(id);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    public record DeleteRestaurantRequest(String password) {
     }
 }

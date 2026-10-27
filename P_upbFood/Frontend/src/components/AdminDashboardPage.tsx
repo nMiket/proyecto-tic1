@@ -5,6 +5,7 @@ import {
   useMemo,
   useState,
   type FormEvent,
+  type ReactNode,
 } from 'react'
 import { apiFetch, getApiBaseUrl, type AsignacionRestaurante } from '../auth'
 import { formatCOP, formatDateTime as formatOrderDateTime, getProductFallbackImage } from '../utils/formatters'
@@ -256,6 +257,11 @@ export default function AdminDashboardPage({
   const [savingCafeConfig, setSavingCafeConfig] = useState(false)
   const [cafeConfigSuccess, setCafeConfigSuccess] = useState('')
   const [cafeConfigError, setCafeConfigError] = useState('')
+  const [deletingRestaurant, setDeletingRestaurant] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [showDeletePassword, setShowDeletePassword] = useState(false)
+  const [deleteRestaurantError, setDeleteRestaurantError] = useState('')
 
   const restauranteSeleccionado = listaRestaurantes.find(
     (r) => Number(r.id) === Number(selectedRestauranteId),
@@ -342,6 +348,76 @@ export default function AdminDashboardPage({
       setCafeConfigError(err instanceof Error ? err.message : 'Error al guardar configuración.')
     } finally {
       setSavingCafeConfig(false)
+    }
+  }
+
+  const handleEliminarRestaurante = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault()
+    if (!selectedRestauranteId || !restauranteSeleccionado || !esDueno) return
+
+    const password = deletePassword.trim()
+    if (!password) {
+      setDeleteRestaurantError('Escribe la contraseña del dueño para confirmar la eliminación.')
+      return
+    } /*
+
+
+
+
+    )
+
+
+
+
+    )
+    */ setDeleteRestaurantError('')
+
+    setDeletingRestaurant(true)
+    setCafeConfigError('')
+    setCafeConfigSuccess('')
+
+    try {
+      const response = await apiFetch(
+        `${getApiBaseUrl()}/api/admin/restaurantes/${selectedRestauranteId}`,
+        {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
+        },
+      )
+
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => null)) as {
+          message?: string
+          detail?: string
+        } | null
+        throw new Error(
+          errorData?.message ??
+            errorData?.detail ??
+            'No se pudo eliminar el restaurante.',
+        )
+      }
+
+      const restaurantesRestantes = listaRestaurantes.filter(
+        (restaurant) => Number(restaurant.id) !== Number(selectedRestauranteId),
+      )
+      setListaRestaurantes(restaurantesRestantes)
+      setShowDeleteConfirm(false)
+      setDeletePassword('')
+      setShowDeletePassword(false)
+
+      if (restaurantesRestantes.length > 0) {
+        setSelectedRestauranteId(restaurantesRestantes[0].id)
+        setCafeConfigSuccess('Restaurante eliminado correctamente.')
+      } else {
+        await onLogout()
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'No se pudo eliminar el restaurante.'
+      setDeleteRestaurantError(errorMessage)
+      setCafeConfigError(errorMessage)
+    } finally {
+      setDeletingRestaurant(false)
     }
   }
 
@@ -587,6 +663,10 @@ export default function AdminDashboardPage({
     resetAdminCocinaForm()
     setBusquedaHistorial('')
     setCatalogSearch('')
+    setShowDeleteConfirm(false)
+    setDeletePassword('')
+    setShowDeletePassword(false)
+    setDeleteRestaurantError('')
   }, [selectedRestauranteId])
 
   // Filtrado de pedidos para el historial
@@ -1131,7 +1211,7 @@ export default function AdminDashboardPage({
           <button
             type="button"
             className="admin-primary-btn"
-            disabled={savingCafeConfig}
+            disabled={savingCafeConfig || deletingRestaurant}
             onClick={() => void handleGuardarConfigCafeteria()}
             style={{ width: 'auto', padding: '0.65rem 1.4rem', fontSize: '0.875rem' }}
           >
@@ -1302,6 +1382,23 @@ export default function AdminDashboardPage({
             </div>
           </div>
         </div>
+
+        {esDueno && (
+          false && <div className="admin-danger-zone">
+            <div>
+              <strong>Zona de peligro</strong>
+              <span>Eliminar el restaurante es permanente y requiere la contraseña del dueño.</span>
+            </div>
+            <button
+              type="button"
+              className="admin-danger-btn"
+              disabled={savingCafeConfig || deletingRestaurant}
+              onClick={() => void handleEliminarRestaurante()}
+            >
+              {deletingRestaurant ? 'Eliminando...' : 'Eliminar restaurante'}
+            </button>
+          </div>
+        )}
       </section>
 
       {/* Navegación por pestañas */}
@@ -2186,7 +2283,115 @@ export default function AdminDashboardPage({
       {/* ============================================================== */}
       {/* PESTAÑA 4: PERSONAL DE COCINA (SOLO DUEÑOS)                     */}
       {/* ============================================================== */}
-      {activeTab === 'personal' && esDueno && (
+      {((personalSection: ReactNode) => (
+        <>
+          {activeTab === 'personal' && esDueno && personalSection}
+
+          {esDueno && (
+            <section className="admin-danger-section" aria-label="Zona de peligro">
+              <div className="admin-danger-zone">
+                <div className="admin-danger-zone-header">
+                  <div className="admin-danger-zone-info">
+                    <span className="admin-danger-kicker">Acción irreversible</span>
+                    <strong>Zona de peligro · Eliminar restaurante</strong>
+                    <span>
+                      Eliminar &ldquo;{restauranteSeleccionado?.nombre ?? 'esta cafetería'}&rdquo; borrará de forma permanente su configuración, horarios y catálogo de menú. Solo está permitido si el restaurante no tiene pedidos registrados.
+                    </span>
+                  </div>
+
+                  {!showDeleteConfirm && (
+                    <button
+                      type="button"
+                      className="admin-danger-btn"
+                      disabled={savingCafeConfig || deletingRestaurant}
+                      onClick={() => {
+                        setShowDeleteConfirm(true)
+                        setDeletePassword('')
+                        setShowDeletePassword(false)
+                        setDeleteRestaurantError('')
+                      }}
+                    >
+                      Eliminar restaurante
+                    </button>
+                  )}
+                </div>
+
+                {showDeleteConfirm && (
+                  <form
+                    className="admin-danger-confirm-box"
+                    onSubmit={(e) => void handleEliminarRestaurante(e)}
+                  >
+                    <p className="admin-danger-confirm-warning">
+                      ¿Confirmas que deseas eliminar definitivamente{' '}
+                      <strong>{restauranteSeleccionado?.nombre ?? 'este restaurante'}</strong>?
+                      Ingresa tu contraseña de dueño para autorizar esta operación dentro de la aplicación.
+                    </p>
+
+                    <div className="admin-form-group admin-danger-password-group">
+                      <label htmlFor="delete-restaurant-password">
+                        Contraseña del dueño para confirmar *
+                      </label>
+                      <div className="password-input-wrapper">
+                        <input
+                          id="delete-restaurant-password"
+                          type={showDeletePassword ? 'text' : 'password'}
+                          value={deletePassword}
+                          onChange={(e) => {
+                            setDeletePassword(e.target.value)
+                            if (deleteRestaurantError) setDeleteRestaurantError('')
+                          }}
+                          placeholder="Escribe tu contraseña actual"
+                          autoComplete="current-password"
+                          disabled={deletingRestaurant}
+                          required
+                        />
+                        <button
+                          type="button"
+                          className="password-toggle-btn"
+                          onClick={() => setShowDeletePassword((prev) => !prev)}
+                        >
+                          {showDeletePassword ? 'Ocultar' : 'Mostrar'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {deleteRestaurantError && (
+                      <div className="admin-alert-banner error" role="alert" style={{ marginBottom: 0 }}>
+                        {deleteRestaurantError}
+                      </div>
+                    )}
+
+                    <div className="admin-danger-confirm-actions">
+                      <button
+                        type="submit"
+                        className="admin-danger-btn is-solid"
+                        disabled={savingCafeConfig || deletingRestaurant || !deletePassword.trim()}
+                      >
+                        {deletingRestaurant
+                          ? 'Eliminando restaurante...'
+                          : 'Confirmar eliminación definitiva'}
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-secondary-btn"
+                        disabled={deletingRestaurant}
+                        onClick={() => {
+                          setShowDeleteConfirm(false)
+                          setDeletePassword('')
+                          setShowDeletePassword(false)
+                          setDeleteRestaurantError('')
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </section>
+          )}
+        </>
+      ))(
         <section aria-label="Personal de cocina">
           <div className="admin-two-cols" style={{ alignItems: 'start' }}>
             {/* Formulario estilizado para crear o editar cocinero */}

@@ -1192,6 +1192,198 @@
   transform: none;
 }
 
+.admin-danger-btn {
+  border: 1px solid #b42318;
+  border-radius: 0.75rem;
+  background: #fff5f4;
+  color: #b42318;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.65rem 1.1rem;
+}
+
+.admin-danger-btn:hover:not(:disabled) {
+  background: #b42318;
+  color: #fff;
+}
+
+.admin-danger-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.admin-danger-zone {
+  align-items: center;
+  border-top: 1px solid #f0c5c1;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+}
+
+.admin-danger-zone-legacy div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.admin-danger-zone strong {
+  color: #8f1d16;
+}
+
+.admin-danger-zone span {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .admin-danger-zone {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+.admin-danger-section {
+  margin-top: 3.5rem;
+  margin-bottom: 2.5rem;
+  padding-top: 2rem;
+  border-top: 2px dashed #e2ded9;
+}
+
+.admin-danger-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 1.25rem;
+  margin-top: 0;
+  padding: 1.5rem 1.75rem;
+  background: #fffafa;
+  border: 1.5px solid #f0c5c1;
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 10px rgba(180, 35, 24, 0.05);
+}
+
+.admin-danger-zone-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.admin-danger-zone-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-width: 720px;
+}
+
+.admin-danger-kicker {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #b42318;
+}
+
+.admin-danger-zone-info strong {
+  font-size: 1.08rem;
+  color: #8f1d16;
+}
+
+.admin-danger-zone-info span {
+  color: #5d635f;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.admin-danger-btn {
+  border: 1.5px solid #b42318;
+  border-radius: 0.85rem;
+  background: #ffffff;
+  color: #b42318;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.75rem 1.35rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.admin-danger-btn.is-solid {
+  background: #b42318;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(180, 35, 24, 0.22);
+}
+
+.admin-danger-btn.is-solid:hover:not(:disabled) {
+  background: #8f1d16;
+  border-color: #8f1d16;
+}
+
+.admin-danger-confirm-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem 1.35rem;
+  background: #ffffff;
+  border: 1.5px solid #f5c2be;
+  border-radius: 1rem;
+}
+
+.admin-danger-confirm-warning {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #7a271a;
+  line-height: 1.5;
+  background: #fef3f2;
+  border-left: 4px solid #b42318;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+}
+
+.admin-danger-password-group {
+  max-width: 460px;
+}
+
+.admin-danger-confirm-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .admin-danger-section {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+  }
+
+  .admin-danger-zone {
+    padding: 1.2rem 1rem;
+  }
+
+  .admin-danger-zone-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-danger-zone-header .admin-danger-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .admin-danger-confirm-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-danger-confirm-actions button {
+    width: 100%;
+  }
+}
+
 .admin-secondary-btn {
   display: inline-flex;
   align-items: center;
