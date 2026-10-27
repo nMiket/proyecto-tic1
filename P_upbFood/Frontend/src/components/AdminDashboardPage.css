@@ -1618,3 +1618,208 @@
   font-size: 0.76rem;
   color: #475569;
 }
+
+/* ============================================================== */
+/* DISEÑO RESPONSIVO PARA MÓVILES Y TABLETS EN PANEL ADMIN         */
+/* ============================================================== */
+@media (max-width: 900px) {
+  .admin-two-cols,
+  .admin-cafe-config-grid {
+    grid-template-columns: 1fr;
+    gap: 1.15rem;
+  }
+
+  .admin-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
+}
+
+@media (max-width: 680px) {
+  .admin-dashboard-container {
+    padding: 0;
+  }
+
+  .admin-header-strip {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.15rem 1rem;
+    gap: 1rem;
+    border-radius: 1rem;
+  }
+
+  .admin-header-titles h2 {
+    font-size: 1.35rem;
+  }
+
+  .admin-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .admin-cafe-selector-box {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .admin-header-actions > button {
+    width: 100%;
+  }
+
+  .admin-operational-panel,
+  .admin-panel-card {
+    padding: 1.15rem 1rem;
+    border-radius: 1rem;
+  }
+
+  .admin-operational-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
+  }
+
+  .admin-operational-header .admin-primary-btn {
+    width: 100% !important;
+  }
+
+  .admin-cafe-identity-card,
+  .admin-cafe-ops-card {
+    padding: 0.95rem;
+  }
+
+  .admin-cafe-image-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-cafe-image-preview {
+    width: 100%;
+    height: 120px;
+  }
+
+  .admin-state-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .admin-state-btn {
+    justify-content: center;
+    padding: 0.55rem 0.5rem;
+    font-size: 0.78rem;
+  }
+
+  .admin-tabs-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+    overflow-x: visible;
+  }
+
+  .admin-tab-btn {
+    justify-content: center;
+    padding: 0.65rem 0.5rem;
+    font-size: 0.8rem;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .admin-kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .admin-kpi-card {
+    padding: 1rem 1.15rem;
+  }
+
+  .admin-kpi-value {
+    font-size: 1.55rem;
+  }
+
+  .admin-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  .admin-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .admin-search-box {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .admin-order-card {
+    padding: 1rem;
+  }
+
+  .admin-order-client-info {
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .admin-form-row-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-new-extra-box {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .admin-new-extra-box button {
+    width: 100%;
+  }
+
+  .admin-catalog-cards-list {
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .admin-product-card-row {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding: 0.9rem;
+    gap: 0.75rem;
+  }
+
+  .admin-product-card-body {
+    flex: 1 1 calc(100% - 76px);
+  }
+
+  .admin-product-card-name {
+    white-space: normal;
+  }
+
+  .admin-product-card-meta {
+    width: 100%;
+    justify-content: space-between;
+    padding-top: 0.65rem;
+    border-top: 1px solid #f0ede8;
+  }
+
+  .admin-staff-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem;
+    gap: 0.85rem;
+  }
+
+  .admin-staff-card .admin-card-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .admin-staff-card .admin-card-actions button {
+    width: 100%;
+    justify-content: center;
+    padding: 0.55rem 0.75rem;
+  }
+}

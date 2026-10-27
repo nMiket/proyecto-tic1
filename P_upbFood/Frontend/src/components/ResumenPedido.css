@@ -375,3 +375,42 @@
   color: #f0f0eb;
   font-size: 0.7rem;
 }
+
+@media (max-width: 640px) {
+  .order-summary,
+  .order-summary--expanded {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .order-summary__heading {
+    align-items: flex-start;
+  }
+
+  .order-summary h2 {
+    font-size: 1.35rem;
+  }
+
+  .order-summary__QuickBar {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .order-item__main {
+    align-items: flex-start;
+  }
+
+  .order-item__title-row {
+    flex-wrap: wrap;
+    gap: 4px 10px;
+  }
+
+  .quantity-controls {
+    flex-wrap: wrap;
+  }
+
+  .quantity-controls button {
+    min-width: 34px;
+    height: 34px;
+  }
+}

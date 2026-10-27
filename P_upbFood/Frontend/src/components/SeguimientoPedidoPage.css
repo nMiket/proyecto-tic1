@@ -368,3 +368,46 @@
   margin-top: 0.5rem;
   background: #8f2929 !important;
 }
+
+@media (max-width: 860px) {
+  .tracking-layout {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .tracking-page {
+    gap: 20px;
+  }
+
+  .tracking-intro {
+    padding-top: 10px;
+  }
+
+  .tracking-intro h1 {
+    font-size: clamp(1.75rem, 6.5vw, 2.3rem);
+  }
+
+  .tracking-form,
+  .tracking-result {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .tracking-result__topline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .tracking-summary {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .tracking-order-items li {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+}

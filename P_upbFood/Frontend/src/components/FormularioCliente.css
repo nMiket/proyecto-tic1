@@ -160,7 +160,26 @@
     color: #121212 !important;
 }
 
-@media (max-width: 520px) {
+@media (max-width: 560px) {
+    .cliente-container {
+        min-height: auto;
+        padding: 16px 6px 28px;
+        align-items: flex-start;
+    }
+
+    .cliente-card {
+        padding: 22px 18px;
+        border-radius: 16px;
+    }
+
+    .cliente-header {
+        margin-bottom: 20px;
+    }
+
+    .cliente-header h2 {
+        font-size: 1.5rem;
+    }
+
     .pickup-options {
         align-items: stretch;
         flex-direction: column;

@@ -1544,9 +1544,144 @@
   height: 44px;
 }
 
-.footer-logo-img {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  display: block;
+  .footer-logo-img {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: block;
+  }
+
+/* ============================================================== */
+/* OPTIMIZACIÓN INTEGRAL PARA DISPOSITIVOS MÓVILES Y TABLETS      */
+/* ============================================================== */
+@media (max-width: 960px) {
+  .app-shell {
+    padding: 18px 20px 48px;
+    gap: 24px;
+  }
+
+  .ordering-layout,
+  .order-page__content {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .ordering-layout .order-summary {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    padding: 12px 14px 40px;
+    gap: 18px;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 8px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    gap: 10px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .brand {
+    justify-content: flex-start;
+  }
+
+  .nav-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+  }
+
+  .nav-actions a {
+    width: 100%;
+    padding: 9px 10px;
+    font-size: 0.78rem;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .restaurant-directory-hero {
+    padding: 16px 0 22px;
+    gap: 18px;
+  }
+
+  .restaurant-directory-hero h1 {
+    font-size: clamp(1.75rem, 7vw, 2.35rem);
+    line-height: 1.08;
+  }
+
+  .restaurant-directory-hero p:last-child {
+    font-size: 0.94rem;
+  }
+
+  .directory-tracking-cta {
+    width: 100%;
+    justify-content: center;
+    margin-top: 16px;
+    padding: 11px 16px;
+  }
+
+  .identity-logo-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .identity-logo-img {
+    max-width: 100%;
+  }
+
+  .order-page-shell {
+    gap: 20px;
+  }
+
+  .order-page__header {
+    padding-bottom: 16px;
+    gap: 14px;
+  }
+
+  .order-page__header h1 {
+    font-size: 1.65rem;
+  }
+
+  .order-steps {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 8px 14px;
+    white-space: normal;
+    font-size: 0.74rem;
+  }
+
+  .order-note {
+    padding: 20px 18px;
+  }
+
+  .order-note h2 {
+    margin: 16px 0 10px;
+    font-size: 1.45rem;
+  }
+
+  .login-card,
+  .dashboard-card {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .login-form button,
+  .product-form button {
+    width: 100%;
+  }
+
+  .site-footer {
+    margin-top: 20px;
+    padding: 20px 0 8px;
+    gap: 14px;
+  }
 }
