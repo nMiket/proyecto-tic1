@@ -2,7 +2,9 @@ package com.upbfood.Backend.config;
 
 import com.upbfood.Backend.security.JwtAuthenticationFilter;
 import com.upbfood.Backend.security.RateLimitFilter;
+import java.util.ArrayList;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,6 +29,9 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
+
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
@@ -117,9 +122,20 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of(
+        List<String> allowedOrigins = new ArrayList<>(List.of(
                 "http://localhost:5173",
                 "http://127.0.0.1:5173"));
+
+        if (frontendUrl != null && !frontendUrl.isBlank()) {
+            for (String origin : frontendUrl.split(",")) {
+                String trimmed = origin.trim();
+                if (!trimmed.isEmpty() && !allowedOrigins.contains(trimmed)) {
+                    allowedOrigins.add(trimmed);
+                }
+            }
+        }
+
+        configuration.setAllowedOrigins(allowedOrigins);
 
         configuration.setAllowedMethods(List.of(
                 "GET",
