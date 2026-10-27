@@ -30,42 +30,18 @@ DROP TABLE IF EXISTS tipo_pago                 CASCADE;
 
 -- Funciones del modelo actual
 DROP FUNCTION IF EXISTS fn_restaurante_crear;
-DROP FUNCTION IF EXISTS fn_restaurante_obtener_todos;
-DROP FUNCTION IF EXISTS fn_restaurante_actualizar;
-DROP FUNCTION IF EXISTS fn_restaurante_eliminar;
 DROP FUNCTION IF EXISTS fn_tipo_producto_crear;
-DROP FUNCTION IF EXISTS fn_tipo_producto_obtener_todos;
-DROP FUNCTION IF EXISTS fn_tipo_producto_actualizar;
-DROP FUNCTION IF EXISTS fn_tipo_producto_eliminar;
 DROP FUNCTION IF EXISTS fn_tipo_pago_crear;
-DROP FUNCTION IF EXISTS fn_tipo_pago_obtener_todos;
-DROP FUNCTION IF EXISTS fn_tipo_administrador_obtener_todos;
 DROP FUNCTION IF EXISTS fn_producto_crear;
-DROP FUNCTION IF EXISTS fn_producto_obtener_todos;
-DROP FUNCTION IF EXISTS fn_producto_actualizar;
-DROP FUNCTION IF EXISTS fn_producto_eliminar;
 DROP FUNCTION IF EXISTS fn_menu_asignar;
-DROP FUNCTION IF EXISTS fn_menu_obtener_por_restaurante;
-DROP FUNCTION IF EXISTS fn_menu_quitar;
 DROP FUNCTION IF EXISTS fn_administrador_crear;
-DROP FUNCTION IF EXISTS fn_administrador_crear_top_global;
-DROP FUNCTION IF EXISTS fn_administrador_login;
-DROP FUNCTION IF EXISTS fn_administrador_actualizar_password;
-DROP FUNCTION IF EXISTS fn_administrador_eliminar;
 DROP FUNCTION IF EXISTS fn_administrador_asignar;
-DROP FUNCTION IF EXISTS fn_administrador_desasignar;
-DROP FUNCTION IF EXISTS fn_administrador_restaurantes;
-DROP FUNCTION IF EXISTS fn_restaurante_administradores;
-DROP FUNCTION IF EXISTS fn_refresh_token_crear;
-DROP FUNCTION IF EXISTS fn_refresh_token_validar;
-DROP FUNCTION IF EXISTS fn_refresh_token_revocar;
 DROP FUNCTION IF EXISTS fn_pedido_crear;
 DROP FUNCTION IF EXISTS fn_pedido_obtener_por_codigo;
 DROP FUNCTION IF EXISTS fn_pedido_detalle;
 DROP FUNCTION IF EXISTS fn_pedido_obtener_activos;
 DROP FUNCTION IF EXISTS fn_pedido_cambiar_estado;
 DROP FUNCTION IF EXISTS fn_pago_registrar;
-DROP FUNCTION IF EXISTS validar_adicion CASCADE;
 
 -- ----------------------------------------------------------------------------
 -- 2. CREACIÓN DE TABLAS
@@ -295,13 +271,12 @@ CREATE INDEX IF NOT EXISTS idx_refresh_tokens_admin_id
 
 -- ----------------------------------------------------------------------------
 -- 3. FUNCIONES ALMACENADAS (PL/pgSQL)
---    Solo las operaciones que la aplicación realmente usa:
---    - Los pedidos y sus líneas se crean juntos con fn_pedido_crear.
---    - Los pedidos no se eliminan: se cancelan con fn_pedido_cambiar_estado.
+--    Solo las operaciones utilizadas en el arranque inicial (seed) y en
+--    el flujo transaccional de pedidos y pagos desde el backend.
 -- ----------------------------------------------------------------------------
 
 -- =========================================================
--- RESTAURANTES
+-- FUNCIONES DE SEMILLA (SEED)
 -- =========================================================
 CREATE OR REPLACE FUNCTION fn_restaurante_crear(
     p_nombre VARCHAR, p_ubicacion VARCHAR,
@@ -316,75 +291,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION fn_restaurante_obtener_todos()
-RETURNS TABLE(restaurante_id INT, nombre_restaurante VARCHAR, ubicacion_restaurante VARCHAR,
-              estado VARCHAR, tiempo_pedido INT) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT r.restaurante_id, r.nombre_restaurante, r.ubicacion_restaurante, r.estado, r.tiempo_pedido
-    FROM restaurante r
-    ORDER BY r.restaurante_id;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION fn_restaurante_actualizar(
-    p_id INT, p_nombre VARCHAR, p_ubicacion VARCHAR, p_estado VARCHAR, p_tiempo INT
-) RETURNS VOID AS $$
-BEGIN
-    UPDATE restaurante
-    SET nombre_restaurante = p_nombre, ubicacion_restaurante = p_ubicacion,
-        estado = p_estado, tiempo_pedido = p_tiempo
-    WHERE restaurante_id = p_id;
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'El restaurante % no existe', p_id;
-    END IF;
-END;
-$$ LANGUAGE plpgsql;
-
--- Solo funciona si el restaurante no tiene menú, pedidos ni administradores asociados
-CREATE OR REPLACE FUNCTION fn_restaurante_eliminar(p_id INT) RETURNS VOID AS $$
-BEGIN
-    DELETE FROM restaurante WHERE restaurante_id = p_id;
-END;
-$$ LANGUAGE plpgsql;
-
-
--- =========================================================
--- CATÁLOGOS: TIPO DE PRODUCTO, TIPO DE PAGO, TIPO DE ADMINISTRADOR
--- =========================================================
 CREATE OR REPLACE FUNCTION fn_tipo_producto_crear(p_nombre VARCHAR) RETURNS INT AS $$
 DECLARE v_id INT;
 BEGIN
     INSERT INTO tipo_producto (nombre_tipo_producto) VALUES (p_nombre)
     RETURNING tipo_producto_id INTO v_id;
     RETURN v_id;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION fn_tipo_producto_obtener_todos()
-RETURNS TABLE(tipo_producto_id INT, nombre_tipo_producto VARCHAR) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT t.tipo_producto_id, t.nombre_tipo_producto
-    FROM tipo_producto t
-    ORDER BY t.tipo_producto_id;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION fn_tipo_producto_actualizar(p_id INT, p_nombre VARCHAR) RETURNS VOID AS $$
-BEGIN
-    UPDATE tipo_producto SET nombre_tipo_producto = p_nombre WHERE tipo_producto_id = p_id;
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'El tipo de producto % no existe', p_id;
-    END IF;
-END;
-$$ LANGUAGE plpgsql;
-
--- Solo funciona si ningún producto usa ese tipo.
--- OJO: el tipo 'Adición' lo usa fn_pedido_crear para reconocer las adiciones; no lo elimines ni renombres.
-CREATE OR REPLACE FUNCTION fn_tipo_producto_eliminar(p_id INT) RETURNS VOID AS $$
-BEGIN
-    DELETE FROM tipo_producto WHERE tipo_producto_id = p_id;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -396,27 +308,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION fn_tipo_pago_obtener_todos()
-RETURNS TABLE(tipo_pago_id INT, nombre VARCHAR) AS $$
-BEGIN
-    RETURN QUERY SELECT t.tipo_pago_id, t.nombre FROM tipo_pago t ORDER BY t.tipo_pago_id;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION fn_tipo_administrador_obtener_todos()
-RETURNS TABLE(tipo_administrador_id INT, nombre_tipo_administrador VARCHAR) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT t.tipo_administrador_id, t.nombre_tipo_administrador
-    FROM tipo_administrador t
-    ORDER BY t.tipo_administrador_id;
-END;
-$$ LANGUAGE plpgsql;
-
-
--- =========================================================
--- PRODUCTOS (catálogo global; incluye las adiciones, que son productos de tipo 'Adición')
--- =========================================================
 CREATE OR REPLACE FUNCTION fn_producto_crear(
     p_tipo_producto_id INT, p_nombre VARCHAR, p_descripcion VARCHAR
 ) RETURNS INT AS $$
@@ -429,49 +320,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION fn_producto_obtener_todos()
-RETURNS TABLE(producto_id INT, nombre_producto VARCHAR, descripcion_producto VARCHAR,
-              tipo_producto_id INT, nombre_tipo_producto VARCHAR) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT p.producto_id, p.nombre_producto, p.descripcion_producto,
-           t.tipo_producto_id, t.nombre_tipo_producto
-    FROM producto p
-    JOIN tipo_producto t ON t.tipo_producto_id = p.tipo_producto_id
-    ORDER BY p.producto_id;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION fn_producto_actualizar(
-    p_id INT, p_tipo_producto_id INT, p_nombre VARCHAR, p_descripcion VARCHAR
-) RETURNS VOID AS $$
-BEGIN
-    UPDATE producto
-    SET tipo_producto_id = p_tipo_producto_id, nombre_producto = p_nombre,
-        descripcion_producto = p_descripcion
-    WHERE producto_id = p_id;
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'El producto % no existe', p_id;
-    END IF;
-END;
-$$ LANGUAGE plpgsql;
-
--- Solo funciona si ningún restaurante lo tiene en su menú
-CREATE OR REPLACE FUNCTION fn_producto_eliminar(p_id INT) RETURNS VOID AS $$
-BEGIN
-    DELETE FROM producto WHERE producto_id = p_id;
-END;
-$$ LANGUAGE plpgsql;
-
-
--- =========================================================
--- MENÚ POR RESTAURANTE (precio, imagen y disponibilidad)
--- =========================================================
-
--- Agrega el producto al menú del restaurante, o actualiza su precio/imagen/disponibilidad si ya está
 CREATE OR REPLACE FUNCTION fn_menu_asignar(
     p_restaurante_id INT, p_producto_id INT, p_precio NUMERIC,
-    p_imagen_url VARCHAR DEFAULT NULL, p_disponible BOOLEAN DEFAULT TRUE
+    p_imagen_url TEXT DEFAULT NULL, p_disponible BOOLEAN DEFAULT TRUE
 ) RETURNS VOID AS $$
 BEGIN
     INSERT INTO producto_restaurante (restaurante_id, producto_id, precio, imagen_url, disponible)
@@ -483,37 +334,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Menú completo del restaurante; es_adicion permite separar los extras de los productos
-CREATE OR REPLACE FUNCTION fn_menu_obtener_por_restaurante(p_restaurante_id INT)
-RETURNS TABLE(producto_id INT, nombre_producto VARCHAR, descripcion_producto VARCHAR,
-              nombre_tipo_producto VARCHAR, es_adicion BOOLEAN,
-              precio NUMERIC, imagen_url VARCHAR, disponible BOOLEAN) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT p.producto_id, p.nombre_producto, p.descripcion_producto,
-           t.nombre_tipo_producto, (t.nombre_tipo_producto = 'Adición'),
-           pr.precio, pr.imagen_url, pr.disponible
-    FROM producto_restaurante pr
-    JOIN producto p      ON p.producto_id = pr.producto_id
-    JOIN tipo_producto t ON t.tipo_producto_id = p.tipo_producto_id
-    WHERE pr.restaurante_id = p_restaurante_id
-    ORDER BY (t.nombre_tipo_producto = 'Adición'), t.nombre_tipo_producto, p.nombre_producto;
-END;
-$$ LANGUAGE plpgsql;
-
--- Solo funciona si el producto nunca se ha pedido en ese restaurante;
--- si ya tiene historial, usa fn_menu_asignar con p_disponible = FALSE
-CREATE OR REPLACE FUNCTION fn_menu_quitar(p_restaurante_id INT, p_producto_id INT) RETURNS VOID AS $$
-BEGIN
-    DELETE FROM producto_restaurante
-    WHERE restaurante_id = p_restaurante_id AND producto_id = p_producto_id;
-END;
-$$ LANGUAGE plpgsql;
-
-
--- =========================================================
--- ADMINISTRADORES Y SUS ROLES POR RESTAURANTE
--- =========================================================
 CREATE OR REPLACE FUNCTION fn_administrador_crear(
     p_nombre VARCHAR, p_telefono VARCHAR, p_correo VARCHAR, p_password_hash VARCHAR
 ) RETURNS INT AS $$
@@ -527,38 +347,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Devuelve el hash para que la aplicación compare la contraseña
-CREATE OR REPLACE FUNCTION fn_administrador_login(p_correo VARCHAR)
-RETURNS TABLE(administrador_id INT, nombre_administrador VARCHAR,
-              correo_administrador VARCHAR, password_hash VARCHAR) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT a.administrador_id, a.nombre_administrador, a.correo_administrador, a.password_hash
-    FROM administrador a
-    WHERE a.correo_administrador = p_correo;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION fn_administrador_actualizar_password(
-    p_id INT, p_nuevo_password_hash VARCHAR
-) RETURNS VOID AS $$
-BEGIN
-    UPDATE administrador SET password_hash = p_nuevo_password_hash WHERE administrador_id = p_id;
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'El administrador % no existe', p_id;
-    END IF;
-END;
-$$ LANGUAGE plpgsql;
-
--- Elimina primero sus asignaciones a restaurantes (sus refresh tokens se borran en cascada)
-CREATE OR REPLACE FUNCTION fn_administrador_eliminar(p_id INT) RETURNS VOID AS $$
-BEGIN
-    DELETE FROM administrador_restaurante WHERE administrador_id = p_id;
-    DELETE FROM administrador WHERE administrador_id = p_id;
-END;
-$$ LANGUAGE plpgsql;
-
--- Asigna un administrador a un restaurante con un rol; si ya estaba asignado, actualiza rol y estado
 CREATE OR REPLACE FUNCTION fn_administrador_asignar(
     p_restaurante_id INT, p_administrador_id INT, p_tipo_administrador_id INT,
     p_estado VARCHAR DEFAULT 'Activo'
@@ -573,97 +361,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION fn_administrador_desasignar(
-    p_restaurante_id INT, p_administrador_id INT
-) RETURNS VOID AS $$
-BEGIN
-    DELETE FROM administrador_restaurante
-    WHERE restaurante_id = p_restaurante_id AND administrador_id = p_administrador_id;
-END;
-$$ LANGUAGE plpgsql;
-
--- Restaurantes de un administrador y rol que tiene en cada uno (se usa después del login)
-CREATE OR REPLACE FUNCTION fn_administrador_restaurantes(p_administrador_id INT)
-RETURNS TABLE(restaurante_id INT, nombre_restaurante VARCHAR,
-              nombre_tipo_administrador VARCHAR, estado VARCHAR) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT r.restaurante_id, r.nombre_restaurante, t.nombre_tipo_administrador, ar.estado
-    FROM administrador_restaurante ar
-    JOIN restaurante r         ON r.restaurante_id = ar.restaurante_id
-    JOIN tipo_administrador t  ON t.tipo_administrador_id = ar.tipo_administrador_id
-    WHERE ar.administrador_id = p_administrador_id
-    ORDER BY r.restaurante_id;
-END;
-$$ LANGUAGE plpgsql;
-
--- Administradores de un restaurante con su rol
-CREATE OR REPLACE FUNCTION fn_restaurante_administradores(p_restaurante_id INT)
-RETURNS TABLE(administrador_id INT, nombre_administrador VARCHAR, correo_administrador VARCHAR,
-              nombre_tipo_administrador VARCHAR, estado VARCHAR) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT a.administrador_id, a.nombre_administrador, a.correo_administrador,
-           t.nombre_tipo_administrador, ar.estado
-    FROM administrador_restaurante ar
-    JOIN administrador a       ON a.administrador_id = ar.administrador_id
-    JOIN tipo_administrador t  ON t.tipo_administrador_id = ar.tipo_administrador_id
-    WHERE ar.restaurante_id = p_restaurante_id
-    ORDER BY t.tipo_administrador_id, a.nombre_administrador;
-END;
-$$ LANGUAGE plpgsql;
-
 
 -- =========================================================
--- REFRESH TOKENS (sesiones de los administradores)
--- =========================================================
-CREATE OR REPLACE FUNCTION fn_refresh_token_crear(
-    p_administrador_id INT, p_token_hash VARCHAR, p_expires_at TIMESTAMP
-) RETURNS BIGINT AS $$
-DECLARE v_id BIGINT;
-BEGIN
-    INSERT INTO refresh_tokens (administrador_id, token_hash, expires_at)
-    VALUES (p_administrador_id, p_token_hash, p_expires_at)
-    RETURNING refresh_token_id INTO v_id;
-    RETURN v_id;
-END;
-$$ LANGUAGE plpgsql;
-
--- Devuelve el administrador dueño del token solo si no está vencido ni revocado
-CREATE OR REPLACE FUNCTION fn_refresh_token_validar(p_token_hash VARCHAR)
-RETURNS TABLE(administrador_id INT) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT rt.administrador_id
-    FROM refresh_tokens rt
-    WHERE rt.token_hash = p_token_hash
-      AND rt.revoked_at IS NULL
-      AND rt.expires_at > CURRENT_TIMESTAMP;
-END;
-$$ LANGUAGE plpgsql;
-
--- Cierre de sesión
-CREATE OR REPLACE FUNCTION fn_refresh_token_revocar(p_token_hash VARCHAR) RETURNS VOID AS $$
-BEGIN
-    UPDATE refresh_tokens
-    SET revoked_at = CURRENT_TIMESTAMP
-    WHERE token_hash = p_token_hash AND revoked_at IS NULL;
-END;
-$$ LANGUAGE plpgsql;
-
-
--- =========================================================
--- PEDIDOS
+-- PEDIDOS Y PAGOS (ejecutados en producción desde PedidoService)
 -- =========================================================
 
 -- Crea el pedido completo (cabecera, líneas y adiciones) en una sola operación.
 -- El precio de cada producto y adición se toma del menú del restaurante y el total se calcula aquí.
---
--- p_items es un arreglo JSON; "adiciones" y "observaciones" son opcionales:
---   [
---     {"producto_id": 1, "cantidad": 2, "adiciones": [5, 7], "observaciones": "Sin cebolla"},
---     {"producto_id": 2, "cantidad": 1}
---   ]
 CREATE OR REPLACE FUNCTION fn_pedido_crear(
     p_restaurante_id INT, p_nombre_cliente VARCHAR, p_telefono_cliente VARCHAR,
     p_correo_cliente VARCHAR, p_items JSONB, p_hora_recogida TIMESTAMP DEFAULT NULL
@@ -853,13 +557,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
--- =========================================================
--- PAGOS
--- =========================================================
-
 -- Registra el pago de un pedido y lo pasa a 'PAGADO'.
--- Solo acepta pedidos pendientes y montos que cubran el total.
 CREATE OR REPLACE FUNCTION fn_pago_registrar(
     p_pedido_id INT, p_tipo_pago_id INT, p_monto NUMERIC
 ) RETURNS INT AS $$
@@ -947,7 +645,6 @@ SELECT fn_administrador_crear('Administrador Central', '3000000001', 'admin@upb.
     '$2a$10$tyIhSPUO.tPXDrUKklBiJef3B9OlrWZeazp5iJT0v3LQ6h0Zq7SnS');
 SELECT fn_administrador_crear('Administrador Boulevard', '3000000002', 'admin2@upb.edu.co',
     '$2a$10$0gCFeH/1cEHW30aS1ehcJ.HtLbZvFpBYTmaRXYcgkOWdetsasSQDO');
-    
 
 -- Roles por restaurante (1 = Dueño de restaurante, 2 = Administrador de cocina)
 SELECT fn_administrador_asignar(1, 1, 1);   -- admin: dueño del restaurante 1
