@@ -162,11 +162,15 @@ public class PedidoService {
             String correo,
             String telefono
     ) {
+        String codigoStr = codigo == null ? null : codigo.toString();
+        String correoNorm = (correo == null || correo.isBlank()) ? null : correo.trim();
+        String telefonoNorm = (telefono == null || telefono.isBlank()) ? null : telefono.trim();
+
         return jdbcTemplate.queryForMap(
                 """
                 SELECT p.pedido_id,
                        p.codigo_seguimiento,
-                       r.nombre AS nombre_restaurante,
+                       r.nombre_restaurante,
                        p.estado,
                        p.total,
                        p.fecha,
@@ -177,22 +181,22 @@ public class PedidoService {
                        p.correo_cliente
                 FROM pedido p
                 JOIN restaurante r ON r.restaurante_id = p.restaurante_id
-                WHERE (? IS NULL OR p.pedido_id = ?)
-                  AND (? IS NULL OR p.codigo_seguimiento = ?)
-                  AND (? IS NULL OR LOWER(TRIM(p.correo_cliente)) = LOWER(TRIM(?)))
-                  AND (? IS NULL OR REGEXP_REPLACE(p.telefono_cliente, '\\D', '', 'g')
-                                  = REGEXP_REPLACE(?, '\\D', '', 'g'))
+                WHERE (CAST(? AS INTEGER) IS NULL OR p.pedido_id = CAST(? AS INTEGER))
+                  AND (CAST(? AS UUID) IS NULL OR p.codigo_seguimiento = CAST(? AS UUID))
+                  AND (CAST(? AS TEXT) IS NULL OR LOWER(TRIM(p.correo_cliente)) = LOWER(TRIM(CAST(? AS TEXT))))
+                  AND (CAST(? AS TEXT) IS NULL OR REGEXP_REPLACE(p.telefono_cliente, '\\D', '', 'g')
+                                  = REGEXP_REPLACE(CAST(? AS TEXT), '\\D', '', 'g'))
                 ORDER BY p.fecha DESC
                 LIMIT 1
                 """,
                 pedidoId,
                 pedidoId,
-                codigo,
-                codigo,
-                correo,
-                correo,
-                telefono,
-                telefono
+                codigoStr,
+                codigoStr,
+                correoNorm,
+                correoNorm,
+                telefonoNorm,
+                telefonoNorm
         );
     }
 
