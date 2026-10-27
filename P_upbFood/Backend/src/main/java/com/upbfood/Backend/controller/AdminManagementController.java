@@ -1,4 +1,3 @@
-
 package com.upbfood.Backend.controller;
 
 import com.upbfood.Backend.entity.AdminUser;
@@ -17,16 +16,17 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @RestController
 @RequestMapping("/api/admin/restaurantes/{restauranteId}/administradores-cocina")
@@ -54,12 +54,16 @@ public class AdminManagementController {
 
     public record CrearAdministradorRequest(
             @NotBlank @Size(max = 50) String nombre,
-
             @NotBlank @Size(max = 20) String telefono,
-
             @NotBlank @Email @Size(max = 100) String correo,
-
             @NotBlank @Size(min = 8, max = 72) String password) {
+    }
+
+    public record ActualizarAdministradorRequest(
+            @NotBlank @Size(max = 50) String nombre,
+            @NotBlank @Size(max = 20) String telefono,
+            @NotBlank @Email @Size(max = 100) String correo,
+            @Size(max = 72) String password) {
     }
 
     public record AdministradorCocinaResponse(
@@ -135,6 +139,67 @@ public class AdminManagementController {
                 guardado.getNombre(),
                 guardado.getTelefono(),
                 guardado.getEmail(),
+                asignacion.getEstado());
+    }
+
+    @PutMapping("/{administradorId}")
+    @Transactional
+    public AdministradorCocinaResponse actualizar(
+            @PathVariable Integer restauranteId,
+            @PathVariable Integer administradorId,
+            @Valid @RequestBody ActualizarAdministradorRequest request) {
+
+        authorizationService.requireOwnerForRestaurant(restauranteId);
+
+        AdministradorRestauranteId asignacionId = new AdministradorRestauranteId(
+                administradorId, restauranteId);
+
+        AdministradorRestaurante asignacion = asignacionRepository.findById(asignacionId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "El administrador no está asignado a este restaurante."));
+
+        if (!ROL_COCINA.equals(asignacion.getTipoAdministradorId())) {
+            throw new AccessDeniedException(
+                    "Solo se pueden editar cuentas de personal de cocina.");
+        }
+
+        AdminUser admin = adminUserRepository.findById(administradorId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Administrador no encontrado."));
+
+        String nuevoCorreo = request.correo().trim().toLowerCase();
+        if (!nuevoCorreo.equalsIgnoreCase(admin.getEmail())) {
+            adminUserRepository.findByEmail(nuevoCorreo)
+                    .filter(existente -> !existente.getId().equals(administradorId))
+                    .ifPresent(existente -> {
+                        throw new ResponseStatusException(
+                                HttpStatus.CONFLICT,
+                                "Ya existe otra cuenta registrada con ese correo.");
+                    });
+            admin.setEmail(nuevoCorreo);
+        }
+
+        admin.setNombre(request.nombre().trim());
+        admin.setTelefono(request.telefono().trim());
+
+        if (request.password() != null && !request.password().isBlank()) {
+            if (request.password().length() < 8) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "La nueva contraseña debe tener al menos 8 caracteres.");
+            }
+            admin.setPasswordHash(passwordEncoder.encode(request.password()));
+        }
+
+        AdminUser actualizado = adminUserRepository.save(admin);
+
+        return new AdministradorCocinaResponse(
+                actualizado.getId(),
+                actualizado.getNombre(),
+                actualizado.getTelefono(),
+                actualizado.getEmail(),
                 asignacion.getEstado());
     }
 

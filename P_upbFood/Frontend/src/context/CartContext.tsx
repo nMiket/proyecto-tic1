@@ -1,16 +1,43 @@
-import { createContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import type { IngredienteExtra } from '../types/Producto'
+
+const CART_STORAGE_KEY = 'upbfood.cart'
+
+function loadInitialCart(): CartItem[] {
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (item): item is CartItem =>
+        Boolean(item) &&
+        typeof item === 'object' &&
+        typeof (item as CartItem).id === 'number' &&
+        typeof (item as CartItem).restauranteId === 'number' &&
+        typeof (item as CartItem).cantidad === 'number' &&
+        typeof (item as CartItem).cartKey === 'string',
+    )
+  } catch {
+    return []
+  }
+}
 
 export type CartProduct = {
   id: number
   nombre: string
+  descripcion?: string
   precio: number | string
   restauranteId: number
+  tiempoEstimadoMin?: number
   imagenUrl?: string
+  adiciones?: IngredienteExtra[]
 }
 
 export type CartItem = CartProduct & {
   cantidad: number
   observaciones: string
+  cartKey: string
 }
 
 type CartContextValue = {
@@ -19,21 +46,42 @@ type CartContextValue = {
   total: number
   cartError: string
   agregarProducto: (product: CartProduct) => void
-  quitarProducto: (productId: number) => void
-  eliminarProducto: (productId: number) => void
-  actualizarObservaciones: (productId: number, observaciones: string) => void
+  quitarProducto: (cartKey: string) => void
+  eliminarProducto: (cartKey: string) => void
+  actualizarObservaciones: (cartKey: string, observaciones: string) => void
   vaciarCarrito: () => void
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined)
 
+function getCartKey(product: CartProduct) {
+  const extras = (product.adiciones ?? []).map((extra) => Number(extra.id)).sort((a, b) => a - b)
+  return `${product.id}:${extras.join(',')}`
+}
+
+function getUnitTotal(item: CartProduct) {
+  return Number(item.precio) + (item.adiciones ?? []).reduce((sum, extra) => sum + Number(extra.precio), 0)
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([])
+  const [items, setItems] = useState<CartItem[]>(() => loadInitialCart())
   const [cartError, setCartError] = useState('')
+
+  useEffect(() => {
+    try {
+      if (items.length === 0) {
+        localStorage.removeItem(CART_STORAGE_KEY)
+      } else {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
+      }
+    } catch {
+      // Ignorar errores de almacenamiento privado o cuota llena
+    }
+  }, [items])
 
   const value = useMemo<CartContextValue>(() => {
     const totalItems = items.reduce((sum, item) => sum + item.cantidad, 0)
-    const total = items.reduce((sum, item) => sum + Number(item.precio) * item.cantidad, 0)
+    const total = items.reduce((sum, item) => sum + getUnitTotal(item) * item.cantidad, 0)
 
     return {
       items,
@@ -41,33 +89,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
       total,
       cartError,
       agregarProducto: (product) => {
-        if (
-          items.length > 0 &&
-          items.some((item) => item.restauranteId !== product.restauranteId)
-        ) {
+        if (items.length > 0 && items.some((item) => item.restauranteId !== product.restauranteId)) {
           setCartError('Tu pedido solo puede incluir productos de una cafetería.')
           return
         }
 
         setCartError('')
+        const cartKey = getCartKey(product)
         setItems((current) => {
-          const existing = current.find((item) => item.id === product.id)
+          const existing = current.find((item) => item.cartKey === cartKey)
           if (existing) {
-            return current.map((item) => item.id === product.id ? { ...item, cantidad: item.cantidad + 1 } : item)
+            return current.map((item) => item.cartKey === cartKey ? { ...item, cantidad: item.cantidad + 1 } : item)
           }
-          return [...current, { ...product, cantidad: 1, observaciones: '' }]
+          return [...current, { ...product, adiciones: product.adiciones ?? [], cantidad: 1, observaciones: '', cartKey }]
         })
       },
-        actualizarObservaciones: (productId, observaciones) => setItems((current) => current.map((item) => (
-          item.id === productId ? { ...item, observaciones } : item
-        ))),
-      quitarProducto: (productId) => {
+      actualizarObservaciones: (cartKey, observaciones) => setItems((current) => current.map((item) => (
+        item.cartKey === cartKey ? { ...item, observaciones } : item
+      ))),
+      quitarProducto: (cartKey) => {
         setItems((current) => current.flatMap((item) => {
-          if (item.id !== productId) return [item]
+          if (item.cartKey !== cartKey) return [item]
           return item.cantidad > 1 ? [{ ...item, cantidad: item.cantidad - 1 }] : []
         }))
       },
-      eliminarProducto: (productId) => setItems((current) => current.filter((item) => item.id !== productId)),
+      eliminarProducto: (cartKey) => setItems((current) => current.filter((item) => item.cartKey !== cartKey)),
       vaciarCarrito: () => {
         setItems([])
         setCartError('')

@@ -1,10 +1,4 @@
-<<<<<<< HEAD
-bu
-
 # 🍔 Plataforma Web para la Gestión de Pedidos en Cafeterías y Restaurantes UPB
-=======
-﻿# 🍔 Plataforma Web para la Gestión de Pedidos en Cafeterías y Restaurantes UPB
->>>>>>> origin/main
 
 ¡Bienvenido al repositorio oficial del proyecto **UPB Food**! Esta solución tecnológica nace para transformar la experiencia gastronómica en el campus de la **Universidad Pontificia Bolivariana (UPB)**, optimizando los tiempos de atención y digitalizando el proceso de compra.
 
@@ -236,14 +230,14 @@ Este proyecto es desarrollado en el marco de la asignatura **Proyecto Aplicado e
 ---
 
 
-<<<<<<< HEAD
+## Metodología de Desarrollo
+
 Trabajamos con un **enfoque híbrido Scrum + Kanban**:
 
 * **Scrum:** Planificación incremental en **4 Sprints** de 2 semanas (8 semanas totales, 72 Puntos de Historia).
 * **Kanban:** Gestión del flujo de trabajo visualizado mediante **GitHub Projects**.
-=======
+
 ---
->>>>>>> origin/main
 
 ## 📋 Tablero Kanban y Matriz de Historias de Usuario (Actualizado v4)
 

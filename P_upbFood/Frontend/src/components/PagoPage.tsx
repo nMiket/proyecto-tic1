@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { apiFetch, getApiBaseUrl } from "../auth";
 
 type PagoState = {
@@ -8,95 +8,167 @@ type PagoState = {
     total?: number;
 };
 
-type MedioPago = {
-    id: number;
-    nombre: string;
-};
+function obtenerPedidoRespaldo(searchParams: URLSearchParams): PagoState | null {
+    const queryCodigo = searchParams.get("codigo");
+    const queryPedidoId = searchParams.get("pedidoId");
+    const queryTotal = searchParams.get("total");
 
-const mediosPago: MedioPago[] = [
-    { id: 1, nombre: "Efectivo" },
-    { id: 2, nombre: "Tarjeta" },
-    { id: 3, nombre: "Transferencia" },
-];
+    if (queryCodigo && queryPedidoId) {
+        return {
+            pedidoId: Number(queryPedidoId),
+            codigoSeguimiento: queryCodigo,
+            total: Number(queryTotal ?? 0),
+        };
+    }
+
+    try {
+        const raw = localStorage.getItem("upbfood.lastOrder");
+        if (!raw) return null;
+        const data = JSON.parse(raw) as {
+            id?: number;
+            pedidoId?: number;
+            codigoSeguimiento?: string;
+            total?: number;
+        };
+        const pedidoId = data.pedidoId ?? data.id;
+        if (!pedidoId || !data.codigoSeguimiento) return null;
+        return {
+            pedidoId: Number(pedidoId),
+            codigoSeguimiento: String(data.codigoSeguimiento),
+            total: Number(data.total ?? 0),
+        };
+    } catch {
+        return null;
+    }
+}
 
 export default function PagoPage() {
     const location = useLocation();
-    const state = (location.state as PagoState | null) ?? null;
+    const [searchParams] = useSearchParams();
+    const state =
+        (location.state as PagoState | null) ?? obtenerPedidoRespaldo(searchParams);
 
-    const [tipoPagoId, setTipoPagoId] = useState(1);
     const [procesando, setProcesando] = useState(false);
+    const [redirigiendoStripe, setRedirigiendoStripe] = useState(false);
     const [estadoPago, setEstadoPago] = useState<
         "pendiente" | "aprobado" | "rechazado"
     >("pendiente");
     const [mensaje, setMensaje] = useState("");
+    const verificadoStripeRef = useRef(false);
 
     const total = Number(state?.total ?? 0);
+    const codigoSeguimiento = state?.codigoSeguimiento ?? "";
+    const pedidoId = state?.pedidoId;
 
-    const simularRechazo = () => {
-        setEstadoPago("rechazado");
-        setMensaje(
-            "El pago simulado fue rechazado. Tu pedido sigue pendiente de pago."
-        );
-    };
+    useEffect(() => {
+        const stripeSessionId = searchParams.get("stripe_session_id");
+        const stripeCancelled = searchParams.get("stripe_cancelled");
 
-    const simularAprobacion = async () => {
+        if (stripeCancelled && !verificadoStripeRef.current) {
+            verificadoStripeRef.current = true;
+            setEstadoPago("rechazado");
+            setMensaje(
+                "Cancelaste el proceso en Stripe. Tu pedido sigue pendiente de pago."
+            );
+            return;
+        }
+
         if (
-            !state?.pedidoId ||
-            !state.codigoSeguimiento ||
-            total <= 0
+            !stripeSessionId ||
+            !codigoSeguimiento ||
+            verificadoStripeRef.current
         ) {
+            return;
+        }
+
+        verificadoStripeRef.current = true;
+        setProcesando(true);
+        setMensaje("Verificando pago con Stripe...");
+
+        void apiFetch(
+            `${getApiBaseUrl()}/api/pedidos/seguimiento/${codigoSeguimiento}/stripe-confirmar?sessionId=${encodeURIComponent(
+                stripeSessionId
+            )}`,
+            { method: "POST" }
+        )
+            .then(async (res) => {
+                if (!res.ok) {
+                    const err = (await res.json().catch(() => null)) as {
+                        message?: string;
+                    } | null;
+                    setEstadoPago("rechazado");
+                    setMensaje(
+                        err?.message ??
+                            "No se pudo confirmar el pago en Stripe. Inténtalo nuevamente."
+                    );
+                    return;
+                }
+                setEstadoPago("aprobado");
+                setMensaje(
+                    "¡Pago confirmado en Stripe! Tu pedido ha sido registrado como pagado."
+                );
+            })
+            .catch(() => {
+                setEstadoPago("rechazado");
+                setMensaje(
+                    "No se pudo conectar con el servidor al verificar el pago de Stripe."
+                );
+            })
+            .finally(() => {
+                setProcesando(false);
+            });
+    }, [searchParams, codigoSeguimiento]);
+
+    const iniciarPagoStripe = async () => {
+        if (!pedidoId || !codigoSeguimiento || total <= 0) {
             setMensaje("No se encontraron los datos completos del pedido.");
             return;
         }
 
-        setProcesando(true);
+        setRedirigiendoStripe(true);
         setMensaje("");
 
         try {
             const respuesta = await apiFetch(
-                `${getApiBaseUrl()}/api/pedidos/seguimiento/${state.codigoSeguimiento}/pago`,
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        tipoPagoId,
-                        monto: total,
-                    }),
-                }
+                `${getApiBaseUrl()}/api/pedidos/seguimiento/${codigoSeguimiento}/stripe-session`,
+                { method: "POST" }
             );
 
-            if (!respuesta.ok) {
-                const error = await respuesta.json().catch(() => null) as {
-                    message?: string;
-                } | null;
+            const data = (await respuesta.json().catch(() => null)) as {
+                checkoutUrl?: string;
+                message?: string;
+            } | null;
 
+            if (!respuesta.ok || !data?.checkoutUrl) {
                 setEstadoPago("rechazado");
                 setMensaje(
-                    error?.message ??
-                    "No se pudo registrar el pago. Puedes intentarlo nuevamente."
+                    data?.message ??
+                        "No se pudo abrir la pasarela de Stripe. Inténtalo nuevamente."
                 );
+                setRedirigiendoStripe(false);
                 return;
             }
 
-            setEstadoPago("aprobado");
-            setMensaje("¡Pago aprobado! Tu pedido ha sido registrado como pagado.");
+            window.location.href = data.checkoutUrl;
         } catch (error) {
             console.error(error);
-            setMensaje("No se pudo conectar con el servidor. Verifica el estado del pago antes de volver a intentarlo.");
-        } finally {
-            setProcesando(false);
+            setMensaje(
+                "No se pudo conectar con Stripe. Verifica tu conexión e inténtalo nuevamente."
+            );
+            setRedirigiendoStripe(false);
         }
     };
 
-    if (!state?.pedidoId || !state.codigoSeguimiento) {
+    if (!pedidoId || !codigoSeguimiento) {
         return (
             <section className="cliente-container">
                 <div className="cliente-card">
                     <div className="cliente-header">
                         <h2>Sin pedido pendiente</h2>
-                        <p>No encontramos los datos necesarios para continuar con el pago.</p>
+                        <p>
+                            No encontramos los datos necesarios para continuar
+                            con el pago.
+                        </p>
                     </div>
                     <Link to="/pedido">Volver al pedido</Link>
                 </div>
@@ -108,56 +180,46 @@ export default function PagoPage() {
         <section className="cliente-container">
             <div className="cliente-card">
                 <div className="cliente-header">
-                    <p className="eyebrow">Pago simulado</p>
+                    <p className="eyebrow">Paso 3 de 3 · Pasarela de pago</p>
                     <h2>Portal de pago</h2>
-                    <p>Selecciona el medio de pago para continuar.</p>
+                    <p>
+                        Completa el pago de tu pedido de forma segura a través
+                        de la pasarela de Stripe.
+                    </p>
                 </div>
 
-                <div>
-                    <p><strong>Pedido:</strong> #{state.pedidoId}</p>
+                <div className="pago-summary-box">
                     <p>
-                        <strong>Total:</strong>{" "}
-                        ${total.toLocaleString("es-CO")}
+                        <strong>Pedido:</strong> #{pedidoId}
+                    </p>
+                    <p>
+                        <strong>Total a pagar:</strong> $
+                        {total.toLocaleString("es-CO")} COP
                     </p>
                 </div>
 
                 {estadoPago === "pendiente" || estadoPago === "rechazado" ? (
                     <>
-                        <div className="campo">
-                            <label htmlFor="medio-pago">Medio de pago</label>
-                            <select
-                                id="medio-pago"
-                                value={tipoPagoId}
-                                onChange={(e) => setTipoPagoId(Number(e.target.value))}
-                                disabled={procesando}
-                            >
-                                {mediosPago.map((medio) => (
-                                    <option key={medio.id} value={medio.id}>
-                                        {medio.nombre}
-                                    </option>
-                                ))}
-                            </select>
+                        <div className="pago-sandbox-card">
+                            <strong>Tarjeta de prueba (Stripe Sandbox):</strong>
+                            <div>
+                                Número: <code>4242 4242 4242 4242</code> ·
+                                Fecha: cualquier mes/año futuro (ej.{" "}
+                                <code>12/28</code>) · CVC: <code>123</code>
+                            </div>
                         </div>
 
-                        <p>
-                            Esta es una demostración académica. No se realizará
-                            ningún cobro real.
-                        </p>
-
                         <button
                             type="button"
-                            onClick={simularAprobacion}
-                            disabled={procesando}
+                            className="pago-stripe-button"
+                            onClick={() => void iniciarPagoStripe()}
+                            disabled={procesando || redirigiendoStripe}
                         >
-                            {procesando ? "Procesando..." : "Simular pago aprobado"}
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={simularRechazo}
-                            disabled={procesando}
-                        >
-                            Simular pago rechazado
+                            {redirigiendoStripe
+                                ? "Abriendo Stripe Checkout..."
+                                : procesando
+                                ? "Verificando pago..."
+                                : "Pagar con Stripe"}
                         </button>
                     </>
                 ) : null}
@@ -176,13 +238,16 @@ export default function PagoPage() {
                 )}
 
                 {estadoPago === "aprobado" && (
-                    <div>
+                    <div className="pago-approved-box">
                         <p>
                             <strong>Código de seguimiento:</strong>{" "}
-                            {state.codigoSeguimiento}
+                            {codigoSeguimiento}
                         </p>
-                        <Link to={`/seguimiento/${state.codigoSeguimiento}`}>
-                            Consultar mi pedido
+                        <Link
+                            className="directory-tracking-cta"
+                            to={`/seguimiento/${codigoSeguimiento}`}
+                        >
+                            Consultar estado de mi pedido en vivo
                         </Link>
                     </div>
                 )}

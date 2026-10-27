@@ -6,6 +6,7 @@ export interface Restaurante {
   id: number
   nombre: string
   imagen?: string
+  imagenUrl?: string
   ubicacion: string
   estado: EstadoRestaurante
   tiempoEstimadoMin: number
@@ -25,24 +26,44 @@ const MONTANA_IMAGE =
 
 function CardRestaurante({ restaurante, seleccionado, onClick }: CardRestauranteProps) {
   const estadoClass = restaurante.estado.toLowerCase().replace(' ', '-')
-  const imagenUrl = restaurante.imagen
-    ? restaurante.imagen
+  const estaCerrado = restaurante.estado.trim().toLowerCase() === 'cerrado'
+  const rawImage = restaurante.imagenUrl || restaurante.imagen
+  const imagenUrl = rawImage
+    ? rawImage
     : restaurante.nombre.toLowerCase().includes('monta') || restaurante.nombre.toLowerCase().includes('boulevard')
       ? MONTANA_IMAGE
       : DEFAULT_IMAGE
 
+  const handleActivate = () => {
+    if (estaCerrado || !onClick) return
+    onClick()
+  }
+
   return (
     <article 
-      className={`restaurant-card ${seleccionado ? 'restaurant-card--selected' : ''}`}
-      onClick={onClick}
+      className={`restaurant-card ${seleccionado ? 'restaurant-card--selected' : ''} ${estaCerrado ? 'restaurant-card--closed' : ''}`}
+      onClick={handleActivate}
       role="button"
-      tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && onClick && onClick()}
+      aria-disabled={estaCerrado}
+      tabIndex={estaCerrado ? -1 : 0}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && !estaCerrado && onClick) {
+          e.preventDefault()
+          onClick()
+        }
+      }}
     >
       <img
         className="restaurant-card__image"
         src={imagenUrl}
         alt={`Imagen de ${restaurante.nombre}`}
+        loading="lazy"
+        decoding="async"
+        onError={(event) => {
+          if (event.currentTarget.src !== DEFAULT_IMAGE) {
+            event.currentTarget.src = DEFAULT_IMAGE
+          }
+        }}
       />
 
       <div className="restaurant-card__content">
@@ -59,7 +80,11 @@ function CardRestaurante({ restaurante, seleccionado, onClick }: CardRestaurante
         </p>
 
         <div className="restaurant-card__selection">
-          {seleccionado ? (
+          {estaCerrado ? (
+            <span className="restaurant-card__selection--closed">
+              Cafetería cerrada · Pedidos deshabilitados
+            </span>
+          ) : seleccionado ? (
             <span className="restaurant-card__selection--active">
               Menú seleccionado
             </span>

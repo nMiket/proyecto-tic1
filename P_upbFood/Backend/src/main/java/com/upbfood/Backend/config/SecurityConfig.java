@@ -1,6 +1,7 @@
 package com.upbfood.Backend.config;
 
 import com.upbfood.Backend.security.JwtAuthenticationFilter;
+import com.upbfood.Backend.security.RateLimitFilter;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,58 +26,84 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitFilter rateLimitFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            RateLimitFilter rateLimitFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.rateLimitFilter = rateLimitFilter;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .exceptionHandling(exception ->
-                exception.authenticationEntryPoint(
-                    new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
-            .authorizeHttpRequests(auth -> auth
-                // Rutas de autenticación de administradores
-                .requestMatchers(
-                    "/api/admin/login",
-                    "/api/admin/refresh",
-                    "/api/admin/logout"
-                ).permitAll()
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(
+                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .authorizeHttpRequests(auth -> auth
+                        // Rutas de autenticación de administradores
+                        .requestMatchers(
+                                "/api/admin/login",
+                                "/api/admin/refresh",
+                                "/api/admin/logout")
+                        .permitAll()
 
-                // Consultas públicas del catálogo
-                .requestMatchers(
-                    HttpMethod.GET,
-                    "/api/products",
-                    "/api/productos",
-                    "/api/restaurantes"
-                ).permitAll()
+                        // Consultas públicas del catálogo
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/products",
+                                "/api/productos",
+                                "/api/categorias",
+                                "/api/restaurantes")
+                        .permitAll()
 
-                // Operaciones públicas de pedidos
-                .requestMatchers(HttpMethod.POST, "/api/pedidos").permitAll()
-                .requestMatchers(
-                    HttpMethod.PUT,
-                    "/api/pedidos/seguimiento/*/pago"
-                ).permitAll()
-                .requestMatchers(
-                    HttpMethod.GET,
-                    "/api/pedidos/seguimiento/consulta",
-                    "/api/pedidos/**"
-                ).permitAll()
+                        // Operaciones públicas de pedidos
+                        .requestMatchers(HttpMethod.POST, "/api/pedidos").permitAll()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/pedidos/seguimiento/*/stripe-session",
+                                "/api/pedidos/seguimiento/*/stripe-confirmar")
+                        .permitAll()
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/pedidos/seguimiento/*/pago")
+                        .permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/pedidos/consulta",
+                                "/api/pedidos/seguimiento/consulta",
+                                "/api/pedidos/seguimiento/*")
+                        .permitAll()
 
-                // El resto requiere autenticación
-                .anyRequest().authenticated()
-            )
-            .httpBasic(httpBasic -> httpBasic.disable())
-            .formLogin(formLogin -> formLogin.disable())
-            .addFilterBefore(
-                jwtAuthenticationFilter,
-                UsernamePasswordAuthenticationFilter.class
-            );
+                        .requestMatchers(HttpMethod.POST, "/api/invitaciones/activar").permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/solicitudes-registro")
+                        .permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/solicitudes-registro/revisar-correo")
+                        .permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/solicitudes-registro/revisar-correo")
+                        .permitAll()
+
+                        // El resto requiere autenticación
+                        .anyRequest().authenticated())
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .formLogin(formLogin -> formLogin.disable())
+                .addFilterBefore(
+                        rateLimitFilter,
+                        UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -91,23 +118,21 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(List.of(
-            "http://localhost:5173",
-            "http://127.0.0.1:5173"
-        ));
+                "http://localhost:5173",
+                "http://127.0.0.1:5173"));
 
         configuration.setAllowedMethods(List.of(
-            "GET",
-            "POST",
-            "PUT",
-            "DELETE",
-            "OPTIONS"
-        ));
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "OPTIONS"));
 
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source =
-            new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration("/**", configuration);
 

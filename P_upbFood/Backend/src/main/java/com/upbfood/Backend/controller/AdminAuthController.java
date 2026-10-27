@@ -155,8 +155,8 @@ public class AdminAuthController {
                 .body(response);
     }
 
-    private ResponseEntity<Map<String, Object>> issueSession(
-            AdminUser admin, String message) {
+        private ResponseEntity<Map<String, Object>> issueSession(
+                AdminUser admin, String message) {
 
         // Solo se incluyen las asignaciones activas.
         List<AdministradorRestaurante> asociaciones =
@@ -168,9 +168,10 @@ public class AdminAuthController {
                                         asociacion.getEstado()))
                         .toList();
 
+        // Toda cuenta operativa debe tener al menos una asignación activa.
         if (asociaciones.isEmpty()) {
-            return unauthorized(
-                    "El administrador no tiene asignaciones activas.");
+                return unauthorized(
+                        "El administrador no tiene asignaciones activas.");
         }
 
         List<Integer> restaurantes = asociaciones.stream()
@@ -181,17 +182,17 @@ public class AdminAuthController {
         // Cada restaurante conserva su propio rol.
         List<Map<String, Object>> asignaciones = asociaciones.stream()
                 .map(asociacion -> {
-                    Map<String, Object> asignacion = new HashMap<>();
+                        Map<String, Object> asignacion = new HashMap<>();
 
-                    asignacion.put(
-                            "restauranteId",
-                            asociacion.getId().getRestauranteId());
+                        asignacion.put(
+                                "restauranteId",
+                                asociacion.getId().getRestauranteId());
 
-                    asignacion.put(
-                            "tipoAdministradorId",
-                            asociacion.getTipoAdministradorId());
+                        asignacion.put(
+                                "tipoAdministradorId",
+                                asociacion.getTipoAdministradorId());
 
-                    return asignacion;
+                        return asignacion;
                 })
                 .toList();
 
@@ -214,14 +215,13 @@ public class AdminAuthController {
                 jwtService.getAccessTokenLifetimeSeconds());
         response.put("id", admin.getId());
         response.put("email", admin.getEmail());
+        // Las cuentas operativas siempre están asociadas a un restaurante.
+        if (!restaurantes.isEmpty()) {
+                response.put("restauranteId", restaurantes.get(0));
+        }
 
-        // Compatibilidad con el frontend existente.
-        response.put("restauranteId", restaurantes.get(0));
         response.put("restaurantes", restaurantes);
-
-        // Nueva información para controlar las opciones según el rol.
         response.put("asignaciones", asignaciones);
-
         response.put("message", message);
 
         return ResponseEntity.ok()
@@ -229,7 +229,7 @@ public class AdminAuthController {
                         HttpHeaders.SET_COOKIE,
                         refreshCookie(rawRefreshToken).toString())
                 .body(response);
-    }
+        }
 
     private ResponseEntity<Map<String, Object>> badRequest(
             String message) {
@@ -254,7 +254,7 @@ public class AdminAuthController {
                 .httpOnly(true)
                 .secure(secureCookie)
                 .sameSite("Lax")
-                .path("/")
+                .path("/api/admin")
                 .maxAge(refreshTokenLifetime)
                 .build();
     }
@@ -264,7 +264,7 @@ public class AdminAuthController {
                 .httpOnly(true)
                 .secure(secureCookie)
                 .sameSite("Lax")
-                .path("/")
+                .path("/api/admin")
                 .maxAge(Duration.ZERO)
                 .build();
     }

@@ -30,27 +30,32 @@ public class AdminOrderController {
     public ResponseEntity<List<Map<String, Object>>> listarPedidos(
             @RequestParam Integer restauranteId
     ) {
-        authorizationService.requireKitchenAdminForRestaurant(restauranteId);
+        authorizationService.requireAdminForRestaurant(restauranteId);
 
         List<Map<String, Object>> pedidos =
                 pedidoService.obtenerActivos(restauranteId);
 
-        return ResponseEntity.ok(pedidos.stream().map(pedido -> {
-            Map<String, Object> response = new HashMap<>(pedido);
+        return ResponseEntity.ok(mapearListaPedidosConDetalles(pedidos));
+    }
 
-            Object pedidoId = pedido.get("pedido_id");
+    @GetMapping("/historial")
+    public ResponseEntity<List<Map<String, Object>>> listarHistorial(
+            @RequestParam Integer restauranteId
+    ) {
+        authorizationService.requireAdminForRestaurant(restauranteId);
 
-            if (pedidoId != null) {
-                response.put(
-                        "details",
-                        pedidoService.obtenerDetalle(
-                                ((Number) pedidoId).intValue()
-                        )
-                );
-            }
+        List<Map<String, Object>> pedidos =
+                pedidoService.obtenerHistorial(restauranteId);
 
-            return response;
-        }).toList());
+        return ResponseEntity.ok(mapearListaPedidosConDetalles(pedidos));
+    }
+
+    @GetMapping("/estadisticas")
+    public ResponseEntity<Map<String, Object>> obtenerEstadisticas(
+            @RequestParam Integer restauranteId
+    ) {
+        authorizationService.requireAdminForRestaurant(restauranteId);
+        return ResponseEntity.ok(pedidoService.obtenerEstadisticas(restauranteId));
     }
 
     @PatchMapping("/{id}/estado")
@@ -64,7 +69,7 @@ public class AdminOrderController {
         Integer restauranteId =
                 ((Number) pedido.get("restaurante_id")).intValue();
 
-        authorizationService.requireKitchenAdminForRestaurant(restauranteId);
+        authorizationService.requireAdminForRestaurant(restauranteId);
 
         pedidoService.cambiarEstado(id, request.estado());
 
@@ -72,5 +77,53 @@ public class AdminOrderController {
                 pedidoService.obtenerPedidoPorId(id);
 
         return ResponseEntity.ok(actualizado);
+    }
+
+    private List<Map<String, Object>> mapearListaPedidosConDetalles(
+            List<Map<String, Object>> pedidos
+    ) {
+        if (pedidos == null || pedidos.isEmpty()) {
+            return List.of();
+        }
+        List<Integer> pedidoIds = pedidos.stream()
+                .map(p -> p.get("pedido_id"))
+                .filter(Number.class::isInstance)
+                .map(id -> ((Number) id).intValue())
+                .toList();
+
+        Map<Integer, List<Map<String, Object>>> detallesPorPedido =
+                pedidoService.obtenerDetallesPorPedidos(pedidoIds);
+
+        return pedidos.stream()
+                .map(pedido -> {
+                    Object idObj = pedido.get("pedido_id");
+                    List<Map<String, Object>> detalles = (idObj instanceof Number num)
+                            ? detallesPorPedido.getOrDefault(num.intValue(), List.of())
+                            : List.of();
+                    return mapearPedido(pedido, detalles);
+                })
+                .toList();
+    }
+
+    private Map<String, Object> mapearPedido(
+            Map<String, Object> pedido,
+            List<Map<String, Object>> detalles
+    ) {
+        Map<String, Object> response = new HashMap<>();
+        Object pedidoId = pedido.get("pedido_id");
+        response.put("id", pedidoId);
+        Object nombreCliente = pedido.get("nombre_cliente");
+        response.put(
+                "client",
+                Map.of("nombre", nombreCliente != null ? nombreCliente : "Cliente sin nombre")
+        );
+        response.put("correoCliente", pedido.get("correo_cliente"));
+        response.put("telefonoCliente", pedido.get("telefono_cliente"));
+        response.put("estado", pedido.get("estado"));
+        response.put("total", pedido.get("total"));
+        response.put("fechaCreacion", pedido.get("fecha"));
+        response.put("horaRecogida", pedido.get("hora_recogida"));
+        response.put("details", detalles != null ? detalles : List.of());
+        return response;
     }
 }

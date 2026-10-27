@@ -4,6 +4,8 @@ services:
     container_name: upbfood-db
     restart: unless-stopped
     environment:
+      TZ: America/Bogota
+      PGTZ: America/Bogota
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -28,7 +30,13 @@ services:
       db:
         condition: service_healthy
     
+    
     environment:
+      TZ: America/Bogota
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      APP_NOTIFICACIONES_CORREO_DESTINO: ${APP_NOTIFICACIONES_CORREO_DESTINO}
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:5173}
       SERVER_PORT: 8080
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/upbfood
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
@@ -39,6 +47,8 @@ services:
       APP_JWT_ACCESS_TOKEN_MINUTES: ${APP_JWT_ACCESS_TOKEN_MINUTES}
       APP_JWT_REFRESH_TOKEN_DAYS: ${APP_JWT_REFRESH_TOKEN_DAYS}
       APP_AUTH_COOKIE_SECURE: ${APP_AUTH_COOKIE_SECURE}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
     ports:
       - "8080:8080"
 

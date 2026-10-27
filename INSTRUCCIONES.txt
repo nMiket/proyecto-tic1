@@ -1,0 +1,24 @@
+UPBFood — Correcciones de panel de cocina y consulta de pedidos
+
+CONTENIDO
+- El administrador de cocina entra directamente al panel Cocina y no ve el panel del dueño si solo tiene rol de cocina.
+- El panel de cocina incluye los pedidos y una sección de disponibilidad de productos. Para los productos solo puede cambiar Disponible/Agotado.
+- El backend agrega un endpoint dedicado para cambiar únicamente la disponibilidad y permite PATCH por CORS.
+- La consulta de pedido usa el endpoint real del backend para buscar por código, o por número de pedido más correo o teléfono. Ya no depende del localStorage del mismo navegador.
+- Si el pedido no existe, la consulta devuelve un mensaje claro en lugar de un error genérico.
+
+APLICACIÓN
+1. Haz una copia de seguridad de los archivos que vas a reemplazar.
+2. Copia la carpeta P_upbFood de este ZIP sobre la raíz de tu proyecto, conservando las rutas.
+3. No hace falta ejecutar migraciones SQL para este parche.
+4. Desde la carpeta que contiene docker-compose.yml ejecuta:
+
+   docker compose up --build -d
+
+5. Revisa los logs si algún servicio no inicia:
+
+   docker compose logs --tail=100 backend frontend
+
+IMPORTANTE
+- No borres el volumen de PostgreSQL ni uses docker compose down -v.
+- La comprobación de TypeScript y ESLint de los archivos frontend modificados pasó en el entorno de preparación. No fue posible completar el build de Vite ni la compilación Maven aquí por dependencias nativas/de descarga del entorno; valida la construcción en tu equipo con Docker.

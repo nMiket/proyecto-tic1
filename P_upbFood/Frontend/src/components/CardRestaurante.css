@@ -21,6 +21,22 @@
   box-shadow: 0 0 0 3px rgba(192, 217, 1, 0.24), 0 12px 28px -4px rgba(18, 18, 18, 0.1);
 }
 
+.restaurant-card--closed {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background: #f8f7f4;
+}
+
+.restaurant-card--closed:hover {
+  transform: none;
+  border-color: #e5e5e7;
+  box-shadow: 0 4px 16px -2px rgba(18, 18, 18, 0.05);
+}
+
+.restaurant-card--closed .restaurant-card__image {
+  filter: grayscale(0.6);
+}
+
 
 .restaurant-card__image {
   width: 100%;
@@ -99,7 +115,8 @@
 }
 
 .restaurant-card__selection--active,
-.restaurant-card__selection--idle {
+.restaurant-card__selection--idle,
+.restaurant-card__selection--closed {
   display: inline-flex;
   border-radius: 999px;
   padding: 6px 11px;
@@ -115,6 +132,11 @@
 .restaurant-card__selection--idle {
   background: #f5f3ef;
   color: #586400;
+}
+
+.restaurant-card__selection--closed {
+  background: #fbe3e2;
+  color: #a33a36;
 }
 
 @media (max-width: 560px) {

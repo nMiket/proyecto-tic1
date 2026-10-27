@@ -34,7 +34,20 @@ function ListaRestaurantes({ restauranteSeleccionadoId, onSelectRestaurante }: L
   }, [restauranteSeleccionadoId]);
 
   if (cargando) {
-    return <p>Cargando restaurantes...</p>;
+    return (
+      <section className="lista-restaurantes" aria-live="polite" aria-busy="true">
+        <div className="skeleton-grid" role="status" aria-label="Cargando cafeterías">
+          {[1, 2, 3].map((item) => (
+            <div className="skeleton-card" key={item}>
+              <div className="skeleton-block skeleton-block--media" />
+              <div className="skeleton-block skeleton-block--title" />
+              <div className="skeleton-block skeleton-block--line" />
+              <div className="skeleton-block skeleton-block--pill" />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
   }
 
   if (error) {

@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,7 +36,7 @@ class ProductControllerTest {
                 mock(AdminAuthorizationService.class);
 
         ProductController controller = new ProductController(
-                productRepository, menuRepository, authorizationService
+                productRepository, menuRepository, authorizationService, mock(JdbcTemplate.class)
         );
 
         Product product = product(1, "Café Especial", 2);
@@ -71,7 +72,7 @@ class ProductControllerTest {
                 mock(AdminAuthorizationService.class);
 
         ProductController controller = new ProductController(
-                productRepository, menuRepository, authorizationService
+                productRepository, menuRepository, authorizationService, mock(JdbcTemplate.class)
         );
 
         Product savedProduct = product(3, "Empanada", 1);
@@ -103,7 +104,7 @@ class ProductControllerTest {
                 response.getBody().get("precio")
         );
 
-        verify(authorizationService).requireAdminForRestaurant(1);
+        verify(authorizationService).requireOwnerForRestaurant(1);
         verify(productRepository).save(any(Product.class));
         verify(menuRepository).save(any(ProductoRestaurante.class));
     }
@@ -117,7 +118,7 @@ class ProductControllerTest {
                 mock(AdminAuthorizationService.class);
 
         ProductController controller = new ProductController(
-                productRepository, menuRepository, authorizationService
+                productRepository, menuRepository, authorizationService, mock(JdbcTemplate.class)
         );
 
         Product existingProduct = product(10, "Café", 1);
@@ -157,13 +158,13 @@ class ProductControllerTest {
                 response.getBody().get("precio")
         );
         assertEquals(false, response.getBody().get("disponible"));
-        assertEquals(2, response.getBody().get("tipoProductoId"));
+        assertEquals(2, response.getBody().get("categoriaId"));
 
-        verify(authorizationService).requireAdminForRestaurant(1);
+        verify(authorizationService).requireOwnerForRestaurant(1);
     }
 
     @Test
-    void deleteProductDeactivatesProductInRestaurantMenu() {
+    void deleteProductRemovesProductFromRestaurantMenu() {
         ProductRepository productRepository = mock(ProductRepository.class);
         ProductoRestauranteRepository menuRepository =
                 mock(ProductoRestauranteRepository.class);
@@ -171,7 +172,7 @@ class ProductControllerTest {
                 mock(AdminAuthorizationService.class);
 
         ProductController controller = new ProductController(
-                productRepository, menuRepository, authorizationService
+                productRepository, menuRepository, authorizationService, mock(JdbcTemplate.class)
         );
 
         ProductoRestaurante menuItem =
@@ -180,19 +181,52 @@ class ProductControllerTest {
         when(menuRepository.findById(
                 new ProductoRestauranteId(1, 7)
         )).thenReturn(Optional.of(menuItem));
-        when(menuRepository.save(menuItem)).thenReturn(menuItem);
 
         ResponseEntity<Map<String, Object>> response =
                 controller.deleteProduct(7, 1);
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(
-                "Producto desactivado en el menú correctamente.",
+                "Producto retirado del restaurante correctamente.",
                 response.getBody().get("message")
         );
+
+        verify(authorizationService).requireOwnerForRestaurant(1);
+        verify(menuRepository).delete(menuItem);
+    }
+
+    @Test
+    void deleteProductWithHistoricalSalesDeactivatesMenuItem() {
+        ProductRepository productRepository = mock(ProductRepository.class);
+        ProductoRestauranteRepository menuRepository =
+                mock(ProductoRestauranteRepository.class);
+        AdminAuthorizationService authorizationService =
+                mock(AdminAuthorizationService.class);
+        JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+
+        ProductController controller = new ProductController(
+                productRepository, menuRepository, authorizationService, jdbcTemplate
+        );
+
+        ProductoRestaurante menuItem =
+                menuItem(1, 7, "4000", true);
+
+        when(menuRepository.findById(
+                new ProductoRestauranteId(1, 7)
+        )).thenReturn(Optional.of(menuItem));
+        when(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM detalle_pedido WHERE restaurante_id = ? AND producto_id = ?",
+                Integer.class, 1, 7
+        )).thenReturn(2);
+
+        ResponseEntity<Map<String, Object>> response =
+                controller.deleteProduct(7, 1);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(true, response.getBody().get("deactivatedInsteadOfDeleted"));
         assertEquals(false, menuItem.getDisponible());
 
-        verify(authorizationService).requireAdminForRestaurant(1);
+        verify(authorizationService).requireOwnerForRestaurant(1);
         verify(menuRepository).save(menuItem);
     }
 

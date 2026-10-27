@@ -318,3 +318,147 @@
     min-height: 240px;
   }
 }
+
+
+.tracking-order-items {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e5e7;
+}
+
+.tracking-order-items h3 {
+  margin: 0 0 0.75rem;
+  color: #1b1c1a;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.tracking-order-items ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.tracking-order-items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #efefed;
+}
+
+.tracking-order-items li p {
+  margin: 0.25rem 0 0;
+  color: #767961;
+  font-size: 0.9rem;
+}
+
+.tracking-order-items li > span {
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.pedido-card button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.pedido-card .pedido-card__cancel {
+  margin-top: 0.5rem;
+  background: #8f2929 !important;
+}
+
+@media (max-width: 860px) {
+  .tracking-layout {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .tracking-page {
+    gap: 20px;
+  }
+
+  .tracking-intro {
+    padding-top: 10px;
+  }
+
+  .tracking-intro h1 {
+    font-size: clamp(1.75rem, 6.5vw, 2.3rem);
+  }
+
+  .tracking-form,
+  .tracking-result {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .tracking-result__topline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .tracking-summary {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .tracking-order-items li {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+}
+
+.tracking-mode-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tracking-mode-tab {
+  flex: 1;
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 999px;
+  border: 1px solid #c7c9ad;
+  background: #ffffff;
+  color: #464834;
+  cursor: pointer;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.tracking-mode-tab:hover {
+  border-color: #c0d901;
+  background: #fafbf3;
+}
+
+.tracking-mode-tab.is-active {
+  border-color: #1d1d1b;
+  background: #1d1d1b;
+  color: #c0d901;
+}
+
+.tracking-form > .tracking-last-order-button {
+  min-height: 40px;
+  margin-top: 2px;
+  margin-bottom: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px dashed #c7c9ad;
+  background: #f5f3ef;
+  color: #1b1c1a;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.tracking-form > .tracking-last-order-button:hover {
+  border-color: #c0d901;
+  background: #eef6b8;
+}

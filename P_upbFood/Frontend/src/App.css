@@ -1,11 +1,11 @@
 .app-shell {
   min-height: 100vh;
-  max-width: 1200px;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 32px 20px 48px;
+  padding: 24px 32px 64px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 }
 
 .topbar {
@@ -13,23 +13,22 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid #d9e7e2;
+  background: #121212;
+  border: 0;
   border-radius: 16px;
-  padding: 14px 18px;
-  backdrop-filter: blur(10px);
+  padding: 12px 16px 12px 18px;
 }
 
 .brand {
   font-weight: 700;
-  color: #123e36;
-  letter-spacing: 0.04em;
+  color: #ffffff;
+  letter-spacing: 0;
   text-decoration: none;
 }
 
 .nav-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -38,11 +37,11 @@
 .dashboard-header button,
 .product-form button {
   border: none;
-  border-radius: 10px;
+  border-radius: 999px;
   padding: 10px 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, background-color 0.2s ease;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -50,33 +49,34 @@
 }
 
 .nav-actions a {
-  background: #edf5f2;
-  color: #1f4d46;
+  background: transparent;
+  color: #f2f1ed;
 }
 
 .nav-actions a.active {
-  background: #0f766e;
-  color: white;
+  background: #c0d901;
+  color: #121212;
 }
 
 .hero-card,
 .login-card,
 .dashboard-card {
-  width: min(820px, 100%);
+  width: min(1040px, 100%);
   margin: 0 auto;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid #d9e7e2;
-  border-radius: 26px;
-  box-shadow: 0 18px 42px -28px rgba(15, 118, 110, 0.35);
+  background: #ffffff;
+  border: 1px solid #e5e5e7;
+  border-radius: 16px;
+  box-shadow: 0 12px 28px -12px rgba(18, 18, 18, 0.14);
   padding: 32px;
 }
 
 .eyebrow {
   margin: 0 0 10px;
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #2c6e5f;
+  color: #586400;
+  font-weight: 700;
 }
 
 .hero-card h1,
@@ -84,7 +84,7 @@
 .dashboard-header h2,
 .panel h3 {
   margin: 0;
-  color: #153c33;
+  color: #1b1c1a;
 }
 
 .hero-card h1 {
@@ -94,7 +94,7 @@
 
 .hero-card p,
 .dashboard-card p {
-  color: #315349;
+  color: #464834;
   line-height: 1.6;
 }
 
@@ -107,20 +107,20 @@
 
 .stats div {
   padding: 18px;
-  background: #f1faf7;
-  border: 1px solid #d6ece5;
+  background: #f5f3ef;
+  border: 1px solid #e5e5e7;
   border-radius: 14px;
 }
 
 .stats strong {
   display: block;
   font-size: 1.5rem;
-  color: #0f766e;
+  color: #586400;
   margin-bottom: 6px;
 }
 
 .stats span {
-  color: #456861;
+  color: #767961;
 }
 
 .login-header {
@@ -137,24 +137,25 @@
 .product-form label {
   display: grid;
   gap: 8px;
-  color: #1d433d;
+  color: #464834;
   font-weight: 600;
 }
 
 .login-form input,
 .product-form input,
 .product-form select {
-  border: 1px solid #cfe1dc;
-  border-radius: 10px;
+  border: 1.5px solid #e5e5e7;
+  border-radius: 12px;
   padding: 12px 14px;
   font-size: 1rem;
+  background: #ffffff;
 }
 
 .login-form button,
 .dashboard-header button,
 .product-form button {
-  background: #0f766e;
-  color: white;
+  background: #c0d901;
+  color: #121212;
   width: fit-content;
 }
 
@@ -174,17 +175,17 @@
 }
 
 .metric-card {
-  background: #f4fbf8;
-  border: 1px solid #d8efe7;
-  border-radius: 18px;
+  background: #f5f3ef;
+  border: 1px solid #e5e5e7;
+  border-radius: 16px;
   padding: 20px 18px;
   display: grid;
   gap: 8px;
 }
 
 .metric-card.accent {
-  background: linear-gradient(135deg, #0f766e, #0d9488);
-  color: white;
+  background: #1d1d1b;
+  color: #ffffff;
 }
 
 .metric-card span,
@@ -205,16 +206,16 @@
 }
 
 .panel {
-  background: #f8faf9;
-  border: 1px solid #dfece8;
-  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid #e5e5e7;
+  border-radius: 16px;
   padding: 20px;
 }
 
 .panel ul {
   margin: 18px 0 0;
   padding-left: 18px;
-  color: #32564f;
+  color: #464834;
   line-height: 2;
 }
 
@@ -223,8 +224,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 0;
-  border-bottom: 1px solid #e2efeb;
-  color: #365f58;
+  border-bottom: 1px solid #e5e5e7;
+  color: #464834;
 }
 
 .summary-row:last-child {
@@ -257,8 +258,8 @@
   gap: 12px;
   padding: 12px 14px;
   border-radius: 12px;
-  background: #edf8f5;
-  border: 1px solid #d9efea;
+  background: #f5f3ef;
+  border: 1px solid #e5e5e7;
 }
 
 .product-list li div {
@@ -278,7 +279,7 @@
 }
 
 .product-list span {
-  color: #3c5f58;
+  color: #767961;
 }
 
 .product-form-actions {
@@ -290,58 +291,70 @@
 .secondary-button,
 .mini-button {
   border: none;
-  border-radius: 10px;
+  border-radius: 999px;
   padding: 10px 14px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
+  transition: background-color 180ms ease;
 }
 
 .secondary-button {
-  background: #e3efec;
-  color: #1b4d46;
+  background: #1d1d1b;
+  color: #ffffff;
+}
+
+.secondary-button:hover {
+  background: #333330;
 }
 
 .mini-button {
-  background: #dff7f3;
-  color: #0f766e;
+  background: #f5f3ef;
+  border: 1px solid #c7c9ad;
+  color: #1b1c1a;
+}
+
+.mini-button:hover {
+  border-color: #c0d901;
+  background: #c0d901;
 }
 
 .mini-button.danger {
-  background: #ffe4e1;
-  color: #b42318;
+  border-color: transparent;
+  background: #ffdad6;
+  color: #93000a;
 }
 
 .secondary {
-  background: #0b3b36 !important;
+  background: #1d1d1b !important;
 }
 
 .error-message {
   margin: 0;
-  color: #b42318;
+  color: #93000a;
   font-weight: 600;
 }
 
 .ordering-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 28px;
   align-items: start;
 }
 
 .floating-cart-button {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
+  right: 32px;
+  bottom: 28px;
   z-index: 10;
   display: flex;
   align-items: center;
   gap: 14px;
   border: 0;
-  border-radius: 12px;
-  padding: 13px 17px;
-  background: #f2c14e;
-  color: #153c33;
-  box-shadow: 0 12px 28px -14px #153c33;
+  border-radius: 999px;
+  padding: 14px 18px;
+  background: #c0d901;
+  color: #121212;
+  box-shadow: 0 16px 30px -14px rgba(18, 18, 18, 0.55);
   cursor: pointer;
   font-weight: 700;
 }
@@ -364,10 +377,10 @@
 .restaurant-card__action {
   width: fit-content;
   border: 0;
-  border-radius: 8px;
-  padding: 9px 13px;
-  background: #e5f5ef;
-  color: #0f766e;
+  border-radius: 999px;
+  padding: 9px 14px;
+  background: #c0d901;
+  color: #121212;
   font-weight: 700;
   cursor: pointer;
 }
@@ -402,6 +415,61 @@
     bottom: 14px;
   }
 }
+
+
+/* Registro de restaurantes en el acceso administrativo */
+.register-restaurant-prompt {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 18px;
+  border-top: 1px solid #e5e5e7;
+  color: #767961;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.register-restaurant-button {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #d8d9ce !important;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: #ffffff !important;
+  color: #464834 !important;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.register-restaurant-button:hover {
+  border-color: #c0d901 !important;
+  background: #f5f8e8 !important;
+}
+
+.back-to-login-button {
+  margin-top: 16px;
+}
+
+.registration-form {
+  gap: 15px;
+}
+
+.registration-form input {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.success-message {
+  margin: 0;
+  border-radius: 10px;
+  padding: 12px;
+  background: #e5f5ef;
+  color: #176447;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
 
 /* Public ordering experience */
 .app-shell {
@@ -877,7 +945,7 @@
 
 .restaurant-directory-hero {
   display: flex;
-  align-items: end;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 32px;
   padding: 38px 0 30px;
@@ -921,26 +989,15 @@
 }
 
 .identity-logo-panel {
-  display: grid;
-  flex: 0 0 280px;
-  gap: 8px;
-  padding: 16px;
-  border: 1px solid #e5e5e7;
-  border-radius: 16px;
-  background: #ffffff;
-}
-
-.identity-logo-panel .identity-logo-slot {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  min-height: 42px;
-  border-color: #c7c9ad;
-  color: #767961;
-  font-size: 0.62rem;
-}
-
-.identity-logo-panel .identity-logo-slot--food {
-  border-color: #bccdfc;
-  color: #586400;
+  flex: 0 0 clamp(290px, 34vw, 420px);
+  padding: 26px 32px;
+  border: 1px solid #e5e5e7;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px -18px rgba(18, 18, 18, 0.14);
 }
 
 .site-footer {
@@ -1092,7 +1149,7 @@
 
 .order-page__content {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 340px);
   align-items: start;
   gap: 28px;
 }
@@ -1192,5 +1249,431 @@
 
   .order-note h2 {
     margin-top: 28px;
+  }
+}
+
+
+/* Registro de restaurantes en el acceso administrativo */
+.register-restaurant-prompt {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 18px;
+  border-top: 1px solid #e5e5e7;
+  color: #767961;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.register-restaurant-button {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #d8d9ce;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: #ffffff;
+  color: #464834;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.register-restaurant-button:hover {
+  border-color: #c0d901;
+  background: #f5f8e8;
+}
+
+.back-to-login-button {
+  margin-top: 16px;
+}
+
+.registration-form {
+  gap: 15px;
+}
+
+.registration-form input {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.success-message {
+  margin: 0;
+  border-radius: 10px;
+  padding: 12px;
+  background: #e5f5ef;
+  color: #176447;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+
+
+.product-extra-manager { display: grid; gap: 10px; padding: 16px; border: 1px solid #e5e5e7; border-radius: 14px; background: #fafbf3; }
+.product-extra-manager h4 { margin: 0; color: #1b1c1a; font-family: 'Plus Jakarta Sans', sans-serif; }
+.product-extra-manager > p { margin: 0; color: #767961; font-size: .82rem; line-height: 1.5; }
+.product-extra-manager .checkbox-row { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px; background: #fff; }
+.product-extra-manager .checkbox-row input { width: 16px; height: 16px; accent-color: #8c9f00; }
+.new-extra-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .7fr); gap: 10px; margin-top: 8px; }
+.new-extra-fields button { grid-column: 1 / -1; }
+@media (max-width: 560px) { .new-extra-fields { grid-template-columns: 1fr; } }
+.restaurant-extra-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.restaurant-extra-row .checkbox-row { min-width: 0; }
+.restaurant-extra-row > input { min-width: 0; width: 100%; box-sizing: border-box; }
+.restaurant-extra-row > button { width: fit-content; padding: 8px 12px; }
+@media (max-width: 560px) { .restaurant-extra-row { grid-template-columns: 1fr; } }
+
+.dashboard-subtitle {
+  margin: 8px 0 0;
+  max-width: 520px;
+  color: #767961;
+  font-size: 0.95rem;
+}
+
+.admin-cafe-switcher {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0 0 24px;
+  padding: 18px 20px;
+  border: 1px solid #e5e5e7;
+  border-radius: 16px;
+  background: #fafbf3;
+}
+
+.admin-cafe-switcher label {
+  display: block;
+  margin-bottom: 8px;
+  color: #1b1c1a;
+  font-weight: 700;
+}
+
+.admin-cafe-switcher select,
+.admin-cafe-switcher p {
+  margin: 0;
+  min-width: min(280px, 100%);
+  color: #1b1c1a;
+  font-weight: 600;
+}
+
+.admin-cafe-switcher span {
+  max-width: 280px;
+  color: #767961;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.admin-staff-panel {
+  margin-bottom: 24px;
+}
+
+.admin-quick-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.admin-quick-actions button {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 11px 16px;
+  background: #c0d901;
+  color: #121212;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-quick-actions button:hover {
+  background: #d5ef2b;
+}
+
+.admin-quick-actions .secondary-button {
+  background: #1d1d1b;
+  color: #ffffff;
+}
+
+.admin-quick-actions .secondary-button:hover {
+  background: #333330;
+}
+
+.admin-insight-panels {
+  margin: 0 0 26px;
+}
+
+.admin-top-products {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+}
+
+.admin-top-products li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #ecece4;
+  color: #464834;
+}
+
+.admin-top-products li:last-child {
+  border-bottom: none;
+}
+
+.admin-history-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-history-filters button {
+  border: 1px solid #c7c9ad;
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: #ffffff;
+  color: #464834;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-history-filters button.is-active {
+  border-color: #c0d901;
+  background: #c0d901;
+  color: #121212;
+}
+
+.admin-history-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  max-height: 360px;
+  overflow: auto;
+}
+
+.admin-history-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e5e5e7;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.admin-history-list strong {
+  display: block;
+  color: #1b1c1a;
+}
+
+.admin-history-list small {
+  color: #767961;
+}
+
+.admin-history-meta {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
+.admin-status-chip {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.admin-status-chip.is-active {
+  background: #eef6b8;
+  color: #4d5900;
+}
+
+.admin-status-chip.is-ready {
+  background: #e8f1ff;
+  color: #1d4f91;
+}
+
+.admin-status-chip.is-delivered {
+  background: #e5f5ef;
+  color: #176447;
+}
+
+.admin-status-chip.is-cancelled {
+  background: #ffe4e1;
+  color: #b42318;
+}
+
+
+.brand-logo-icon {
+  width: 44px;
+  height: 44px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.identity-logo-img {
+  width: clamp(250px, 30vw, 360px);
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.footer-logo-placeholder {
+  border: none !important;
+  background: transparent !important;
+  width: auto;
+  height: auto;
+}
+
+.footer-logo-img {
+  width: auto;
+  height: 36px;
+  display: block;
+}
+
+/* ============================================================== */
+/* OPTIMIZACIÓN INTEGRAL PARA DISPOSITIVOS MÓVILES Y TABLETS      */
+/* ============================================================== */
+@media (max-width: 960px) {
+  .app-shell {
+    padding: 18px 20px 48px;
+    gap: 24px;
+  }
+
+  .ordering-layout,
+  .order-page__content {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .ordering-layout .order-summary {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    padding: 12px 14px 40px;
+    gap: 18px;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 8px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    gap: 10px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .brand {
+    justify-content: flex-start;
+  }
+
+  .nav-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+  }
+
+  .nav-actions a {
+    width: 100%;
+    padding: 9px 10px;
+    font-size: 0.78rem;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .restaurant-directory-hero {
+    padding: 16px 0 22px;
+    gap: 18px;
+  }
+
+  .restaurant-directory-hero h1 {
+    font-size: clamp(1.75rem, 7vw, 2.35rem);
+    line-height: 1.08;
+  }
+
+  .restaurant-directory-hero p:last-child {
+    font-size: 0.94rem;
+  }
+
+  .directory-tracking-cta {
+    width: 100%;
+    justify-content: center;
+    margin-top: 16px;
+    padding: 11px 16px;
+  }
+
+  .identity-logo-panel {
+    justify-content: center;
+    padding: 20px 24px;
+  }
+
+  .identity-logo-img {
+    width: clamp(220px, 68vw, 300px);
+    max-width: 100%;
+  }
+
+  .order-page-shell {
+    gap: 20px;
+  }
+
+  .order-page__header {
+    padding-bottom: 16px;
+    gap: 14px;
+  }
+
+  .order-page__header h1 {
+    font-size: 1.65rem;
+  }
+
+  .order-steps {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 8px 14px;
+    white-space: normal;
+    font-size: 0.74rem;
+  }
+
+  .order-note {
+    padding: 20px 18px;
+  }
+
+  .order-note h2 {
+    margin: 16px 0 10px;
+    font-size: 1.45rem;
+  }
+
+  .login-card,
+  .dashboard-card {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .login-form button,
+  .product-form button {
+    width: 100%;
+  }
+
+  .site-footer {
+    margin-top: 20px;
+    padding: 20px 0 8px;
+    gap: 14px;
   }
 }

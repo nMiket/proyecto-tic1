@@ -1,16 +1,19 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, getApiBaseUrl } from "../auth";
 import { useCart } from "../context/useCart";
 import "./FormularioCliente.css";
 
-function crearOpcionesHora() {
+function crearOpcionesHora(tiempoPreparacionMin: number) {
     const ahora = new Date();
-    const minutosSiguiente = Math.ceil((ahora.getMinutes() + 1) / 15) * 15;
-    ahora.setMinutes(minutosSiguiente, 0, 0);
+    const minutosMinimos = Math.max(15, tiempoPreparacionMin || 15);
+    const primeraHora = new Date(ahora.getTime() + minutosMinimos * 60 * 1000);
+    // Ofrecemos horarios cada 15 minutos, redondeando hacia arriba para no
+    // sugerir una recogida anterior al tiempo mínimo de preparación.
+    primeraHora.setMinutes(Math.ceil(primeraHora.getMinutes() / 15) * 15, 0, 0);
 
-    return Array.from({ length: 6 }, (_, indice) => {
-        const hora = new Date(ahora.getTime() + (indice * 15 * 60 * 1000));
+    return Array.from({ length: 8 }, (_, indice) => {
+        const hora = new Date(primeraHora.getTime() + (indice * 15 * 60 * 1000));
         const fecha = [
             hora.getFullYear(),
             String(hora.getMonth() + 1).padStart(2, "0"),
@@ -34,11 +37,15 @@ function crearOpcionesHora() {
 export default function FormularioCliente() {
     const navigate = useNavigate();
     const { items, vaciarCarrito } = useCart();
+    const tiempoPreparacionMin = Math.max(15, ...items.map((item) => item.tiempoEstimadoMin || 15));
     const [nombre, setNombre] = useState("");
     const [telefono, setTelefono] = useState("");
     const [correo, setCorreo] = useState("");
     const [horaRecogida, setHoraRecogida] = useState("");
-    const opcionesHora = crearOpcionesHora();
+    const opcionesHora = useMemo(
+        () => crearOpcionesHora(tiempoPreparacionMin),
+        [tiempoPreparacionMin]
+    );
 
     const [errores, setErrores] = useState({
         nombre: "",
@@ -107,6 +114,7 @@ export default function FormularioCliente() {
                         productoId: item.id,
                         cantidad: item.cantidad,
                         observaciones: item.observaciones.trim(),
+                        adiciones: (item.adiciones ?? []).map((extra) => extra.id),
                     })),
                 }),
             });
@@ -162,45 +170,58 @@ export default function FormularioCliente() {
 
                 <form onSubmit={guardarCliente} noValidate>
                     <div className="campo">
-                        <label>Nombre completo</label>
+                        <label htmlFor="cliente-nombre">Nombre completo</label>
                         <input
+                            id="cliente-nombre"
                             type="text"
+                            autoComplete="name"
                             placeholder="Ej. Julián Miranda"
                             value={nombre}
+                            aria-invalid={Boolean(errores.nombre)}
+                            aria-describedby={errores.nombre ? "error-cliente-nombre" : undefined}
                             onChange={(e) => setNombre(e.target.value)}
                         />
                         {errores.nombre && (
-                            <span className="error">
+                            <span id="error-cliente-nombre" className="error" role="alert">
                                 {errores.nombre}
                             </span>
                         )}
                     </div>
 
                     <div className="campo">
-                        <label>Teléfono</label>
+                        <label htmlFor="cliente-telefono">Teléfono</label>
                         <input
-                            type="text"
+                            id="cliente-telefono"
+                            type="tel"
+                            inputMode="numeric"
+                            autoComplete="tel"
                             placeholder="Ej. 3001234567"
                             value={telefono}
+                            aria-invalid={Boolean(errores.telefono)}
+                            aria-describedby={errores.telefono ? "error-cliente-telefono" : undefined}
                             onChange={(e) => setTelefono(e.target.value)}
                         />
                         {errores.telefono && (
-                            <span className="error">
+                            <span id="error-cliente-telefono" className="error" role="alert">
                                 {errores.telefono}
                             </span>
                         )}
                     </div>
 
                     <div className="campo">
-                        <label>Correo</label>
+                        <label htmlFor="cliente-correo">Correo</label>
                         <input
+                            id="cliente-correo"
                             type="email"
+                            autoComplete="email"
                             placeholder="Ej. nombre.apellido@upb.edu.co"
                             value={correo}
+                            aria-invalid={Boolean(errores.correo)}
+                            aria-describedby={errores.correo ? "error-cliente-correo" : undefined}
                             onChange={(e) => setCorreo(e.target.value)}
                         />
                         {errores.correo && (
-                            <span className="error">
+                            <span id="error-cliente-correo" className="error" role="alert">
                                 {errores.correo}
                             </span>
                         )}
@@ -215,7 +236,7 @@ export default function FormularioCliente() {
                                 onClick={() => setHoraRecogida("")}
                             >
                                 <strong>Lo antes posible</strong>
-                                <span>Según el tiempo estimado</span>
+                                <span>Listo en aproximadamente {tiempoPreparacionMin} minutos</span>
                             </button>
                             <span className="pickup-or">o elige una hora</span>
                         </div>
@@ -232,7 +253,6 @@ export default function FormularioCliente() {
                                 </button>
                             ))}
                         </div>
-                        <small>Los horarios mostrados son posteriores a “Lo antes posible”.</small>
                     </div>
 
                     <button type="submit" disabled={enviando || items.length === 0}>

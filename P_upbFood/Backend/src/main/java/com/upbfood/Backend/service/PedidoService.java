@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 public class PedidoService {
@@ -24,11 +26,14 @@ public class PedidoService {
                     EstadoPedido.PENDIENTE,
                     EnumSet.of(
                             EstadoPedido.EN_PAGO,
+                            EstadoPedido.PAGADO,
+                            EstadoPedido.EN_PREPARACION,
                             EstadoPedido.CANCELADO
                     ),
                     EstadoPedido.EN_PAGO,
                     EnumSet.of(
                             EstadoPedido.PAGADO,
+                            EstadoPedido.EN_PREPARACION,
                             EstadoPedido.PENDIENTE,
                             EstadoPedido.CANCELADO
                     ),
@@ -61,16 +66,61 @@ public class PedidoService {
     @Transactional
     public Map<String, Object> crearPedido(CreateOrderRequest request) {
 
+        List<Map<String, Object>> datosRestauranteList = jdbcTemplate.queryForList(
+                "SELECT tiempo_pedido, estado FROM restaurante WHERE restaurante_id = ?",
+                request.restauranteId());
+        if (datosRestauranteList.isEmpty()) {
+            throw new IllegalArgumentException("No se encontró la cafetería seleccionada.");
+        }
+        Map<String, Object> datosRestaurante = datosRestauranteList.get(0);
+        String estadoRestaurante = String.valueOf(datosRestaurante.getOrDefault("estado", "Abierto"));
+        if ("Cerrado".equalsIgnoreCase(estadoRestaurante.trim())) {
+            throw new IllegalArgumentException(
+                    "Esta cafetería se encuentra cerrada en este momento y no está recibiendo pedidos.");
+        }
+        Object tiempoObj = datosRestaurante.get("tiempo_pedido");
+        Integer tiempoConfigurado = tiempoObj instanceof Number num ? num.intValue() : 15;
+
+        int minutosPreparacion = Math.max(15, tiempoConfigurado);
+        LocalDateTime horaMinimaRecogida = LocalDateTime.now(ZoneId.of("America/Bogota"))
+                .plusMinutes(minutosPreparacion);
+        LocalDateTime horaRecogida = request.horaRecogida();
+        if (horaRecogida == null) {
+            horaRecogida = horaMinimaRecogida;
+        } else if (horaRecogida.isBefore(horaMinimaRecogida)) {
+            throw new IllegalArgumentException(
+                    "La hora de recogida debe ser al menos dentro de "
+                            + minutosPreparacion + " minutos.");
+        }
+
         List<Map<String, Object>> items = new ArrayList<>();
 
         for (CreateOrderRequest.OrderItemRequest item : request.items()) {
+            List<Integer> adiciones = item.adiciones() == null ? List.of() : item.adiciones();
+            for (Integer adicionId : adiciones.stream().distinct().toList()) {
+                Integer habilitada = jdbcTemplate.queryForObject(
+                        """
+                        SELECT COUNT(*) FROM producto_adicion pa
+                        JOIN producto_restaurante pr
+                          ON pr.restaurante_id = pa.restaurante_id AND pr.producto_id = pa.adicion_id
+                        WHERE pa.restaurante_id = ? AND pa.producto_id = ?
+                          AND pa.adicion_id = ? AND pr.disponible = TRUE
+                        """,
+                        Integer.class,
+                        request.restauranteId(), item.productoId(), adicionId);
+                if (habilitada == null || habilitada == 0) {
+                    throw new IllegalArgumentException(
+                            "Uno de los ingredientes extra ya no está disponible para este producto.");
+                }
+            }
+
             Map<String, Object> detalle = new LinkedHashMap<>();
 
             detalle.put("producto_id", item.productoId());
             detalle.put("cantidad", item.cantidad());
             detalle.put(
                     "adiciones",
-                    item.adiciones() == null ? List.of() : item.adiciones()
+                    adiciones
             );
             detalle.put("observaciones", item.observaciones());
 
@@ -102,7 +152,7 @@ public class PedidoService {
                 request.clienteTelefono().trim(),
                 request.clienteCorreo().trim(),
                 itemsJson,
-                request.horaRecogida()
+                horaRecogida
         );
     }
 
@@ -122,36 +172,41 @@ public class PedidoService {
             String correo,
             String telefono
     ) {
+        String codigoStr = codigo == null ? null : codigo.toString();
+        String correoNorm = (correo == null || correo.isBlank()) ? null : correo.trim();
+        String telefonoNorm = (telefono == null || telefono.isBlank()) ? null : telefono.trim();
+
         return jdbcTemplate.queryForMap(
                 """
                 SELECT p.pedido_id,
                        p.codigo_seguimiento,
-                       r.nombre AS nombre_restaurante,
+                       r.nombre_restaurante,
                        p.estado,
                        p.total,
                        p.fecha,
                        p.hora_recogida,
+                       r.tiempo_pedido,
                        p.nombre_cliente,
                        p.telefono_cliente,
                        p.correo_cliente
                 FROM pedido p
                 JOIN restaurante r ON r.restaurante_id = p.restaurante_id
-                WHERE (? IS NULL OR p.pedido_id = ?)
-                  AND (? IS NULL OR p.codigo_seguimiento = ?)
-                  AND (? IS NULL OR LOWER(TRIM(p.correo_cliente)) = LOWER(TRIM(?)))
-                  AND (? IS NULL OR REGEXP_REPLACE(p.telefono_cliente, '\\D', '', 'g')
-                                  = REGEXP_REPLACE(?, '\\D', '', 'g'))
+                WHERE (CAST(? AS INTEGER) IS NULL OR p.pedido_id = CAST(? AS INTEGER))
+                  AND (CAST(? AS UUID) IS NULL OR p.codigo_seguimiento = CAST(? AS UUID))
+                  AND (CAST(? AS TEXT) IS NULL OR LOWER(TRIM(p.correo_cliente)) = LOWER(TRIM(CAST(? AS TEXT))))
+                  AND (CAST(? AS TEXT) IS NULL OR REGEXP_REPLACE(p.telefono_cliente, '\\D', '', 'g')
+                                  = REGEXP_REPLACE(CAST(? AS TEXT), '\\D', '', 'g'))
                 ORDER BY p.fecha DESC
                 LIMIT 1
                 """,
                 pedidoId,
                 pedidoId,
-                codigo,
-                codigo,
-                correo,
-                correo,
-                telefono,
-                telefono
+                codigoStr,
+                codigoStr,
+                correoNorm,
+                correoNorm,
+                telefonoNorm,
+                telefonoNorm
         );
     }
 
@@ -163,6 +218,50 @@ public class PedidoService {
                 """,
                 pedidoId
         );
+    }
+
+    public Map<Integer, List<Map<String, Object>>> obtenerDetallesPorPedidos(List<Integer> pedidoIds) {
+        if (pedidoIds == null || pedidoIds.isEmpty()) {
+            return Map.of();
+        }
+        String placeholders = pedidoIds.stream()
+                .map(id -> "?")
+                .collect(java.util.stream.Collectors.joining(","));
+        String sql = """
+                SELECT dp.pedido_id,
+                       dp.detalle_pedido_id,
+                       p.nombre_producto,
+                       dp.cantidad,
+                       dp.precio_unitario,
+                       (SELECT string_agg(COALESCE(pr.nombre_personalizado, pa.nombre_producto), ', ' ORDER BY COALESCE(pr.nombre_personalizado, pa.nombre_producto))
+                          FROM detalle_pedido_adicion dpa
+                          JOIN producto pa ON pa.producto_id = dpa.adicion_id
+                          LEFT JOIN producto_restaurante pr
+                            ON pr.restaurante_id = dpa.restaurante_id AND pr.producto_id = dpa.adicion_id
+                         WHERE dpa.detalle_pedido_id = dp.detalle_pedido_id) AS adiciones,
+                       dp.observaciones,
+                       dp.cantidad * (dp.precio_unitario + COALESCE(
+                           (SELECT SUM(dpa.precio_adicion)
+                              FROM detalle_pedido_adicion dpa
+                             WHERE dpa.detalle_pedido_id = dp.detalle_pedido_id), 0)) AS subtotal
+                  FROM detalle_pedido dp
+                  JOIN producto p ON p.producto_id = dp.producto_id
+                 WHERE dp.pedido_id IN (%s)
+                 ORDER BY dp.pedido_id, dp.detalle_pedido_id
+                """.formatted(placeholders);
+
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, pedidoIds.toArray());
+        Map<Integer, List<Map<String, Object>>> agrupados = new LinkedHashMap<>();
+        for (Map<String, Object> row : rows) {
+            Object pedidoIdObj = row.get("pedido_id");
+            if (!(pedidoIdObj instanceof Number pedidoIdNum)) {
+                continue;
+            }
+            Map<String, Object> item = new LinkedHashMap<>(row);
+            item.remove("pedido_id");
+            agrupados.computeIfAbsent(pedidoIdNum.intValue(), k -> new java.util.ArrayList<>()).add(item);
+        }
+        return agrupados;
     }
 
     public List<Map<String, Object>> obtenerActivos(Integer restauranteId) {
@@ -185,6 +284,7 @@ public class PedidoService {
                 SELECT estado
                 FROM pedido
                 WHERE pedido_id = ?
+                FOR UPDATE
                 """,
                 String.class,
                 pedidoId
@@ -244,5 +344,121 @@ public class PedidoService {
                 """,
                 pedidoId
         );
+    }
+
+    public List<Map<String, Object>> obtenerHistorial(Integer restauranteId) {
+        return jdbcTemplate.queryForList(
+                """
+                SELECT pedido_id,
+                       nombre_cliente,
+                       correo_cliente,
+                       telefono_cliente,
+                       estado,
+                       total,
+                       fecha,
+                       hora_recogida
+                FROM pedido
+                WHERE restaurante_id = ?
+                  AND estado IN (
+                      'PENDIENTE',
+                      'EN_PAGO',
+                      'PAGADO',
+                      'EN_PREPARACION',
+                      'LISTO',
+                      'ENTREGADO',
+                      'CANCELADO'
+                  )
+                ORDER BY fecha DESC
+                LIMIT 80
+                """,
+                restauranteId
+        );
+    }
+
+    public Map<String, Object> obtenerEstadisticas(Integer restauranteId) {
+        Map<String, Object> resumen = jdbcTemplate.queryForMap(
+                """
+                SELECT
+                    COUNT(*) FILTER (
+                        WHERE estado IN ('PENDIENTE', 'EN_PAGO', 'PAGADO', 'EN_PREPARACION', 'LISTO')
+                    ) AS pedidos_activos,
+                    COUNT(*) FILTER (WHERE estado = 'EN_PREPARACION') AS en_preparacion,
+                    COUNT(*) FILTER (WHERE estado = 'LISTO') AS listos,
+                    COUNT(*) FILTER (
+                        WHERE fecha::date = CURRENT_DATE
+                    ) AS pedidos_hoy,
+                    COUNT(*) FILTER (
+                        WHERE estado = 'ENTREGADO'
+                          AND fecha::date = CURRENT_DATE
+                    ) AS entregados_hoy,
+                    COUNT(*) FILTER (
+                        WHERE estado = 'CANCELADO'
+                          AND fecha::date = CURRENT_DATE
+                    ) AS cancelados_hoy,
+                    COUNT(DISTINCT correo_cliente) FILTER (
+                        WHERE estado IN (
+                            'PENDIENTE', 'EN_PAGO', 'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
+                        )
+                          AND fecha::date = CURRENT_DATE
+                    ) AS clientes_hoy,
+                    COALESCE(SUM(total) FILTER (
+                        WHERE estado IN (
+                            'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
+                        )
+                          AND fecha::date = CURRENT_DATE
+                    ), 0) AS ingresos_hoy,
+                    COALESCE(SUM(total) FILTER (
+                        WHERE estado IN (
+                            'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
+                        )
+                          AND date_trunc('month', fecha) = date_trunc('month', CURRENT_TIMESTAMP)
+                    ), 0) AS ingresos_mes,
+                    COALESCE(SUM(total) FILTER (
+                        WHERE estado IN (
+                            'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
+                        )
+                          AND date_trunc('month', fecha) = date_trunc('month', CURRENT_TIMESTAMP) - INTERVAL '1 month'
+                    ), 0) AS ingresos_mes_anterior
+                FROM pedido
+                WHERE restaurante_id = ?
+                """,
+                restauranteId
+        );
+
+        List<Map<String, Object>> productosMasVendidos = jdbcTemplate.queryForList(
+                """
+                SELECT pr.nombre_producto AS nombre,
+                       SUM(dp.cantidad) AS unidades
+                FROM detalle_pedido dp
+                JOIN producto pr ON pr.producto_id = dp.producto_id
+                JOIN pedido p ON p.pedido_id = dp.pedido_id
+                WHERE p.restaurante_id = ?
+                  AND p.estado IN (
+                      'PENDIENTE', 'EN_PAGO', 'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
+                  )
+                GROUP BY pr.nombre_producto
+                ORDER BY unidades DESC, nombre ASC
+                LIMIT 5
+                """,
+                restauranteId
+        );
+
+        Map<String, Object> estadisticas = new LinkedHashMap<>();
+        estadisticas.put("pedidosActivos", toInt(resumen.get("pedidos_activos")));
+        estadisticas.put("enPreparacion", toInt(resumen.get("en_preparacion")));
+        estadisticas.put("listos", toInt(resumen.get("listos")));
+        estadisticas.put("pedidosHoy", toInt(resumen.get("pedidos_hoy")));
+        estadisticas.put("entregadosHoy", toInt(resumen.get("entregados_hoy")));
+        estadisticas.put("canceladosHoy", toInt(resumen.get("cancelados_hoy")));
+        estadisticas.put("clientesHoy", toInt(resumen.get("clientes_hoy")));
+        estadisticas.put("ingresosHoy", resumen.get("ingresos_hoy"));
+        estadisticas.put("ingresosMes", resumen.get("ingresos_mes"));
+        estadisticas.put("ingresosMesAnterior", resumen.get("ingresos_mes_anterior"));
+        estadisticas.put("productosMasVendidos", productosMasVendidos);
+        return estadisticas;
+    }
+
+    private static int toInt(Object value) {
+        return value instanceof Number number ? number.intValue() : 0;
     }
 }

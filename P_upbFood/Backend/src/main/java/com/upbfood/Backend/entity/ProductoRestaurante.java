@@ -17,7 +17,7 @@ public class ProductoRestaurante {
     @Column(name = "precio", nullable = false, precision = 10, scale = 2)
     private BigDecimal precio;
 
-    @Column(name = "imagen_url", length = 500)
+    @Column(name = "imagen_url", columnDefinition = "TEXT")
     private String imagenUrl;
 
     @Column(name = "disponible", nullable = false)
