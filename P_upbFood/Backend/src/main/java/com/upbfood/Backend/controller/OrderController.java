@@ -2,6 +2,7 @@ package com.upbfood.Backend.controller;
 
 import com.upbfood.Backend.dto.CreateOrderRequest;
 import com.upbfood.Backend.service.PedidoService;
+import com.upbfood.Backend.service.StripeService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -21,9 +22,11 @@ import java.util.UUID;
 public class OrderController {
 
     private final PedidoService pedidoService;
+    private final StripeService stripeService;
 
-    public OrderController(PedidoService pedidoService) {
+    public OrderController(PedidoService pedidoService, StripeService stripeService) {
         this.pedidoService = pedidoService;
+        this.stripeService = stripeService;
     }
 
     @PostMapping
@@ -74,6 +77,77 @@ public class OrderController {
         response.put("estado", actualizado.get("estado"));
         response.put("total", actualizado.get("total"));
 
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/seguimiento/{codigo}/stripe-session")
+    public ResponseEntity<?> crearSesionStripe(@PathVariable UUID codigo) {
+        Map<String, Object> pedido;
+        try {
+            pedido = pedidoService.obtenerPorCodigo(codigo);
+        } catch (EmptyResultDataAccessException exception) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "No encontramos el pedido para iniciar el pago."));
+        }
+
+        Integer pedidoId = ((Number) pedido.get("pedido_id")).intValue();
+        String nombreRestaurante = pedido.get("nombre_restaurante") != null
+                ? pedido.get("nombre_restaurante").toString()
+                : "UPB Food";
+        BigDecimal total = new BigDecimal(pedido.get("total").toString());
+
+        Map<String, Object> session = stripeService.crearSesionCheckout(
+                pedidoId,
+                codigo,
+                nombreRestaurante,
+                total
+        );
+        return ResponseEntity.ok(session);
+    }
+
+    @PostMapping("/seguimiento/{codigo}/stripe-confirmar")
+    public ResponseEntity<?> confirmarPagoStripe(
+            @PathVariable UUID codigo,
+            @RequestParam String sessionId
+    ) {
+        Map<String, Object> pedido;
+        try {
+            pedido = pedidoService.obtenerPorCodigo(codigo);
+        } catch (EmptyResultDataAccessException exception) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "No encontramos el pedido para confirmar el pago."));
+        }
+
+        String estadoActual = String.valueOf(pedido.get("estado"));
+        if (!"PENDIENTE".equals(estadoActual) && !"EN_PAGO".equals(estadoActual)) {
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("id", pedido.get("pedido_id"));
+            response.put("codigoSeguimiento", codigo);
+            response.put("estado", estadoActual);
+            response.put("total", pedido.get("total"));
+            return ResponseEntity.ok(response);
+        }
+
+        boolean pagadoEnStripe = stripeService.verificarSesionPagada(sessionId);
+        if (!pagadoEnStripe) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La sesión de Stripe aún no registra el pago como completado."
+            );
+        }
+
+        Integer pedidoId = ((Number) pedido.get("pedido_id")).intValue();
+        BigDecimal total = new BigDecimal(pedido.get("total").toString());
+
+        // Tipo de pago 2 = Tarjeta
+        pedidoService.registrarPago(pedidoId, 2, total);
+
+        Map<String, Object> actualizado = pedidoService.obtenerPorCodigo(codigo);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("id", actualizado.get("pedido_id"));
+        response.put("codigoSeguimiento", codigo);
+        response.put("estado", actualizado.get("estado"));
+        response.put("total", actualizado.get("total"));
         return ResponseEntity.ok(response);
     }
 

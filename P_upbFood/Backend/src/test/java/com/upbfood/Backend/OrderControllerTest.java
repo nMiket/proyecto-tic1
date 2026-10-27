@@ -2,6 +2,7 @@ package com.upbfood.Backend;
 
 import com.upbfood.Backend.controller.OrderController;
 import com.upbfood.Backend.service.PedidoService;
+import com.upbfood.Backend.service.StripeService;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,8 @@ class OrderControllerTest {
     @Test
     void consultarPedidoPorCodigoReturnsOrderWithDetails() {
         PedidoService pedidoService = mock(PedidoService.class);
-        OrderController controller = new OrderController(pedidoService);
+        StripeService stripeService = mock(StripeService.class);
+        OrderController controller = new OrderController(pedidoService, stripeService);
 
         UUID codigo = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
         when(pedidoService.obtenerPorCodigo(codigo)).thenReturn(Map.of(
@@ -50,7 +52,8 @@ class OrderControllerTest {
     @Test
     void consultarPedidoPorIdYContactoReturnsOrder() {
         PedidoService pedidoService = mock(PedidoService.class);
-        OrderController controller = new OrderController(pedidoService);
+        StripeService stripeService = mock(StripeService.class);
+        OrderController controller = new OrderController(pedidoService, stripeService);
 
         UUID codigo = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
         when(pedidoService.buscarPedido(15, null, "cliente@upb.edu.co", null)).thenReturn(Map.of(
@@ -77,7 +80,8 @@ class OrderControllerTest {
     @Test
     void consultarPedidoWithoutRequiredParamsThrowsBadRequest() {
         PedidoService pedidoService = mock(PedidoService.class);
-        OrderController controller = new OrderController(pedidoService);
+        StripeService stripeService = mock(StripeService.class);
+        OrderController controller = new OrderController(pedidoService, stripeService);
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
@@ -89,7 +93,8 @@ class OrderControllerTest {
     @Test
     void consultarPedidoReturnsNotFoundWhenMissing() {
         PedidoService pedidoService = mock(PedidoService.class);
-        OrderController controller = new OrderController(pedidoService);
+        StripeService stripeService = mock(StripeService.class);
+        OrderController controller = new OrderController(pedidoService, stripeService);
 
         UUID codigo = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
         when(pedidoService.obtenerPorCodigo(codigo)).thenThrow(new EmptyResultDataAccessException(1));
@@ -101,7 +106,8 @@ class OrderControllerTest {
     @Test
     void registrarPagoUpdatesOrderAndReturnsUpdatedStatus() {
         PedidoService pedidoService = mock(PedidoService.class);
-        OrderController controller = new OrderController(pedidoService);
+        StripeService stripeService = mock(StripeService.class);
+        OrderController controller = new OrderController(pedidoService, stripeService);
 
         UUID codigo = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
         when(pedidoService.obtenerPorCodigo(codigo))
@@ -118,5 +124,25 @@ class OrderControllerTest {
         Map<String, Object> body = (Map<String, Object>) response.getBody();
         assertEquals("PAGADO", body.get("estado"));
     }
-}
 
+    @Test
+    void confirmarPagoStripeRegistersPaymentWhenSessionIsPaid() {
+        PedidoService pedidoService = mock(PedidoService.class);
+        StripeService stripeService = mock(StripeService.class);
+        OrderController controller = new OrderController(pedidoService, stripeService);
+
+        UUID codigo = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+        when(pedidoService.obtenerPorCodigo(codigo))
+                .thenReturn(Map.of("pedido_id", 25, "estado", "PENDIENTE", "total", new BigDecimal("15000")))
+                .thenReturn(Map.of("pedido_id", 25, "estado", "PAGADO", "total", new BigDecimal("15000")));
+        when(stripeService.verificarSesionPagada("cs_test_12345")).thenReturn(true);
+
+        ResponseEntity<?> response = controller.confirmarPagoStripe(codigo, "cs_test_12345");
+
+        assertEquals(200, response.getStatusCode().value());
+        verify(pedidoService).registrarPago(25, 2, new BigDecimal("15000"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertEquals("PAGADO", body.get("estado"));
+    }
+}

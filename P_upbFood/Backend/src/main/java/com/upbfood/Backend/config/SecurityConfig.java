@@ -62,6 +62,11 @@ public class SecurityConfig {
                         // Operaciones públicas de pedidos
                         .requestMatchers(HttpMethod.POST, "/api/pedidos").permitAll()
                         .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/pedidos/seguimiento/*/stripe-session",
+                                "/api/pedidos/seguimiento/*/stripe-confirmar")
+                        .permitAll()
+                        .requestMatchers(
                                 HttpMethod.PUT,
                                 "/api/pedidos/seguimiento/*/pago")
                         .permitAll()
