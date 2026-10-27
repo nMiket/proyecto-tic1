@@ -60,7 +60,7 @@ function combinarObservaciones(marcadas: string[], notaLibre: string): string {
 }
 
 function ResumenPedido({
-  checkoutLabel = 'Confirmar datos y recogida',
+  checkoutLabel = 'Confirmar pedido',
   checkoutPath = '/cliente',
 }: {
   checkoutLabel?: string
@@ -125,31 +125,26 @@ function ResumenPedido({
     >
       <div className="order-summary__heading">
         <div>
-          <p className="eyebrow">Mi pedido activo</p>
-          <h2>Configura y revisa tu orden</h2>
-          <p className="order-summary__sub">
-            {items.length > 0
-              ? `Tiempo estimado de preparación: ~${tiempoEstimadoMin} min`
-              : 'Agrega platos o bebidas y personalízalos a tu gusto'}
-          </p>
+          <p className="eyebrow">Tu pedido</p>
+          <h2>Resumen</h2>
+          {items.length > 0 && (
+            <p className="order-summary__sub">
+              Preparación estimada: {tiempoEstimadoMin} min
+            </p>
+          )}
         </div>
-        <div className="order-badge-group">
-          <span className="order-badge" title="Total de unidades en el pedido">
-            {totalItems}
-          </span>
-          <small>{totalItems === 1 ? 'unidad' : 'unidades'}</small>
-        </div>
+        <span className="order-badge">{totalItems}</span>
       </div>
 
       {enVistaPedido && restauranteActivoId && (
         <div className="order-summary__QuickBar">
-          <span>¿Olvidaste agregar algo más de esta cafetería?</span>
+          <span>¿Quieres agregar otro producto de esta cafetería?</span>
           <button
             type="button"
             className="order-summary__add-more"
             onClick={() => navigate(`/restaurante/${restauranteActivoId}`)}
           >
-            + Agregar más productos
+            Agregar más productos
           </button>
         </div>
       )}
@@ -162,16 +157,12 @@ function ResumenPedido({
 
       {items.length === 0 ? (
         <div className="empty-order">
-          <div className="empty-order__icon" aria-hidden="true">
-            🍽️
-          </div>
-          <strong>Tu pedido está vacío por ahora</strong>
+          <strong>Tu pedido está vacío</strong>
           <p>
-            Explora las cafeterías del campus, elige tus productos favoritos y personaliza
-            ingredientes o notas para cocina desde este panel.
+            Explora una cafetería y agrega tus productos favoritos para comenzar.
           </p>
           <button type="button" onClick={() => navigate('/')}>
-            Explorar cafeterías disponibles
+            Explorar cafeterías
           </button>
         </div>
       ) : (
@@ -192,65 +183,60 @@ function ResumenPedido({
               return (
                 <div className="order-item" key={item.cartKey}>
                   <div className="order-item__main">
-                    <img className="order-item__image" src={item.imagenUrl} alt={item.nombre} />
+                    <img className="order-item__image" src={item.imagenUrl} alt="" />
                     <div className="order-item__details">
                       <div className="order-item__title-row">
                         <strong>{item.nombre}</strong>
-                        <span className="order-item__line-total">
-                          {precioCOP(precioUnidad * item.cantidad)}
-                        </span>
+                        <span>{precioCOP(precioUnidad * item.cantidad)}</span>
                       </div>
                       <span className="order-item__unit-price">
-                        {precioCOP(Number(item.precio))} base
-                        {extrasTotal > 0 ? ` + ${precioCOP(extrasTotal)} extras` : ''} ·{' '}
-                        {precioCOP(precioUnidad)} c/u
+                        {precioCOP(Number(item.precio))} base · {precioCOP(precioUnidad)} por unidad
                       </span>
-
-                      <div className="quantity-controls">
-                        <div className="quantity-stepper">
-                          <button
-                            type="button"
-                            aria-label={`Quitar una unidad de ${item.nombre}`}
-                            onClick={() => quitarProducto(item.cartKey)}
-                          >
-                            −
-                          </button>
-                          <span>{item.cantidad}</span>
-                          <button
-                            type="button"
-                            aria-label={`Agregar una unidad de ${item.nombre}`}
-                            onClick={() => agregarProducto(item)}
-                          >
-                            +
-                          </button>
-                        </div>
-                        <button
-                          className="remove-item"
-                          type="button"
-                          aria-label={`Eliminar ${item.nombre}`}
-                          onClick={() => eliminarProducto(item.cartKey)}
-                        >
-                          Quitar
-                        </button>
-                      </div>
                     </div>
                   </div>
 
                   {(item.adiciones ?? []).length > 0 && (
                     <div className="order-item__extras">
-                      <span>Adiciones incluidas por unidad</span>
+                      <span>Extras seleccionados</span>
                       {item.adiciones?.map((extra) => (
                         <div key={extra.id}>
-                          <span>+ {extra.nombre}</span>
-                          <strong>{precioCOP(Number(extra.precio))}</strong>
+                          <span>{extra.nombre}</span>
+                          <strong>+{precioCOP(Number(extra.precio))}</strong>
                         </div>
                       ))}
                     </div>
                   )}
 
+                  <div className="quantity-controls">
+                    <button
+                      type="button"
+                      aria-label={`Quitar una unidad de ${item.nombre}`}
+                      onClick={() => quitarProducto(item.cartKey)}
+                    >
+                      −
+                    </button>
+                    <span>{item.cantidad}</span>
+                    <button
+                      type="button"
+                      aria-label={`Agregar una unidad de ${item.nombre}`}
+                      onClick={() => agregarProducto(item)}
+                    >
+                      +
+                    </button>
+                    <button
+                      className="remove-item"
+                      type="button"
+                      aria-label={`Eliminar ${item.nombre}`}
+                      onClick={() => eliminarProducto(item.cartKey)}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+
                   {sugerenciasDisponibles.length > 0 && (
                     <fieldset className="order-item__suggestions">
-                      <legend>Preferencias rápidas</legend>
+                      <legend>Personaliza tu producto</legend>
+                      <p>Marca si quieres retirar o ajustar algún ingrediente.</p>
                       <div className="suggestion-options">
                         {sugerenciasDisponibles.map((sugerencia) => (
                           <label key={sugerencia}>
@@ -287,7 +273,7 @@ function ResumenPedido({
                           event.target.value,
                         )
                       }
-                      placeholder="Ej. Salsas aparte, bien asado, empacar para llevar..."
+                      placeholder="Ej. Salsas aparte, bien caliente, empacar para llevar..."
                       maxLength={160}
                     />
                   </label>
@@ -298,21 +284,17 @@ function ResumenPedido({
 
           <div className="order-breakdown">
             <div className="order-breakdown__row">
-              <span>Productos ({totalItems} {totalItems === 1 ? 'unidad' : 'unidades'})</span>
+              <span>Productos ({totalItems})</span>
               <strong>{precioCOP(subtotalBase)}</strong>
             </div>
             {totalExtras > 0 && (
               <div className="order-breakdown__row">
-                <span>Adiciones y extras</span>
+                <span>Adiciones</span>
                 <strong>+{precioCOP(totalExtras)}</strong>
               </div>
             )}
-            <div className="order-breakdown__row">
-              <span>Tiempo estimado de recogida</span>
-              <strong>~{tiempoEstimadoMin} min</strong>
-            </div>
             <div className="order-total">
-              <span>Total a pagar</span>
+              <span>Total</span>
               <strong>{precioCOP(total)}</strong>
             </div>
           </div>
@@ -326,12 +308,12 @@ function ResumenPedido({
             className="checkout-button"
             onClick={() => navigate(checkoutPath)}
           >
-            {checkoutLabel} →
+            {checkoutLabel}
           </button>
         )}
         {items.length > 0 && (
           <button type="button" className="clear-button" onClick={vaciarCarrito}>
-            Vaciar pedido completo
+            Vaciar carrito
           </button>
         )}
       </div>
