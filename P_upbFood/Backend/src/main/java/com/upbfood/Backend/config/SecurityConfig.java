@@ -18,7 +18,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -63,8 +62,9 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,
+                                "/api/pedidos/consulta",
                                 "/api/pedidos/seguimiento/consulta",
-                                "/api/pedidos/**")
+                                "/api/pedidos/seguimiento/*")
                         .permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/api/invitaciones/activar").permitAll()
