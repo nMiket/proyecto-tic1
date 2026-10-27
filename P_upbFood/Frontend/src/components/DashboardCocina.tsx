@@ -175,7 +175,9 @@ export function DashboardCocina({ restauranteId, onLogout }: DashboardCocinaProp
     }
   }
 
-  const nuevos = pedidos.filter((p) => p.estado === 'PAGADO')
+  const nuevos = pedidos.filter(
+    (p) => p.estado === 'PAGADO' || p.estado === 'PENDIENTE' || p.estado === 'EN_PAGO',
+  )
   const enPreparacion = pedidos.filter((p) => p.estado === 'EN_PREPARACION')
   const listos = pedidos.filter((p) => p.estado === 'LISTO')
 

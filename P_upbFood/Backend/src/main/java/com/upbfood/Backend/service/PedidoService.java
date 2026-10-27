@@ -26,11 +26,14 @@ public class PedidoService {
                     EstadoPedido.PENDIENTE,
                     EnumSet.of(
                             EstadoPedido.EN_PAGO,
+                            EstadoPedido.PAGADO,
+                            EstadoPedido.EN_PREPARACION,
                             EstadoPedido.CANCELADO
                     ),
                     EstadoPedido.EN_PAGO,
                     EnumSet.of(
                             EstadoPedido.PAGADO,
+                            EstadoPedido.EN_PREPARACION,
                             EstadoPedido.PENDIENTE,
                             EstadoPedido.CANCELADO
                     ),
@@ -350,6 +353,8 @@ public class PedidoService {
                 FROM pedido
                 WHERE restaurante_id = ?
                   AND estado IN (
+                      'PENDIENTE',
+                      'EN_PAGO',
                       'PAGADO',
                       'EN_PREPARACION',
                       'LISTO',
@@ -368,49 +373,44 @@ public class PedidoService {
                 """
                 SELECT
                     COUNT(*) FILTER (
-                        WHERE estado IN ('PAGADO', 'EN_PREPARACION', 'LISTO')
+                        WHERE estado IN ('PENDIENTE', 'EN_PAGO', 'PAGADO', 'EN_PREPARACION', 'LISTO')
                     ) AS pedidos_activos,
                     COUNT(*) FILTER (WHERE estado = 'EN_PREPARACION') AS en_preparacion,
                     COUNT(*) FILTER (WHERE estado = 'LISTO') AS listos,
                     COUNT(*) FILTER (
-                        WHERE estado NOT IN ('PENDIENTE', 'EN_PAGO')
-                          AND (fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota')::date = (now() AT TIME ZONE 'America/Bogota')::date
+                        WHERE fecha::date = CURRENT_DATE
                     ) AS pedidos_hoy,
                     COUNT(*) FILTER (
                         WHERE estado = 'ENTREGADO'
-                          AND (fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota')::date = (now() AT TIME ZONE 'America/Bogota')::date
+                          AND fecha::date = CURRENT_DATE
                     ) AS entregados_hoy,
                     COUNT(*) FILTER (
                         WHERE estado = 'CANCELADO'
-                          AND (fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota')::date = (now() AT TIME ZONE 'America/Bogota')::date
+                          AND fecha::date = CURRENT_DATE
                     ) AS cancelados_hoy,
                     COUNT(DISTINCT correo_cliente) FILTER (
                         WHERE estado IN (
-                            'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
+                            'PENDIENTE', 'EN_PAGO', 'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
                         )
-                          AND (fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota')::date = (now() AT TIME ZONE 'America/Bogota')::date
+                          AND fecha::date = CURRENT_DATE
                     ) AS clientes_hoy,
                     COALESCE(SUM(total) FILTER (
                         WHERE estado IN (
                             'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
                         )
-                          AND (fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota')::date = (now() AT TIME ZONE 'America/Bogota')::date
+                          AND fecha::date = CURRENT_DATE
                     ), 0) AS ingresos_hoy,
                     COALESCE(SUM(total) FILTER (
                         WHERE estado IN (
                             'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
                         )
-                          AND date_trunc('month', fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota') = date_trunc(
-                              'month', now() AT TIME ZONE 'America/Bogota'
-                          )
+                          AND date_trunc('month', fecha) = date_trunc('month', CURRENT_TIMESTAMP)
                     ), 0) AS ingresos_mes,
                     COALESCE(SUM(total) FILTER (
                         WHERE estado IN (
                             'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
                         )
-                          AND date_trunc('month', fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota') = date_trunc(
-                              'month', now() AT TIME ZONE 'America/Bogota'
-                          ) - INTERVAL '1 month'
+                          AND date_trunc('month', fecha) = date_trunc('month', CURRENT_TIMESTAMP) - INTERVAL '1 month'
                     ), 0) AS ingresos_mes_anterior
                 FROM pedido
                 WHERE restaurante_id = ?
@@ -427,7 +427,7 @@ public class PedidoService {
                 JOIN pedido p ON p.pedido_id = dp.pedido_id
                 WHERE p.restaurante_id = ?
                   AND p.estado IN (
-                      'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
+                      'PENDIENTE', 'EN_PAGO', 'PAGADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'
                   )
                 GROUP BY pr.nombre_producto
                 ORDER BY unidades DESC, nombre ASC

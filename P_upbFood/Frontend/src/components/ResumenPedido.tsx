@@ -1,120 +1,339 @@
 import { useCart } from '../context/useCart'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import './ResumenPedido.css'
 
 function obtenerSugerencias(producto: { nombre: string; descripcion?: string }): string[] {
   const texto = `${producto.nombre} ${producto.descripcion ?? ''}`.toLocaleLowerCase('es-CO')
 
   if (texto.includes('jugo') || texto.includes('limonada')) {
-    return ['Sin azúcar', 'Sin hielo']
+    return ['Sin azúcar', 'Sin hielo', 'Poca azúcar']
   }
-  if (texto.includes('café') || texto.includes('cafe') || texto.includes('latte') || texto.includes('capuchino') || texto.includes('capuccino')) {
-    return ['Sin azúcar', 'Sin leche']
+  if (
+    texto.includes('café') ||
+    texto.includes('cafe') ||
+    texto.includes('latte') ||
+    texto.includes('capuchino') ||
+    texto.includes('capuccino')
+  ) {
+    return ['Sin azúcar', 'Leche deslactosada', 'Bien caliente']
   }
-  if (texto.includes('sándwich') || texto.includes('sandwich') || texto.includes('hamburguesa') || texto.includes('perro caliente')) {
+  if (
+    texto.includes('sándwich') ||
+    texto.includes('sandwich') ||
+    texto.includes('hamburguesa') ||
+    texto.includes('perro caliente')
+  ) {
     return ['Sin queso', 'Sin tomate', 'Sin cebolla', 'Sin salsas', 'Sin lechuga']
   }
-  if (texto.includes('ejecutivo') || texto.includes('almuerzo') || texto.includes('carne') || texto.includes('pollo')) {
-    const opciones = ['Sin arroz', 'Sin ensalada', 'Sin papas']
+  if (
+    texto.includes('ejecutivo') ||
+    texto.includes('almuerzo') ||
+    texto.includes('carne') ||
+    texto.includes('pollo')
+  ) {
+    const opciones = ['Sin arroz', 'Sin ensalada', 'Sin papas', 'Salsas aparte']
     if (texto.includes('queso')) opciones.push('Sin queso')
-    if (texto.includes('salsa')) opciones.push('Sin salsas')
     return opciones
   }
-  return []
+  return ['Para llevar', 'Sin salsas', 'Servilletas extra']
 }
+
 const precioCOP = (valor: number) => `$${valor.toLocaleString('es-CO')}`
 
+function separarObservaciones(observaciones: string, sugerenciasDisponibles: string[]) {
+  const partes = observaciones
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+  const marcadas = partes.filter((p) => sugerenciasDisponibles.includes(p))
+  const libres = partes.filter((p) => !sugerenciasDisponibles.includes(p))
+  return {
+    marcadas,
+    notaLibre: libres.join(', '),
+  }
+}
+
+function combinarObservaciones(marcadas: string[], notaLibre: string): string {
+  const limpia = notaLibre.trim()
+  const todas = [...marcadas, ...(limpia ? [limpia] : [])]
+  return todas.join(', ')
+}
+
 function ResumenPedido({
-  checkoutLabel = 'Confirmar pedido',
+  checkoutLabel = 'Confirmar datos y recogida',
   checkoutPath = '/cliente',
 }: {
   checkoutLabel?: string
   checkoutPath?: string
 }) {
-  const { items, totalItems, total, cartError, agregarProducto, quitarProducto, eliminarProducto, actualizarObservaciones, vaciarCarrito } = useCart()
+  const {
+    items,
+    totalItems,
+    total,
+    cartError,
+    agregarProducto,
+    quitarProducto,
+    eliminarProducto,
+    actualizarObservaciones,
+    vaciarCarrito,
+  } = useCart()
   const navigate = useNavigate()
+  const location = useLocation()
+  const enVistaPedido = location.pathname === '/pedido'
 
-  const cambiarSugerencia = (cartKey: string, observaciones: string, sugerencia: string, marcada: boolean) => {
-    const actuales = observaciones.split(',').map((item) => item.trim()).filter(Boolean)
-    const actualizadas = marcada
-      ? [...new Set([...actuales, sugerencia])]
-      : actuales.filter((item) => item !== sugerencia)
-    actualizarObservaciones(cartKey, actualizadas.join(', '))
+  const tiempoEstimadoMin =
+    items.length > 0 ? Math.max(15, ...items.map((item) => item.tiempoEstimadoMin || 15)) : 15
+  const restauranteActivoId = items[0]?.restauranteId
+
+  const subtotalBase = items.reduce(
+    (acc, item) => acc + Number(item.precio) * item.cantidad,
+    0,
+  )
+  const totalExtras = items.reduce((acc, item) => {
+    const extrasUnit = (item.adiciones ?? []).reduce((s, extra) => s + Number(extra.precio), 0)
+    return acc + extrasUnit * item.cantidad
+  }, 0)
+
+  const cambiarSugerencia = (
+    cartKey: string,
+    observaciones: string,
+    sugerenciasDisponibles: string[],
+    sugerencia: string,
+    marcada: boolean,
+  ) => {
+    const { marcadas, notaLibre } = separarObservaciones(observaciones, sugerenciasDisponibles)
+    const nuevasMarcadas = marcada
+      ? [...new Set([...marcadas, sugerencia])]
+      : marcadas.filter((item) => item !== sugerencia)
+    actualizarObservaciones(cartKey, combinarObservaciones(nuevasMarcadas, notaLibre))
+  }
+
+  const cambiarNotaLibre = (
+    cartKey: string,
+    observaciones: string,
+    sugerenciasDisponibles: string[],
+    nuevaNota: string,
+  ) => {
+    const { marcadas } = separarObservaciones(observaciones, sugerenciasDisponibles)
+    actualizarObservaciones(cartKey, combinarObservaciones(marcadas, nuevaNota))
   }
 
   return (
-    <aside className="order-summary" aria-label="Resumen del pedido">
+    <aside
+      className={`order-summary ${enVistaPedido ? 'order-summary--expanded' : ''}`}
+      aria-label="Resumen del pedido"
+    >
       <div className="order-summary__heading">
-        <div><p className="eyebrow">Tu pedido</p><h2>Resumen</h2></div>
-        <span className="order-badge">{totalItems}</span>
+        <div>
+          <p className="eyebrow">Mi pedido activo</p>
+          <h2>Configura y revisa tu orden</h2>
+          <p className="order-summary__sub">
+            {items.length > 0
+              ? `Tiempo estimado de preparación: ~${tiempoEstimadoMin} min`
+              : 'Agrega platos o bebidas y personalízalos a tu gusto'}
+          </p>
+        </div>
+        <div className="order-badge-group">
+          <span className="order-badge" title="Total de unidades en el pedido">
+            {totalItems}
+          </span>
+          <small>{totalItems === 1 ? 'unidad' : 'unidades'}</small>
+        </div>
       </div>
-      {cartError && <p className="cart-error" role="alert">{cartError}</p>}
+
+      {enVistaPedido && restauranteActivoId && (
+        <div className="order-summary__QuickBar">
+          <span>¿Olvidaste agregar algo más de esta cafetería?</span>
+          <button
+            type="button"
+            className="order-summary__add-more"
+            onClick={() => navigate(`/restaurante/${restauranteActivoId}`)}
+          >
+            + Agregar más productos
+          </button>
+        </div>
+      )}
+
+      {cartError && (
+        <p className="cart-error" role="alert">
+          {cartError}
+        </p>
+      )}
+
       {items.length === 0 ? (
         <div className="empty-order">
-          <strong>Tu pedido está vacío</strong>
-          <p>Explora una cafetería y agrega tus productos favoritos para comenzar.</p>
-          <button type="button" onClick={() => navigate('/')}>Explorar cafeterías</button>
+          <div className="empty-order__icon" aria-hidden="true">
+            🍽️
+          </div>
+          <strong>Tu pedido está vacío por ahora</strong>
+          <p>
+            Explora las cafeterías del campus, elige tus productos favoritos y personaliza
+            ingredientes o notas para cocina desde este panel.
+          </p>
+          <button type="button" onClick={() => navigate('/')}>
+            Explorar cafeterías disponibles
+          </button>
         </div>
       ) : (
         <>
           <div className="order-items">
             {items.map((item) => {
-              const extrasTotal = (item.adiciones ?? []).reduce((sum, extra) => sum + Number(extra.precio), 0)
+              const extrasTotal = (item.adiciones ?? []).reduce(
+                (sum, extra) => sum + Number(extra.precio),
+                0,
+              )
               const precioUnidad = Number(item.precio) + extrasTotal
-              const sugerenciasMarcadas = item.observaciones.split(',').map((value) => value.trim()).filter(Boolean)
               const sugerenciasDisponibles = obtenerSugerencias(item)
+              const { marcadas: sugerenciasMarcadas, notaLibre } = separarObservaciones(
+                item.observaciones,
+                sugerenciasDisponibles,
+              )
+
               return (
                 <div className="order-item" key={item.cartKey}>
                   <div className="order-item__main">
-                    <img className="order-item__image" src={item.imagenUrl} alt="" />
+                    <img className="order-item__image" src={item.imagenUrl} alt={item.nombre} />
                     <div className="order-item__details">
                       <div className="order-item__title-row">
                         <strong>{item.nombre}</strong>
-                        <span>{precioCOP(precioUnidad * item.cantidad)}</span>
+                        <span className="order-item__line-total">
+                          {precioCOP(precioUnidad * item.cantidad)}
+                        </span>
                       </div>
-                      <span className="order-item__unit-price">{precioCOP(Number(item.precio))} base · {precioCOP(precioUnidad)} por unidad</span>
+                      <span className="order-item__unit-price">
+                        {precioCOP(Number(item.precio))} base
+                        {extrasTotal > 0 ? ` + ${precioCOP(extrasTotal)} extras` : ''} ·{' '}
+                        {precioCOP(precioUnidad)} c/u
+                      </span>
+
+                      <div className="quantity-controls">
+                        <div className="quantity-stepper">
+                          <button
+                            type="button"
+                            aria-label={`Quitar una unidad de ${item.nombre}`}
+                            onClick={() => quitarProducto(item.cartKey)}
+                          >
+                            −
+                          </button>
+                          <span>{item.cantidad}</span>
+                          <button
+                            type="button"
+                            aria-label={`Agregar una unidad de ${item.nombre}`}
+                            onClick={() => agregarProducto(item)}
+                          >
+                            +
+                          </button>
+                        </div>
+                        <button
+                          className="remove-item"
+                          type="button"
+                          aria-label={`Eliminar ${item.nombre}`}
+                          onClick={() => eliminarProducto(item.cartKey)}
+                        >
+                          Quitar
+                        </button>
+                      </div>
                     </div>
                   </div>
+
                   {(item.adiciones ?? []).length > 0 && (
                     <div className="order-item__extras">
-                      <span>Extras seleccionados</span>
+                      <span>Adiciones incluidas por unidad</span>
                       {item.adiciones?.map((extra) => (
-                        <div key={extra.id}><span>{extra.nombre}</span><strong>+{precioCOP(Number(extra.precio))}</strong></div>
+                        <div key={extra.id}>
+                          <span>+ {extra.nombre}</span>
+                          <strong>{precioCOP(Number(extra.precio))}</strong>
+                        </div>
                       ))}
                     </div>
                   )}
-                  <div className="quantity-controls">
-                    <button type="button" aria-label={`Quitar una unidad de ${item.nombre}`} onClick={() => quitarProducto(item.cartKey)}>−</button>
-                    <span>{item.cantidad}</span>
-                    <button type="button" aria-label={`Agregar una unidad de ${item.nombre}`} onClick={() => agregarProducto(item)}>+</button>
-                    <button className="remove-item" type="button" aria-label={`Eliminar ${item.nombre}`} onClick={() => eliminarProducto(item.cartKey)}>Eliminar</button>
-                  </div>
-                  {sugerenciasDisponibles.length > 0 && <fieldset className="order-item__suggestions">
-                    <legend>Personaliza tu producto</legend>
-                    <p>Marca si quieres retirar algún ingrediente.</p>
-                    <div className="suggestion-options">
-                      {sugerenciasDisponibles.map((sugerencia) => (
-                        <label key={sugerencia}>
-                          <input
-                            type="checkbox"
-                            checked={sugerenciasMarcadas.includes(sugerencia)}
-                            onChange={(event) => cambiarSugerencia(item.cartKey, item.observaciones, sugerencia, event.target.checked)}
-                          />
-                          <span>{sugerencia}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </fieldset>}
+
+                  {sugerenciasDisponibles.length > 0 && (
+                    <fieldset className="order-item__suggestions">
+                      <legend>Preferencias rápidas</legend>
+                      <div className="suggestion-options">
+                        {sugerenciasDisponibles.map((sugerencia) => (
+                          <label key={sugerencia}>
+                            <input
+                              type="checkbox"
+                              checked={sugerenciasMarcadas.includes(sugerencia)}
+                              onChange={(event) =>
+                                cambiarSugerencia(
+                                  item.cartKey,
+                                  item.observaciones,
+                                  sugerenciasDisponibles,
+                                  sugerencia,
+                                  event.target.checked,
+                                )
+                              }
+                            />
+                            <span>{sugerencia}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                  )}
+
+                  <label className="order-item__notes">
+                    <span>Nota para cocina (opcional)</span>
+                    <textarea
+                      rows={2}
+                      value={notaLibre}
+                      onChange={(event) =>
+                        cambiarNotaLibre(
+                          item.cartKey,
+                          item.observaciones,
+                          sugerenciasDisponibles,
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Ej. Salsas aparte, bien asado, empacar para llevar..."
+                      maxLength={160}
+                    />
+                  </label>
                 </div>
               )
             })}
           </div>
-          <div className="order-total"><span>Total</span><strong>{precioCOP(total)}</strong></div>
+
+          <div className="order-breakdown">
+            <div className="order-breakdown__row">
+              <span>Productos ({totalItems} {totalItems === 1 ? 'unidad' : 'unidades'})</span>
+              <strong>{precioCOP(subtotalBase)}</strong>
+            </div>
+            {totalExtras > 0 && (
+              <div className="order-breakdown__row">
+                <span>Adiciones y extras</span>
+                <strong>+{precioCOP(totalExtras)}</strong>
+              </div>
+            )}
+            <div className="order-breakdown__row">
+              <span>Tiempo estimado de recogida</span>
+              <strong>~{tiempoEstimadoMin} min</strong>
+            </div>
+            <div className="order-total">
+              <span>Total a pagar</span>
+              <strong>{precioCOP(total)}</strong>
+            </div>
+          </div>
         </>
       )}
+
       <div className="order-actions">
-        {items.length > 0 && <button type="button" className="checkout-button" onClick={() => navigate(checkoutPath)}>{checkoutLabel}</button>}
-        {items.length > 0 && <button type="button" className="clear-button" onClick={vaciarCarrito}>Vaciar carrito</button>}
+        {items.length > 0 && (
+          <button
+            type="button"
+            className="checkout-button"
+            onClick={() => navigate(checkoutPath)}
+          >
+            {checkoutLabel} →
+          </button>
+        )}
+        {items.length > 0 && (
+          <button type="button" className="clear-button" onClick={vaciarCarrito}>
+            Vaciar pedido completo
+          </button>
+        )}
       </div>
     </aside>
   )

@@ -70,7 +70,7 @@
 
 .restaurant-menu__layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr) 420px;
   align-items: start;
   gap: 28px;
 }

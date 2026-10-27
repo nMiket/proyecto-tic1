@@ -1033,64 +1033,44 @@ export default function AdminDashboardPage({
             </div>
 
             <div className="admin-field-compact">
-              <label htmlFor="cafe-imagen">Imagen principal del restaurante</label>
+              <label htmlFor="cafe-imagen">Imagen principal del restaurante (archivo de imagen)</label>
               <div className="admin-cafe-image-row">
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                    <label
-                      className="admin-secondary-btn"
-                      style={{
-                        cursor: 'pointer',
-                        padding: '0.42rem 0.75rem',
-                        fontSize: '0.78rem',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        margin: 0,
-                      }}
-                    >
-                      Subir desde dispositivo
-                      <input
-                        type="file"
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (!file) return
-                          setCafeConfigError('')
-                          void procesarImagenDesdeArchivo(file, 1200)
-                            .then((dataUrl) => setCafeImagenUrl(dataUrl))
-                            .catch((err: unknown) =>
-                              setCafeConfigError(
-                                err instanceof Error ? err.message : 'No se pudo procesar la imagen.',
-                              ),
-                            )
-                          e.target.value = ''
-                        }}
-                      />
-                    </label>
+                <div className="admin-file-upload-box">
+                  <input
+                    id="cafe-imagen"
+                    type="file"
+                    accept="image/*"
+                    className="admin-file-input"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      setCafeConfigError('')
+                      void procesarImagenDesdeArchivo(file, 1200)
+                        .then((dataUrl) => setCafeImagenUrl(dataUrl))
+                        .catch((err: unknown) =>
+                          setCafeConfigError(
+                            err instanceof Error ? err.message : 'No se pudo procesar la imagen.',
+                          ),
+                        )
+                    }}
+                  />
+                  <div className="admin-file-upload-meta">
+                    <span>
+                      {cafeImagenUrl.trim()
+                        ? 'Imagen cargada lista para guardar (haz clic en "Guardar información y estado")'
+                        : 'Formatos admitidos: JPG, PNG o WEBP desde tu computador'}
+                    </span>
                     {cafeImagenUrl.trim() && (
                       <button
                         type="button"
-                        className="admin-secondary-btn"
-                        style={{ padding: '0.42rem 0.65rem', fontSize: '0.76rem' }}
+                        className="secondary-button"
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.76rem' }}
                         onClick={() => setCafeImagenUrl('')}
                       >
                         Quitar imagen
                       </button>
                     )}
                   </div>
-                  <input
-                    id="cafe-imagen"
-                    type="text"
-                    value={cafeImagenUrl.startsWith('data:image/') ? '' : cafeImagenUrl}
-                    onChange={(e) => setCafeImagenUrl(e.target.value)}
-                    placeholder={
-                      cafeImagenUrl.startsWith('data:image/')
-                        ? 'Imagen local cargada desde el dispositivo (o pega un enlace https://...)'
-                        : 'O pega un enlace https://images.unsplash.com/...'
-                    }
-                  />
                 </div>
                 <div className="admin-cafe-image-preview">
                   {cafeImagenUrl.trim() ? (
@@ -1650,61 +1630,44 @@ export default function AdminDashboardPage({
                 </div>
 
                 <div className="admin-form-group">
-                  <label htmlFor="prod-img">Imagen del producto (subir archivo o enlace)</label>
-                  <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.45rem' }}>
-                    <label
-                      className="admin-secondary-btn"
-                      style={{
-                        cursor: 'pointer',
-                        padding: '0.45rem 0.85rem',
-                        fontSize: '0.8rem',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        margin: 0,
+                  <label htmlFor="prod-img">Imagen del producto (cargar archivo)</label>
+                  <div className="admin-file-upload-box">
+                    <input
+                      id="prod-img"
+                      type="file"
+                      accept="image/*"
+                      className="admin-file-input"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        setProductError('')
+                        void procesarImagenDesdeArchivo(file, 900)
+                          .then((dataUrl) => setProductImageUrl(dataUrl))
+                          .catch((err: unknown) =>
+                            setProductError(
+                              err instanceof Error ? err.message : 'No se pudo procesar la imagen.',
+                            ),
+                          )
                       }}
-                    >
-                      Subir desde dispositivo
-                      <input
-                        type="file"
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (!file) return
-                          setProductError('')
-                          void procesarImagenDesdeArchivo(file, 900)
-                            .then((dataUrl) => setProductImageUrl(dataUrl))
-                            .catch((err: unknown) =>
-                              setProductError(
-                                err instanceof Error ? err.message : 'No se pudo procesar la imagen.',
-                              ),
-                            )
-                          e.target.value = ''
-                        }}
-                      />
-                    </label>
-                    {productImageUrl.trim() && (
-                      <button
-                        type="button"
-                        className="admin-secondary-btn"
-                        style={{ padding: '0.45rem 0.7rem', fontSize: '0.78rem' }}
-                        onClick={() => setProductImageUrl('')}
-                      >
-                        Usar imagen sugerida
-                      </button>
-                    )}
+                    />
+                    <div className="admin-file-upload-meta">
+                      <span>
+                        {productImageUrl.trim()
+                          ? 'Archivo de imagen cargado para este producto'
+                          : 'Selecciona una foto (JPG, PNG o WEBP) o déjalo vacío para usar la imagen sugerida'}
+                      </span>
+                      {productImageUrl.trim() && (
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.76rem' }}
+                          onClick={() => setProductImageUrl('')}
+                        >
+                          Usar imagen sugerida
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <input
-                    id="prod-img"
-                    type="text"
-                    value={productImageUrl.startsWith('data:image/') ? '' : productImageUrl}
-                    onChange={(e) => setProductImageUrl(e.target.value)}
-                    placeholder={
-                      productImageUrl.startsWith('data:image/')
-                        ? 'Imagen local cargada desde el dispositivo (o pega un enlace https://...)'
-                        : 'https://images.unsplash.com/... (o déjalo vacío para usar sugerida)'
-                    }
-                  />
                 </div>
 
                 {/* Administrador de ingredientes extra */}

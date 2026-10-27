@@ -542,7 +542,7 @@ BEGIN
     SELECT p.pedido_id, p.nombre_cliente, p.estado, p.total, p.fecha, p.hora_recogida
     FROM pedido p
     WHERE p.restaurante_id = p_restaurante_id
-      AND p.estado IN ('PAGADO', 'EN_PREPARACION', 'LISTO')
+      AND p.estado IN ('PENDIENTE', 'EN_PAGO', 'PAGADO', 'EN_PREPARACION', 'LISTO')
     ORDER BY p.fecha ASC;
 END;
 $$ LANGUAGE plpgsql;

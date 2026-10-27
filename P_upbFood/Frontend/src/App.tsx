@@ -113,7 +113,7 @@ const rutaPanelPrincipal = soloCocina
     <main className="app-shell">
       <nav className="topbar">
         <Link to="/" className="brand">
-          <span className="brand-mark" aria-hidden="true">UPB</span>
+          <img src="/favicon.svg" alt="" className="brand-logo-icon" aria-hidden="true" />
           <span className="brand-copy">
             <strong>UPB Food</strong>
             <small>Comunidad universitaria</small>
@@ -271,10 +271,10 @@ function HomePage() {
           aria-label="Espacios reservados para identidad visual"
         >
           <span className="identity-logo-slot">
-            /assets/branding/upb-logo.svg
+            <img src="/assets/branding/upb-logo.svg" alt="Universidad Pontificia Bolivariana" className="identity-logo-img" />
           </span>
           <span className="identity-logo-slot identity-logo-slot--food">
-            /assets/branding/upb-food-logo.svg
+            <img src="/assets/branding/upb-food-logo.svg" alt="UPB Food" className="identity-logo-img" />
           </span>
         </div>
       </section>
@@ -295,7 +295,7 @@ function SiteFooter() {
     <footer className="site-footer">
       <div className="site-footer__brand">
         <div className="footer-logo-placeholder">
-          /assets/branding/upb-logo.svg
+          <img src="/favicon.svg" alt="UPB Food" className="footer-logo-img" />
         </div>
         <div>
           <strong>UPB Food</strong>
@@ -619,6 +619,7 @@ function PedidoPage() {
       </header>
 
       <div className="order-page__content">
+        <ResumenPedido />
         <div className="order-page__aside">
           <div className="order-note">
             <span className="order-note__mark">UPB FOOD</span>
@@ -634,7 +635,6 @@ function PedidoPage() {
             <span>Pago simulado y seguro dentro de la plataforma</span>
           </div>
         </div>
-        <ResumenPedido />
       </div>
     </section>
   )

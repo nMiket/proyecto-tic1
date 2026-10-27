@@ -47,7 +47,9 @@ export function CardPedido({ pedido, tipo, actualizando = false, onAceptar, onLi
     <article className={`pedido-card ${tipo === 'preparacion' ? 'en-preparacion' : ''}`}>
       <div className="pedido-card__header">
         <div><span className="pedido-card__eyebrow">Pedido #{pedido.id}</span><h3>{pedido.client?.nombre ?? 'Cliente sin nombre'}</h3></div>
-        <span className="pedido-card__badge">{pedido.estado.replaceAll('_', ' ')}</span>
+        <span className="pedido-card__badge">
+          {pedido.estado === 'PENDIENTE' ? 'PENDIENTE DE PAGO' : pedido.estado.replaceAll('_', ' ')}
+        </span>
       </div>
       <div className="pedido-card__meta">
         <p><strong>Hora de recogida:</strong> {horaRecogida}</p>

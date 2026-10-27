@@ -1147,7 +1147,7 @@
 
 .order-page__content {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 340px);
   align-items: start;
   gap: 28px;
 }
@@ -1512,4 +1512,41 @@
 .admin-status-chip.is-cancelled {
   background: #ffe4e1;
   color: #b42318;
+}
+
+
+.brand-logo-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: block;
+  box-shadow: 0 6px 14px -6px rgba(15, 118, 110, 0.45);
+}
+
+.identity-logo-panel .identity-logo-slot {
+  border: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.identity-logo-img {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+}
+
+.footer-logo-placeholder {
+  border: none !important;
+  background: transparent !important;
+  width: 44px;
+  height: 44px;
+}
+
+.footer-logo-img {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: block;
 }
