@@ -43,14 +43,12 @@ function nombreDetalle(detalle: DetallePedido) {
 
 export function CardPedido({ pedido, tipo, actualizando = false, onAceptar, onListo, onEntregar, onCancelar }: CardPedidoProps) {
   const horaRecogida = formatearHora(pedido.horaRecogida ?? pedido.fechaCreacion)
-  const esPagado = pedido.estado === 'PAGADO'
-
   return (
     <article className={`pedido-card ${tipo === 'preparacion' ? 'en-preparacion' : ''}`}>
       <div className="pedido-card__header">
         <div><span className="pedido-card__eyebrow">Pedido #{pedido.id}</span><h3>{pedido.client?.nombre ?? 'Cliente sin nombre'}</h3></div>
         <span className="pedido-card__badge">
-          {pedido.estado === 'PENDIENTE' ? 'PENDIENTE DE PAGO' : pedido.estado === 'EN_PAGO' ? 'PROCESANDO PAGO' : pedido.estado.replaceAll('_', ' ')}
+          {pedido.estado === 'PENDIENTE' ? 'PENDIENTE DE PAGO' : pedido.estado.replaceAll('_', ' ')}
         </span>
       </div>
       <div className="pedido-card__meta">
@@ -67,15 +65,7 @@ export function CardPedido({ pedido, tipo, actualizando = false, onAceptar, onLi
         )) : <li>Sin productos registrados</li>}
       </ul></div>
       <div className="pedido-card__acciones">
-        {tipo === 'nuevo' && onAceptar && (
-          <button
-            type="button"
-            disabled={actualizando || !esPagado}
-            onClick={() => onAceptar(pedido.id)}
-          >
-            {actualizando ? 'Guardando…' : !esPagado ? 'Esperando pago del cliente' : 'Aceptar pedido e iniciar preparación'}
-          </button>
-        )}
+        {tipo === 'nuevo' && onAceptar && <button type="button" disabled={actualizando} onClick={() => onAceptar(pedido.id)}>{actualizando ? 'Guardando…' : 'Aceptar pedido e iniciar preparación'}</button>}
         {tipo === 'nuevo' && onCancelar && <button type="button" className="pedido-card__secondary pedido-card__cancel" disabled={actualizando} onClick={() => onCancelar(pedido.id)}>Cancelar pedido</button>}
         {tipo === 'preparacion' && onListo && <button type="button" className="pedido-card__secondary" disabled={actualizando} onClick={() => onListo(pedido.id)}>{actualizando ? 'Guardando…' : 'Marcar como listo'}</button>}
         {tipo === 'listo' && onEntregar && <button type="button" className="pedido-card__secondary" disabled={actualizando} onClick={() => onEntregar(pedido.id)}>{actualizando ? 'Guardando…' : 'Marcar como entregado'}</button>}
