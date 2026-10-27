@@ -107,7 +107,20 @@ public class RestaurantController {
         if (request.containsKey("imagenUrl") || request.containsKey("imagen")) {
             Object imgVal = request.containsKey("imagenUrl") ? request.get("imagenUrl") : request.get("imagen");
             String nuevaImagen = imgVal != null ? imgVal.toString().trim() : null;
-            restaurant.setImagenUrl(nuevaImagen != null && nuevaImagen.isEmpty() ? null : nuevaImagen);
+            if (nuevaImagen != null && !nuevaImagen.isEmpty()) {
+                if (nuevaImagen.length() > 2_000_000) {
+                    throw new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST, "La imagen supera el tamaño máximo permitido.");
+                }
+                String lower = nuevaImagen.toLowerCase();
+                if (!lower.startsWith("https://") && !lower.startsWith("http://") && !lower.startsWith("data:image/")) {
+                    throw new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST, "La imagen debe ser un enlace HTTP/HTTPS válido o una imagen cargada desde el dispositivo.");
+                }
+                restaurant.setImagenUrl(nuevaImagen);
+            } else {
+                restaurant.setImagenUrl(null);
+            }
         }
 
         if (request.containsKey("estado") && request.get("estado") != null) {

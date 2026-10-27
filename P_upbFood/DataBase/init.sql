@@ -196,7 +196,7 @@ CREATE TABLE producto_restaurante (
     restaurante_id  INTEGER NOT NULL REFERENCES restaurante (restaurante_id),
     producto_id     INTEGER NOT NULL REFERENCES producto (producto_id),
     precio          DECIMAL(10,2) NOT NULL CHECK (precio > 0),
-    imagen_url      VARCHAR(500),
+    imagen_url      TEXT,
     nombre_personalizado VARCHAR(50),
     disponible      BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (restaurante_id, producto_id)

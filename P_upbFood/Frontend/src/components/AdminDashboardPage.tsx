@@ -162,6 +162,51 @@ function getInitials(name: string): string {
     .join('')
 }
 
+function procesarImagenDesdeArchivo(file: File, maxDimension = 960): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) {
+      reject(new Error('Selecciona un archivo de imagen válido (JPG, PNG, WEBP).'))
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      reject(new Error('El archivo supera el límite de 10 MB.'))
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo seleccionado.'))
+    reader.onload = () => {
+      const rawDataUrl = typeof reader.result === 'string' ? reader.result : ''
+      const img = new Image()
+      img.onerror = () => reject(new Error('El archivo seleccionado no es una imagen válida.'))
+      img.onload = () => {
+        let { width, height } = img
+        if (width > maxDimension || height > maxDimension) {
+          if (width >= height) {
+            height = Math.round((height * maxDimension) / width)
+            width = maxDimension
+          } else {
+            width = Math.round((width * maxDimension) / height)
+            height = maxDimension
+          }
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(rawDataUrl)
+          return
+        }
+        ctx.drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL('image/jpeg', 0.82))
+      }
+      img.src = rawDataUrl
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function AdminDashboardPage({
   adminName,
   restauranteId: initialRestauranteId,
@@ -186,6 +231,7 @@ export default function AdminDashboardPage({
   const [categoriaId, setCategoriaId] = useState('1')
   const [disponible, setDisponible] = useState(true)
   const [productError, setProductError] = useState('')
+  const [productSuccess, setProductSuccess] = useState('')
   const [loadingProducts, setLoadingProducts] = useState(false)
   const [editingProductId, setEditingProductId] = useState<number | null>(null)
   const [togglingProductId, setTogglingProductId] = useState<number | null>(null)
@@ -792,14 +838,21 @@ export default function AdminDashboardPage({
     if (!confirmar) return
 
     setProductError('')
+    setProductSuccess('')
     try {
       const response = await apiFetch(
         `${getApiBaseUrl()}/api/products/${productId}?restauranteId=${selectedRestauranteId}`,
         { method: 'DELETE' },
       )
+      const data = (await response.json().catch(() => null)) as {
+        message?: string
+        deactivatedInsteadOfDeleted?: boolean
+      } | null
       if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as { message?: string } | null
         throw new Error(data?.message ?? 'No se pudo retirar el producto.')
+      }
+      if (data?.message) {
+        setProductSuccess(data.message)
       }
       await fetchProducts()
     } catch (error) {
@@ -1012,15 +1065,65 @@ export default function AdminDashboardPage({
             </div>
 
             <div className="admin-field-compact">
-              <label htmlFor="cafe-imagen">URL de imagen principal</label>
+              <label htmlFor="cafe-imagen">Imagen principal del restaurante</label>
               <div className="admin-cafe-image-row">
-                <input
-                  id="cafe-imagen"
-                  type="url"
-                  value={cafeImagenUrl}
-                  onChange={(e) => setCafeImagenUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                />
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <label
+                      className="admin-secondary-btn"
+                      style={{
+                        cursor: 'pointer',
+                        padding: '0.42rem 0.75rem',
+                        fontSize: '0.78rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        margin: 0,
+                      }}
+                    >
+                      Subir desde dispositivo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          setCafeConfigError('')
+                          void procesarImagenDesdeArchivo(file, 1200)
+                            .then((dataUrl) => setCafeImagenUrl(dataUrl))
+                            .catch((err: unknown) =>
+                              setCafeConfigError(
+                                err instanceof Error ? err.message : 'No se pudo procesar la imagen.',
+                              ),
+                            )
+                          e.target.value = ''
+                        }}
+                      />
+                    </label>
+                    {cafeImagenUrl.trim() && (
+                      <button
+                        type="button"
+                        className="admin-secondary-btn"
+                        style={{ padding: '0.42rem 0.65rem', fontSize: '0.76rem' }}
+                        onClick={() => setCafeImagenUrl('')}
+                      >
+                        Quitar imagen
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    id="cafe-imagen"
+                    type="text"
+                    value={cafeImagenUrl.startsWith('data:image/') ? '' : cafeImagenUrl}
+                    onChange={(e) => setCafeImagenUrl(e.target.value)}
+                    placeholder={
+                      cafeImagenUrl.startsWith('data:image/')
+                        ? 'Imagen local cargada desde el dispositivo (o pega un enlace https://...)'
+                        : 'O pega un enlace https://images.unsplash.com/...'
+                    }
+                  />
+                </div>
                 <div className="admin-cafe-image-preview">
                   {cafeImagenUrl.trim() ? (
                     <img
@@ -1579,14 +1682,60 @@ export default function AdminDashboardPage({
                 </div>
 
                 <div className="admin-form-group">
-                  <label htmlFor="prod-img">URL de imagen personalizada (opcional)</label>
+                  <label htmlFor="prod-img">Imagen del producto (subir archivo o enlace)</label>
+                  <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.45rem' }}>
+                    <label
+                      className="admin-secondary-btn"
+                      style={{
+                        cursor: 'pointer',
+                        padding: '0.45rem 0.85rem',
+                        fontSize: '0.8rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        margin: 0,
+                      }}
+                    >
+                      Subir desde dispositivo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          setProductError('')
+                          void procesarImagenDesdeArchivo(file, 900)
+                            .then((dataUrl) => setProductImageUrl(dataUrl))
+                            .catch((err: unknown) =>
+                              setProductError(
+                                err instanceof Error ? err.message : 'No se pudo procesar la imagen.',
+                              ),
+                            )
+                          e.target.value = ''
+                        }}
+                      />
+                    </label>
+                    {productImageUrl.trim() && (
+                      <button
+                        type="button"
+                        className="admin-secondary-btn"
+                        style={{ padding: '0.45rem 0.7rem', fontSize: '0.78rem' }}
+                        onClick={() => setProductImageUrl('')}
+                      >
+                        Usar imagen sugerida
+                      </button>
+                    )}
+                  </div>
                   <input
                     id="prod-img"
-                    type="url"
-                    value={productImageUrl}
+                    type="text"
+                    value={productImageUrl.startsWith('data:image/') ? '' : productImageUrl}
                     onChange={(e) => setProductImageUrl(e.target.value)}
-                    placeholder="https://images.unsplash.com/... (o déjalo vacío para usar sugerida)"
-                    maxLength={500}
+                    placeholder={
+                      productImageUrl.startsWith('data:image/')
+                        ? 'Imagen local cargada desde el dispositivo (o pega un enlace https://...)'
+                        : 'https://images.unsplash.com/... (o déjalo vacío para usar sugerida)'
+                    }
                   />
                 </div>
 
@@ -1737,6 +1886,12 @@ export default function AdminDashboardPage({
                 {productError && (
                   <div className="admin-alert-banner error" role="alert">
                     {productError}
+                  </div>
+                )}
+
+                {productSuccess && (
+                  <div className="admin-alert-banner success" role="status">
+                    {productSuccess}
                   </div>
                 )}
 

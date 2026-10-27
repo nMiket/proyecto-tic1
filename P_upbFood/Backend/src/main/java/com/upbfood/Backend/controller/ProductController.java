@@ -233,6 +233,8 @@ public class ProductController {
         authorizationService.requireOwnerForRestaurant(
                 request.restauranteId());
 
+        String imagenLimpia = normalizarYValidarImagen(request.imagenUrl());
+
         Product product = new Product();
         product.setNombre(request.nombre().trim());
         product.setDescripcion(request.descripcion().trim());
@@ -245,7 +247,7 @@ public class ProductController {
                 request.restauranteId(),
                 savedProduct.getId()));
         asociacion.setPrecio(request.precio());
-        asociacion.setImagenUrl(request.imagenUrl());
+        asociacion.setImagenUrl(imagenLimpia);
         asociacion.setDisponible(request.disponible());
 
         ProductoRestaurante savedAssociation =
@@ -267,6 +269,8 @@ public class ProductController {
         authorizationService.requireOwnerForRestaurant(
                 request.restauranteId());
 
+        String imagenLimpia = normalizarYValidarImagen(request.imagenUrl());
+
         Product product = productRepository.findById(id)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Producto no encontrado."));
@@ -280,12 +284,54 @@ public class ProductController {
                                 new IllegalArgumentException(
                                         "El producto no está asociado a este restaurante."));
 
+        Integer otrosRestaurantes = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM producto_restaurante WHERE producto_id = ? AND restaurante_id <> ?",
+                Integer.class, id, request.restauranteId());
+
+        if (otrosRestaurantes != null && otrosRestaurantes > 0) {
+            // Si el producto estaba compartido en el catálogo inicial, se independiza para esta cafetería.
+            Product independizado = new Product();
+            independizado.setNombre(request.nombre().trim());
+            independizado.setDescripcion(request.descripcion().trim());
+            independizado.setTipoProductoId(request.categoriaId());
+            Product savedNuevo = productRepository.save(independizado);
+
+            ProductoRestaurante nuevaAsociacion = new ProductoRestaurante();
+            nuevaAsociacion.setId(new ProductoRestauranteId(request.restauranteId(), savedNuevo.getId()));
+            nuevaAsociacion.setPrecio(request.precio());
+            nuevaAsociacion.setImagenUrl(imagenLimpia);
+            nuevaAsociacion.setDisponible(request.disponible());
+            ProductoRestaurante savedAsociacion = productoRestauranteRepository.save(nuevaAsociacion);
+
+            jdbcTemplate.update(
+                    "INSERT INTO producto_adicion (restaurante_id, producto_id, adicion_id) " +
+                    "SELECT restaurante_id, ?, adicion_id FROM producto_adicion WHERE restaurante_id = ? AND producto_id = ?",
+                    savedNuevo.getId(), request.restauranteId(), id);
+            jdbcTemplate.update(
+                    "DELETE FROM producto_adicion WHERE restaurante_id = ? AND producto_id = ?",
+                    request.restauranteId(), id);
+
+            Integer ventasAnteriores = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM detalle_pedido WHERE restaurante_id = ? AND producto_id = ?",
+                    Integer.class, request.restauranteId(), id);
+            if (ventasAnteriores == null || ventasAnteriores == 0) {
+                productoRestauranteRepository.delete(asociacion);
+            } else {
+                asociacion.setDisponible(false);
+                productoRestauranteRepository.save(asociacion);
+            }
+
+            Map<String, Object> response = toResponse(savedNuevo, savedAsociacion);
+            response.put("message", "Producto actualizado correctamente.");
+            return ResponseEntity.ok(response);
+        }
+
         product.setNombre(request.nombre().trim());
         product.setDescripcion(request.descripcion().trim());
         product.setTipoProductoId(request.categoriaId());
 
         asociacion.setPrecio(request.precio());
-        asociacion.setImagenUrl(request.imagenUrl());
+        asociacion.setImagenUrl(imagenLimpia);
         asociacion.setDisponible(request.disponible());
 
         Product updatedProduct = productRepository.save(product);
@@ -316,7 +362,38 @@ public class ProductController {
                                 new IllegalArgumentException(
                                         "El producto no está asociado a este restaurante."));
 
+        Integer ventasHistoricas = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM detalle_pedido WHERE restaurante_id = ? AND producto_id = ?",
+                Integer.class, restauranteId, id);
+
+        if (ventasHistoricas != null && ventasHistoricas > 0) {
+            jdbcTemplate.update(
+                    "DELETE FROM producto_adicion WHERE restaurante_id = ? AND (producto_id = ? OR adicion_id = ?)",
+                    restauranteId, id, id);
+            asociacion.setDisponible(false);
+            productoRestauranteRepository.save(asociacion);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("deactivatedInsteadOfDeleted", true);
+            response.put("message",
+                    "El producto ya tiene pedidos en el historial; se desactivó del menú disponible para conservar las estadísticas.");
+            return ResponseEntity.ok(response);
+        }
+
+        jdbcTemplate.update(
+                "DELETE FROM producto_adicion WHERE restaurante_id = ? AND (producto_id = ? OR adicion_id = ?)",
+                restauranteId, id, id);
         productoRestauranteRepository.delete(asociacion);
+
+        Integer referenciasRestantes = jdbcTemplate.queryForObject(
+                "SELECT (SELECT COUNT(*) FROM producto_restaurante WHERE producto_id = ?) + " +
+                "(SELECT COUNT(*) FROM detalle_pedido WHERE producto_id = ?) + " +
+                "(SELECT COUNT(*) FROM detalle_pedido_adicion WHERE adicion_id = ?)",
+                Integer.class, id, id, id);
+        if (referenciasRestantes != null && referenciasRestantes == 0) {
+            productRepository.findById(id).ifPresent(productRepository::delete);
+        }
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
@@ -324,6 +401,25 @@ public class ProductController {
                 "Producto retirado del restaurante correctamente.");
 
         return ResponseEntity.ok(response);
+    }
+
+    private String normalizarYValidarImagen(String imagenUrl) {
+        if (imagenUrl == null) {
+            return null;
+        }
+        String limpia = imagenUrl.trim();
+        if (limpia.isEmpty()) {
+            return null;
+        }
+        if (limpia.length() > 2_000_000) {
+            throw new IllegalArgumentException("La imagen supera el tamaño máximo permitido.");
+        }
+        String lower = limpia.toLowerCase();
+        if (!lower.startsWith("https://") && !lower.startsWith("http://") && !lower.startsWith("data:image/")) {
+            throw new IllegalArgumentException(
+                    "La imagen debe ser un enlace HTTP/HTTPS válido o una imagen cargada desde el dispositivo.");
+        }
+        return limpia;
     }
 
     private Map<String, Object> toResponse(

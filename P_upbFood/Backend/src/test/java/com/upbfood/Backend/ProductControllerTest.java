@@ -195,6 +195,41 @@ class ProductControllerTest {
         verify(menuRepository).delete(menuItem);
     }
 
+    @Test
+    void deleteProductWithHistoricalSalesDeactivatesMenuItem() {
+        ProductRepository productRepository = mock(ProductRepository.class);
+        ProductoRestauranteRepository menuRepository =
+                mock(ProductoRestauranteRepository.class);
+        AdminAuthorizationService authorizationService =
+                mock(AdminAuthorizationService.class);
+        JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+
+        ProductController controller = new ProductController(
+                productRepository, menuRepository, authorizationService, jdbcTemplate
+        );
+
+        ProductoRestaurante menuItem =
+                menuItem(1, 7, "4000", true);
+
+        when(menuRepository.findById(
+                new ProductoRestauranteId(1, 7)
+        )).thenReturn(Optional.of(menuItem));
+        when(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM detalle_pedido WHERE restaurante_id = ? AND producto_id = ?",
+                Integer.class, 1, 7
+        )).thenReturn(2);
+
+        ResponseEntity<Map<String, Object>> response =
+                controller.deleteProduct(7, 1);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(true, response.getBody().get("deactivatedInsteadOfDeleted"));
+        assertEquals(false, menuItem.getDisponible());
+
+        verify(authorizationService).requireOwnerForRestaurant(1);
+        verify(menuRepository).save(menuItem);
+    }
+
     private Product product(
             Integer id, String nombre, Integer tipoProductoId) {
         Product product = new Product();

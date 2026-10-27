@@ -30,7 +30,7 @@ public record UpdateProductRequest(
         @Positive
         Integer restauranteId,
 
-        @Size(max = 500)
+        @Size(max = 2000000)
         String imagenUrl,
 
         @NotNull
