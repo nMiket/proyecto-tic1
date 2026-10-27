@@ -1,5 +1,3 @@
-bu
-
 # 🍔 Plataforma Web para la Gestión de Pedidos en Cafeterías y Restaurantes UPB
 
 ¡Bienvenido al repositorio oficial del proyecto **UPB Food**! Esta solución tecnológica nace para transformar la experiencia gastronómica en el campus de la **Universidad Pontificia Bolivariana (UPB)**, optimizando los tiempos de atención y digitalizando el proceso de compra.
