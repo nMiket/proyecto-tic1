@@ -115,3 +115,4 @@ try {
    - `RateLimitFilter` contabiliza peticiones por IP en memoria dentro del contenedor backend. Si se realizan pruebas de carga automatizadas (>15 logins por minuto o >20 creaciones de pedido por minuto desde la misma IP), el backend responderá `429 Too Many Requests` hasta que se cumpla la ventana de 60 segundos.
 3. **Zona horaria en contenedores (`DB-03`):**
    - Los contenedores `db` y `backend` ahora operan en `America/Bogota` (`UTC-5`). Los pedidos antiguos creados cuando el contenedor estaba en `UTC` conservan su marca de tiempo anterior, mientras que todos los pedidos nuevos y el corte diario de estadísticas se calculan con la hora local de Colombia.
+

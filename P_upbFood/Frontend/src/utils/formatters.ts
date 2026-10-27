@@ -34,3 +34,4 @@ export function getProductFallbackImage(categoriaId?: number, nombre?: string): 
   if (categoriaId === 2) return 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400'
   return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400'
 }
+
