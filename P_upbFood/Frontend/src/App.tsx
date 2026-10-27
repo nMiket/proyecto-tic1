@@ -113,9 +113,7 @@ const rutaPanelPrincipal = soloCocina
     <main className="app-shell">
       <nav className="topbar">
         <Link to="/" className="brand">
-          <span className="brand-logo-badge" aria-hidden="true">
-            <img src="/assets/branding/UPBFood.svg" alt="" className="brand-logo-icon" />
-          </span>
+          <img src="/assets/branding/campana.svg" alt="" className="brand-logo-icon" aria-hidden="true" />
           <span className="brand-copy">
             <strong>UPB Food</strong>
             <small>Comunidad universitaria</small>
