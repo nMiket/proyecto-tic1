@@ -21,7 +21,12 @@ type RestauranteCocina = {
   tiempoEstimadoMin?: number
 }
 
-type DashboardCocinaProps = { restauranteId: number; onLogout: () => Promise<void> }
+type DashboardCocinaProps = {
+  restauranteId: number
+  onLogout: () => Promise<void>
+  // HU029: solo el dueño puede abrir, cerrar o marcar alta demanda.
+  restaurantesDueno?: number[]
+}
 
 const mensajeError = async (res: Response) => {
   const data = (await res.json().catch(() => null)) as { message?: string; detail?: string } | null
@@ -33,7 +38,7 @@ const mensajeErrorProducto = async (res: Response) => {
   return data?.message ?? data?.detail ?? 'No se pudo actualizar la disponibilidad del producto.'
 }
 
-export function DashboardCocina({ restauranteId, onLogout }: DashboardCocinaProps) {
+export function DashboardCocina({ restauranteId, onLogout, restaurantesDueno = [] }: DashboardCocinaProps) {
   const [selectedRestauranteId, setSelectedRestauranteId] = useState(restauranteId)
   const [restaurantes, setRestaurantes] = useState<RestauranteCocina[]>([])
   const [pedidos, setPedidos] = useState<Pedido[]>([])
@@ -302,6 +307,7 @@ export function DashboardCocina({ restauranteId, onLogout }: DashboardCocinaProp
                 Tiempo estimado: {restauranteActual.tiempoEstimadoMin ?? 15} min
               </span>
 
+              {restaurantesDueno.includes(Number(selectedRestauranteId)) && (
               <div style={{ display: 'inline-flex', gap: '0.3rem' }}>
                 {restauranteActual.estado !== 'Abierto' && (
                   <button
@@ -358,6 +364,7 @@ export function DashboardCocina({ restauranteId, onLogout }: DashboardCocinaProp
                   </button>
                 )}
               </div>
+              )}
             </div>
           )}
         </div>

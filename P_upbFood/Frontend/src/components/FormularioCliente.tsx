@@ -35,6 +35,31 @@ function crearOpcionesHora(tiempoPreparacionMin: number) {
     });
 }
 
+type ErroresCliente = { nombre: string; telefono: string; correo: string };
+
+// HU010/HU011: reglas de validación compartidas por los mensajes en vivo y el envío.
+function validarCliente(nombre: string, telefono: string, correo: string): ErroresCliente {
+    const errores: ErroresCliente = { nombre: "", telefono: "", correo: "" };
+
+    if (!nombre.trim()) {
+        errores.nombre = "El nombre es obligatorio";
+    }
+
+    if (!telefono.trim()) {
+        errores.telefono = "El teléfono es obligatorio";
+    } else if (!/^3[0-9]{9}$/.test(telefono.trim())) {
+        errores.telefono = "Ingresa un celular colombiano de 10 dígitos";
+    }
+
+    if (!correo.trim()) {
+        errores.correo = "El correo es obligatorio";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo.trim())) {
+        errores.correo = "Ingresa un correo electrónico válido";
+    }
+
+    return errores;
+}
+
 export default function FormularioCliente() {
     const navigate = useNavigate();
     const { items, vaciarCarrito } = useCart();
@@ -48,11 +73,22 @@ export default function FormularioCliente() {
         [tiempoPreparacionMin]
     );
 
-    const [errores, setErrores] = useState({
-        nombre: "",
-        telefono: "",
-        correo: "",
+    const [tocados, setTocados] = useState({
+        nombre: false,
+        telefono: false,
+        correo: false,
     });
+    const erroresActuales = validarCliente(nombre, telefono, correo);
+    const formularioValido =
+        !erroresActuales.nombre && !erroresActuales.telefono && !erroresActuales.correo;
+    // Los mensajes aparecen cuando el usuario sale del campo o intenta continuar.
+    const errores = {
+        nombre: tocados.nombre ? erroresActuales.nombre : "",
+        telefono: tocados.telefono ? erroresActuales.telefono : "",
+        correo: tocados.correo ? erroresActuales.correo : "",
+    };
+    const marcarTocado = (campo: keyof ErroresCliente) =>
+        setTocados((actual) => ({ ...actual, [campo]: true }));
 
     const [mensaje, setMensaje] = useState("");
     const [enviando, setEnviando] = useState(false);
@@ -60,29 +96,8 @@ export default function FormularioCliente() {
     const guardarCliente = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const nuevosErrores = {
-            nombre: "",
-            telefono: "",
-            correo: "",
-        };
-
-        if (!nombre.trim()) {
-            nuevosErrores.nombre = "El nombre es obligatorio";
-        }
-
-        if (!telefono.trim()) {
-            nuevosErrores.telefono = "El teléfono es obligatorio";
-        } else if (!/^3[0-9]{9}$/.test(telefono.trim())) {
-            nuevosErrores.telefono = "Ingresa un celular colombiano de 10 dígitos";
-        }
-
-        if (!correo.trim()) {
-            nuevosErrores.correo = "El correo es obligatorio";
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
-            nuevosErrores.correo = "Ingresa un correo electrónico válido";
-        }
-
-        setErrores(nuevosErrores);
+        const nuevosErrores = validarCliente(nombre, telefono, correo);
+        setTocados({ nombre: true, telefono: true, correo: true });
         setMensaje("");
 
         if (
@@ -126,6 +141,12 @@ export default function FormularioCliente() {
                     codigoSeguimiento: string;
                     total: number;
                 };
+
+                // HU011: el pedido queda en estado "En pago" antes de abrir el portal.
+                await apiFetch(
+                    `${getApiBaseUrl()}/api/pedidos/seguimiento/${pedido.codigoSeguimiento}/iniciar-pago`,
+                    { method: "POST" },
+                ).catch(() => null);
 
                 guardarPedido({
                     ...pedido,
@@ -181,6 +202,7 @@ export default function FormularioCliente() {
                             aria-invalid={Boolean(errores.nombre)}
                             aria-describedby={errores.nombre ? "error-cliente-nombre" : undefined}
                             onChange={(e) => setNombre(e.target.value)}
+                            onBlur={() => marcarTocado("nombre")}
                         />
                         {errores.nombre && (
                             <span id="error-cliente-nombre" className="error" role="alert">
@@ -201,6 +223,7 @@ export default function FormularioCliente() {
                             aria-invalid={Boolean(errores.telefono)}
                             aria-describedby={errores.telefono ? "error-cliente-telefono" : undefined}
                             onChange={(e) => setTelefono(e.target.value)}
+                            onBlur={() => marcarTocado("telefono")}
                         />
                         {errores.telefono && (
                             <span id="error-cliente-telefono" className="error" role="alert">
@@ -220,6 +243,7 @@ export default function FormularioCliente() {
                             aria-invalid={Boolean(errores.correo)}
                             aria-describedby={errores.correo ? "error-cliente-correo" : undefined}
                             onChange={(e) => setCorreo(e.target.value)}
+                            onBlur={() => marcarTocado("correo")}
                         />
                         {errores.correo && (
                             <span id="error-cliente-correo" className="error" role="alert">
@@ -256,9 +280,18 @@ export default function FormularioCliente() {
                         </div>
                     </div>
 
-                    <button type="submit" disabled={enviando || items.length === 0}>
+                    <button
+                        type="submit"
+                        disabled={enviando || items.length === 0 || !formularioValido}
+                        aria-describedby={!formularioValido ? "ayuda-continuar-pago" : undefined}
+                    >
                         {enviando ? "Abriendo pago..." : "Continuar al pago"}
                     </button>
+                    {!formularioValido && (
+                        <p id="ayuda-continuar-pago" className="campo-ayuda">
+                            Completa tu nombre, un celular de 10 dígitos y un correo válido para continuar.
+                        </p>
+                    )}
 
                     {mensaje && (
                         <p className="mensaje-exito" aria-live="polite">

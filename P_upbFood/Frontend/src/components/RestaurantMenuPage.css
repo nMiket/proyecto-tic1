@@ -251,3 +251,9 @@
     grid-template-columns: 1fr;
   }
 }
+
+.restaurant-menu__schedule {
+  margin-top: 0.35rem;
+  opacity: 0.85;
+  font-size: 0.92rem;
+}

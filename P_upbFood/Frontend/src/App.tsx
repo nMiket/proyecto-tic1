@@ -35,6 +35,9 @@ export function App() {
   const [adminName, setAdminName] = useState('')
   const [restauranteId, setRestauranteId] = useState<number | null>(null)
   const [asignaciones, setAsignaciones] = useState<AsignacionRestaurante[]>([])
+  // HU024: mientras se recupera la sesión no se redirige desde rutas /admin/*,
+  // así un enlace directo llega a su destino (o a la página 403) y no al login.
+  const [verificandoSesion, setVerificandoSesion] = useState(true)
 
   const navigate = useNavigate()
 
@@ -79,6 +82,9 @@ const rutaPanelPrincipal = soloCocina
       })
       .catch((error) => {
         console.error('Error al recuperar la sesión:', error)
+      })
+      .finally(() => {
+        if (!cancelled) setVerificandoSesion(false)
       })
 
     return () => {
@@ -208,6 +214,9 @@ const rutaPanelPrincipal = soloCocina
           <Route
             path="/admin"
             element={
+              verificandoSesion ? (
+                <p className="session-loading" role="status">Verificando sesión…</p>
+              ) :
               isLoggedIn ? (
                 <Navigate
                   to={rutaPanelPrincipal}
@@ -222,6 +231,9 @@ const rutaPanelPrincipal = soloCocina
           <Route
             path="/admin/dashboard"
             element={
+              verificandoSesion ? (
+                <p className="session-loading" role="status">Verificando sesión…</p>
+              ) :
               isLoggedIn && tieneRolDueno ? (
                 <AdminDashboardPage
                   adminName={adminName}
@@ -245,8 +257,17 @@ const rutaPanelPrincipal = soloCocina
           <Route
             path="/admin/cocina"
             element={
+              verificandoSesion ? (
+                <p className="session-loading" role="status">Verificando sesión…</p>
+              ) :
               isLoggedIn && (tieneRolDueno || tieneRolCocina) && restauranteCocinaId !== null ? (
-                <DashboardCocina restauranteId={restauranteCocinaId} onLogout={handleLogout} />
+                <DashboardCocina
+                  restauranteId={restauranteCocinaId}
+                  onLogout={handleLogout}
+                  restaurantesDueno={asignaciones
+                    .filter((asignacion) => Number(asignacion.tipoAdministradorId) === 1)
+                    .map((asignacion) => Number(asignacion.restauranteId))}
+                />
               ) : isLoggedIn && !tieneAccesoAdmin ? (
                 <EstadoAccesoPage tipo="prohibido" />
               ) : (

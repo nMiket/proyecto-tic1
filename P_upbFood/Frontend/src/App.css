@@ -1677,3 +1677,9 @@
     gap: 14px;
   }
 }
+
+.session-loading {
+  margin: 4rem auto;
+  color: var(--color-muted, #767961);
+  text-align: center;
+}

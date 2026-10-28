@@ -14,6 +14,7 @@ type Restaurante = {
   tiempoEstimadoMin?: number
   imagen?: string
   imagenUrl?: string
+  horario?: string | null
 }
 
 const DEFAULT_IMAGE =
@@ -82,6 +83,7 @@ export default function RestaurantMenuPage() {
           <p className="section-kicker">Menú de la cafetería</p>
           <h1>{restaurante.nombre}</h1>
           <p>{restaurante.ubicacion} · Recogida estimada en {restaurante.tiempoEstimadoMin || 15} minutos</p>
+          {restaurante.horario && <p className="restaurant-menu__schedule">Horario: {restaurante.horario}</p>}
         </div>
       </header>
 

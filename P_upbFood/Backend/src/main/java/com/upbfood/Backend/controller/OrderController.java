@@ -1,6 +1,7 @@
 package com.upbfood.Backend.controller;
 
 import com.upbfood.Backend.dto.CreateOrderRequest;
+import com.upbfood.Backend.entity.EstadoPedido;
 import com.upbfood.Backend.service.PedidoService;
 import com.upbfood.Backend.service.StripeService;
 import jakarta.validation.Valid;
@@ -78,6 +79,31 @@ public class OrderController {
         response.put("estado", actualizado.get("estado"));
         response.put("total", actualizado.get("total"));
 
+        return ResponseEntity.ok(response);
+    }
+
+    // HU011: al continuar al pago el pedido pasa de PENDIENTE a EN_PAGO.
+    @PostMapping("/seguimiento/{codigo}/iniciar-pago")
+    public ResponseEntity<?> iniciarPago(@PathVariable UUID codigo) {
+        Map<String, Object> pedido;
+        try {
+            pedido = pedidoService.obtenerPorCodigo(codigo);
+        } catch (EmptyResultDataAccessException exception) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "No encontramos el pedido para iniciar el pago."));
+        }
+
+        Integer pedidoId = ((Number) pedido.get("pedido_id")).intValue();
+        if ("PENDIENTE".equals(String.valueOf(pedido.get("estado")))) {
+            pedidoService.cambiarEstado(pedidoId, EstadoPedido.EN_PAGO);
+        }
+
+        Map<String, Object> actualizado = pedidoService.obtenerPorCodigo(codigo);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("id", actualizado.get("pedido_id"));
+        response.put("codigoSeguimiento", codigo);
+        response.put("estado", actualizado.get("estado"));
+        response.put("total", actualizado.get("total"));
         return ResponseEntity.ok(response);
     }
 

@@ -32,6 +32,10 @@ public class Restaurant {
     @Column(name = "imagen_url", columnDefinition = "TEXT")
     private String imagenUrl;
 
+    // HU029: horario de atención visible para los clientes (texto libre, ej. "Lun a Vie 7:00 - 18:00").
+    @Column(name = "horario", length = 100)
+    private String horario;
+
     public Integer getId() {
         return id;
     }
@@ -78,6 +82,14 @@ public class Restaurant {
 
     public void setImagenUrl(String imagenUrl) {
         this.imagenUrl = imagenUrl;
+    }
+
+    public String getHorario() {
+        return horario;
+    }
+
+    public void setHorario(String horario) {
+        this.horario = horario;
     }
 
     public String getImagen() {

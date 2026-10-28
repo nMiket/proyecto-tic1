@@ -25,6 +25,7 @@ type ResultadoDecision = {
   mensaje?: string
   message?: string
   enlaceActivacion?: string
+  correoEnviado?: boolean
 }
 
 const CLAVE_STORAGE = 'upbfood.revisorUpb'
@@ -155,7 +156,7 @@ export default function PanelUniversidadPage() {
         data?.mensaje ??
           (accion === 'aprobar' ? 'Solicitud aprobada.' : 'Solicitud rechazada.'),
       )
-      setEnlaceActivacion(data?.enlaceActivacion ?? '')
+      setEnlaceActivacion(data?.correoEnviado === false ? data?.enlaceActivacion ?? '' : '')
       setRechazandoId(null)
       setObservacion('')
       await cargar()

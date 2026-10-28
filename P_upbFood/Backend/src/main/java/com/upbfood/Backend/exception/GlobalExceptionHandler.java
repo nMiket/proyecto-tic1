@@ -1,6 +1,10 @@
 package com.upbfood.Backend.exception;
 
 import jakarta.validation.ConstraintViolationException;
+import java.sql.SQLException;
+import org.springframework.core.NestedExceptionUtils;
+import org.springframework.dao.DataAccessException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import java.time.Instant;
 import java.util.stream.Collectors;
@@ -36,6 +40,26 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EmptyResultDataAccessException.class)
     public ResponseEntity<ApiError> handleNotFound(EmptyResultDataAccessException exception) {
         return error(HttpStatus.NOT_FOUND, "No se encontró el pedido solicitado.");
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiError> handleMissingParameter(MissingServletRequestParameterException exception) {
+        return error(HttpStatus.BAD_REQUEST, "Falta el parámetro obligatorio: " + exception.getParameterName() + ".");
+    }
+
+    /**
+     * Las validaciones de negocio de las funciones PL/pgSQL (RAISE EXCEPTION, SQLSTATE P0001)
+     * se devuelven como 400 con su mensaje; cualquier otro error de base de datos es 500.
+     */
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ApiError> handleDataAccess(DataAccessException exception) {
+        Throwable causa = NestedExceptionUtils.getMostSpecificCause(exception);
+        if (causa instanceof SQLException sql && "P0001".equals(sql.getSQLState()) && sql.getMessage() != null) {
+            String mensaje = sql.getMessage().lines().findFirst().orElse(sql.getMessage())
+                    .replaceFirst("^ERROR:\\s*", "").trim();
+            return error(HttpStatus.BAD_REQUEST, mensaje);
+        }
+        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrió un error al procesar la solicitud.");
     }
 
     @ExceptionHandler(ResponseStatusException.class)

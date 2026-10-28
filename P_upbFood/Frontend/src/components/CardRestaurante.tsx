@@ -10,6 +10,7 @@ export interface Restaurante {
   ubicacion: string
   estado: EstadoRestaurante
   tiempoEstimadoMin: number
+  horario?: string | null
 }
 
 type CardRestauranteProps = {
@@ -78,6 +79,11 @@ function CardRestaurante({ restaurante, seleccionado, onClick }: CardRestaurante
         <p className="restaurant-card__time">
           Tiempo estimado <strong>{restaurante.tiempoEstimadoMin} min</strong>
         </p>
+        {restaurante.horario && (
+          <p className="restaurant-card__time restaurant-card__schedule">
+            Horario <strong>{restaurante.horario}</strong>
+          </p>
+        )}
 
         <div className="restaurant-card__selection">
           {estaCerrado ? (

@@ -144,3 +144,27 @@ Se revisó el *Documento Acumulativo del Proyecto UPB Food* contra el código y 
 
 - `APP_UPB_REVISOR_CLAVE`: clave del encargado de la universidad. Agrégala a tu `.env` (ver `.env.example`) y reconstruye con `docker compose up --build -d`. No requiere migraciones de base de datos.
 
+### Ajustes exigidos por el plan de pruebas (Plan_de_Pruebas_UPB.xlsx)
+
+| HU / criterio | Cambio | Archivos |
+|---|---|---|
+| HU011 (87–92) | El botón *Continuar al pago* solo se habilita con datos válidos; los errores aparecen al salir de cada campo. Al continuar, el pedido pasa a **EN_PAGO** con `POST /api/pedidos/seguimiento/{codigo}/iniciar-pago`. | `FormularioCliente.tsx`, `OrderController.java`, `SecurityConfig.java` |
+| HU022 (216–217) | El portal de pago permite elegir **Efectivo, Tarjeta o Transferencia**. Tarjeta usa Stripe (sandbox); efectivo y transferencia usan el pago simulado que valida el monto exacto. | `PagoPage.tsx`, `FormularioCliente.css` |
+| HU014/HU015 (115, 129, 142) | En la tarjeta de cocina los extras y las notas aparecen debajo de cada producto, y se puede desplegar el detalle (precio unitario y subtotal). | `CardPedido.tsx`, `DashboardCocina.css` |
+| HU029 (260, 263) | Solo el dueño cambia estado, tiempo y datos de la cafetería (el backend responde 403 al rol cocina y el tablero de cocina ya no muestra esos botones). Nuevo campo **horario de atención**, visible en la tarjeta y en el menú. | `RestaurantController.java`, `Restaurant.java`, `DashboardCocina.tsx`, `App.tsx`, `AdminDashboardPage.tsx`, `CardRestaurante.tsx`, `RestaurantMenuPage.tsx`, `init.sql`, `migrations/20261028_horario_restaurante.sql` |
+| HU024 (26, 232) | Mientras se recupera la sesión, las rutas `/admin/*` esperan en lugar de redirigir; un enlace directo llega a su vista o a la página 403. | `App.tsx` |
+| HU031 (272) | La aprobación desde el panel UPB siempre devuelve el enlace de activación al encargado; la pantalla solo lo muestra si el correo no se envió. | `RevisionUniversidadController.java`, `PanelUniversidadPage.tsx` |
+
+**Base de datos existente:** ejecuta una vez `DataBase/migrations/20261028_horario_restaurante.sql` (o recrea el volumen). Sin esta columna el backend no arranca, porque Hibernate valida el esquema.
+
+### Suite automática del plan de pruebas
+
+`P_upbFood/QA` ejecuta los 198 criterios pendientes del plan (API, base de datos e interfaz con Playwright) y genera el Excel diligenciado, un reporte y capturas. Instrucciones en `P_upbFood/QA/README.md`.
+
+
+### Ejecución del plan de pruebas (27/Oct/2026)
+
+Resultado en Docker local: **198/198 criterios pendientes en OK** (275/275 en total). La primera corrida detectó dos fallas reales que se corrigieron:
+
+- Errores no manejados respondían **401** porque `/error` no estaba permitido en `SecurityConfig`. Ahora se permite y `GlobalExceptionHandler` devuelve **400** con el mensaje para las validaciones de PL/pgSQL (`SQLSTATE P0001`) y los parámetros faltantes.
+- Se agregaron `EJECUTAR_PRUEBAS.bat` (levanta la app y corre la suite) y `REINICIAR_BD_Y_PROBAR.bat` (recrea la base local desde `init.sql` antes de probar).

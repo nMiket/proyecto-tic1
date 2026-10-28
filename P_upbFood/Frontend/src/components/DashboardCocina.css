@@ -554,3 +554,49 @@
     min-height: auto;
   }
 }
+
+/* HU014/HU015: extras y notas debajo de cada producto y detalle desplegable */
+.pedido-card__productos li {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.pedido-card__producto strong {
+  display: inline;
+  margin: 0;
+}
+
+.pedido-card__extra,
+.pedido-card__nota,
+.pedido-card__detalle {
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.pedido-card__extra {
+  color: #0f766e;
+}
+
+.pedido-card__nota {
+  color: #92400e;
+  font-style: italic;
+}
+
+.pedido-card__detalle {
+  color: #64748b;
+}
+
+.pedido-card button.pedido-card__toggle {
+  width: auto;
+  margin-top: 0.4rem;
+  padding: 0.3rem 0;
+  background: none;
+  color: #0f766e;
+  font-size: 0.82rem;
+  text-decoration: underline;
+}
+
+.pedido-card button.pedido-card__toggle:hover {
+  background: none;
+  color: #123e36;
+}

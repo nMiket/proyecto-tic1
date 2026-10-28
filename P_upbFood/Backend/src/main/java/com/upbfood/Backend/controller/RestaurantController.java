@@ -81,7 +81,8 @@ public class RestaurantController {
             @PathVariable Integer id,
             @RequestBody Map<String, Object> request) {
 
-        authorizationService.requireAdminForRestaurant(id);
+        // HU029: solo el dueño puede cambiar la configuración de su cafetería.
+        authorizationService.requireOwnerForRestaurant(id);
 
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -130,6 +131,16 @@ public class RestaurantController {
             } else {
                 restaurant.setImagenUrl(null);
             }
+        }
+
+        if (request.containsKey("horario")) {
+            Object horarioVal = request.get("horario");
+            String nuevoHorario = horarioVal == null ? "" : horarioVal.toString().trim();
+            if (nuevoHorario.length() > 100) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "El horario no puede superar 100 caracteres.");
+            }
+            restaurant.setHorario(nuevoHorario.isEmpty() ? null : nuevoHorario);
         }
 
         if (request.containsKey("estado") && request.get("estado") != null) {

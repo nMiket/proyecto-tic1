@@ -85,7 +85,8 @@ CREATE TABLE restaurante (
     estado                 VARCHAR(20) NOT NULL DEFAULT 'Abierto'
         CHECK (estado IN ('Abierto', 'Cerrado', 'Alta demanda')),
     tiempo_pedido          INTEGER NOT NULL DEFAULT 15 CHECK (tiempo_pedido > 0),
-    imagen_url             TEXT
+    imagen_url             TEXT,
+    horario                VARCHAR(100)
 );
 
 CREATE TABLE administrador (
@@ -595,6 +596,7 @@ $$ LANGUAGE plpgsql;
 -- Restaurantes (ids 1 y 2)
 SELECT fn_restaurante_crear('Cafetería Central - Bloque 11', 'Bloque 11', 'Abierto', 15);
 SELECT fn_restaurante_crear('Cafetería Montana del Boulevard', 'Boulevard', 'Abierto', 10);
+UPDATE restaurante SET horario = 'Lunes a viernes, 7:00 a. m. - 6:00 p. m.';
 
 -- Tipos de producto (ids 1 a 4). 'Adición' es el tipo que usan los extras.
 SELECT fn_tipo_producto_crear('Almuerzos');

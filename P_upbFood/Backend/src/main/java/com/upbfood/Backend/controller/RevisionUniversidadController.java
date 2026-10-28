@@ -102,6 +102,8 @@ public class RevisionUniversidadController {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("solicitudId", resultado.solicitudId());
         response.put("estado", "APROBADA");
+        // El encargado siempre recibe el enlace para poder entregarlo si el correo no llega.
+        response.put("enlaceActivacion", resultado.enlace());
         try {
             notificacionInvitacionService.enviarInvitacion(resultado.correoDestino(), resultado.enlace());
             response.put("correoEnviado", true);
@@ -110,7 +112,6 @@ public class RevisionUniversidadController {
         } catch (IllegalStateException e) {
             // Sin servidor de correo, el encargado recibe el enlace para entregarlo manualmente.
             response.put("correoEnviado", false);
-            response.put("enlaceActivacion", resultado.enlace());
             response.put("mensaje",
                     "Solicitud aprobada, pero no se pudo enviar el correo. Comparte el enlace de activación con el solicitante.");
         }

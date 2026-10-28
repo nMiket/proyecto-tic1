@@ -1,0 +1,16 @@
+{
+  "name": "upbfood-qa",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Ejecución automática del plan de pruebas de UPB Food (criterios pendientes HU001-HU031).",
+  "type": "module",
+  "scripts": {
+    "postinstall": "playwright install chromium",
+    "test": "node run-plan.mjs"
+  },
+  "dependencies": {
+    "exceljs": "4.4.0",
+    "pg": "8.13.1",
+    "playwright": "1.48.2"
+  }
+}

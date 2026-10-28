@@ -42,6 +42,14 @@ function obtenerPedidoRespaldo(searchParams: URLSearchParams): PagoState | null 
     }
 }
 
+type MetodoPago = "efectivo" | "tarjeta" | "transferencia";
+
+const metodosPago: Array<{ valor: MetodoPago; etiqueta: string; tipoPagoId: number }> = [
+    { valor: "efectivo", etiqueta: "Efectivo", tipoPagoId: 1 },
+    { valor: "tarjeta", etiqueta: "Tarjeta", tipoPagoId: 2 },
+    { valor: "transferencia", etiqueta: "Transferencia", tipoPagoId: 3 },
+];
+
 export default function PagoPage() {
     const location = useLocation();
     const [searchParams] = useSearchParams();
@@ -55,6 +63,9 @@ export default function PagoPage() {
     >("pendiente");
     const [mensaje, setMensaje] = useState("");
     const verificadoStripeRef = useRef(false);
+    // HU022: el cliente elige el medio de pago. Tarjeta usa Stripe (sandbox);
+    // efectivo y transferencia se registran con el pago simulado.
+    const [metodo, setMetodo] = useState<MetodoPago>("tarjeta");
 
     const total = Number(state?.total ?? 0);
     const codigoSeguimiento = state?.codigoSeguimiento ?? "";
@@ -159,6 +170,42 @@ export default function PagoPage() {
         }
     };
 
+    const simularPago = async () => {
+        if (!codigoSeguimiento || total <= 0) {
+            setMensaje("No se encontraron los datos completos del pedido.");
+            return;
+        }
+        const tipoPagoId = metodosPago.find((item) => item.valor === metodo)?.tipoPagoId ?? 1;
+
+        setProcesando(true);
+        setMensaje("");
+        try {
+            const respuesta = await apiFetch(
+                `${getApiBaseUrl()}/api/pedidos/seguimiento/${codigoSeguimiento}/pago`,
+                {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ tipoPagoId, monto: total }),
+                }
+            );
+            if (!respuesta.ok) {
+                const err = (await respuesta.json().catch(() => null)) as {
+                    message?: string;
+                } | null;
+                setEstadoPago("rechazado");
+                setMensaje(err?.message ?? "El pago no pudo registrarse. Inténtalo nuevamente.");
+                return;
+            }
+            setEstadoPago("aprobado");
+            setMensaje("¡Pago aprobado! Tu pedido quedó registrado como pagado.");
+        } catch {
+            setEstadoPago("rechazado");
+            setMensaje("No se pudo conectar con el servidor. Revisa tu conexión e inténtalo nuevamente.");
+        } finally {
+            setProcesando(false);
+        }
+    };
+
     if (!pedidoId || !codigoSeguimiento) {
         return (
             <section className="cliente-container">
@@ -200,27 +247,66 @@ export default function PagoPage() {
 
                 {estadoPago === "pendiente" || estadoPago === "rechazado" ? (
                     <>
-                        <div className="pago-sandbox-card">
-                            <strong>Tarjeta de prueba (Stripe Sandbox):</strong>
-                            <div>
-                                Número: <code>4242 4242 4242 4242</code> ·
-                                Fecha: cualquier mes/año futuro (ej.{" "}
-                                <code>12/28</code>) · CVC: <code>123</code>
-                            </div>
-                        </div>
+                        <fieldset className="pago-metodos">
+                            <legend>Método de pago</legend>
+                            {metodosPago.map((item) => (
+                                <label
+                                    key={item.valor}
+                                    className={metodo === item.valor ? "pago-metodo is-active" : "pago-metodo"}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="metodo-pago"
+                                        value={item.valor}
+                                        checked={metodo === item.valor}
+                                        onChange={() => setMetodo(item.valor)}
+                                    />
+                                    {item.etiqueta}
+                                </label>
+                            ))}
+                        </fieldset>
 
-                        <button
-                            type="button"
-                            className="pago-stripe-button"
-                            onClick={() => void iniciarPagoStripe()}
-                            disabled={procesando || redirigiendoStripe}
-                        >
-                            {redirigiendoStripe
-                                ? "Abriendo Stripe Checkout..."
-                                : procesando
-                                ? "Verificando pago..."
-                                : "Pagar con Stripe"}
-                        </button>
+                        {metodo === "tarjeta" ? (
+                            <>
+                                <div className="pago-sandbox-card">
+                                    <strong>Tarjeta de prueba (Stripe Sandbox):</strong>
+                                    <div>
+                                        Número: <code>4242 4242 4242 4242</code> ·
+                                        Fecha: cualquier mes/año futuro (ej.{" "}
+                                        <code>12/28</code>) · CVC: <code>123</code>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="pago-stripe-button"
+                                    onClick={() => void iniciarPagoStripe()}
+                                    disabled={procesando || redirigiendoStripe}
+                                >
+                                    {redirigiendoStripe
+                                        ? "Abriendo Stripe Checkout..."
+                                        : procesando
+                                        ? "Verificando pago..."
+                                        : "Pagar con Stripe"}
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <p className="campo-ayuda">
+                                    {metodo === "efectivo"
+                                        ? "Pagarás en el mostrador al recoger. En este prototipo el pago se simula."
+                                        : "La transferencia se simula en este prototipo y se valida por el valor exacto del pedido."}
+                                </p>
+                                <button
+                                    type="button"
+                                    className="pago-stripe-button"
+                                    onClick={() => void simularPago()}
+                                    disabled={procesando}
+                                >
+                                    {procesando ? "Registrando pago..." : "Simular aprobación del pago"}
+                                </button>
+                            </>
+                        )}
                     </>
                 ) : null}
 

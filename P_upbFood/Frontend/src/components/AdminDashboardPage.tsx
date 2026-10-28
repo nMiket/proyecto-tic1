@@ -39,6 +39,7 @@ type RestauranteItem = {
   tiempoEstimadoMin?: number
   imagenUrl?: string
   imagen?: string
+  horario?: string | null
 }
 
 type AdministradorCocinaItem = {
@@ -252,6 +253,7 @@ export default function AdminDashboardPage({
   // Configuración de identidad y control operativo de la cafetería
   const [cafeNombre, setCafeNombre] = useState<string>('')
   const [cafeUbicacion, setCafeUbicacion] = useState<string>('')
+  const [cafeHorario, setCafeHorario] = useState<string>('')
   const [cafeImagenUrl, setCafeImagenUrl] = useState<string>('')
   const [cafeEstado, setCafeEstado] = useState<string>('Abierto')
   const [cafeTiempoMin, setCafeTiempoMin] = useState<number>(15)
@@ -278,6 +280,7 @@ export default function AdminDashboardPage({
     if (restauranteSeleccionado) {
       setCafeNombre(restauranteSeleccionado.nombre ?? '')
       setCafeUbicacion(restauranteSeleccionado.ubicacion ?? '')
+      setCafeHorario(restauranteSeleccionado.horario ?? '')
       setCafeImagenUrl(restauranteSeleccionado.imagenUrl ?? restauranteSeleccionado.imagen ?? '')
       setCafeEstado(restauranteSeleccionado.estado ?? 'Abierto')
       setCafeTiempoMin(restauranteSeleccionado.tiempoEstimadoMin ?? 15)
@@ -321,6 +324,7 @@ export default function AdminDashboardPage({
           body: JSON.stringify({
             nombre: cafeNombre.trim(),
             ubicacion: cafeUbicacion.trim(),
+            horario: cafeHorario.trim(),
             imagenUrl: cafeImagenUrl.trim() || null,
             estado: cafeEstado,
             tiempoEstimadoMin: cafeTiempoMin,
@@ -1258,6 +1262,18 @@ export default function AdminDashboardPage({
                 value={cafeUbicacion}
                 onChange={(e) => setCafeUbicacion(e.target.value)}
                 placeholder="Ej. Bloque 11, primer piso"
+              />
+            </div>
+
+            <div className="admin-field-compact">
+              <label htmlFor="cafe-horario">Horario de atención</label>
+              <input
+                id="cafe-horario"
+                type="text"
+                maxLength={100}
+                value={cafeHorario}
+                onChange={(e) => setCafeHorario(e.target.value)}
+                placeholder="Ej. Lunes a viernes, 7:00 a. m. - 6:00 p. m."
               />
             </div>
 

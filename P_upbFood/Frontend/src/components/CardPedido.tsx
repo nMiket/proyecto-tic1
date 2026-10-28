@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 type DetallePedido = {
   id?: number
   detalle_pedido_id?: number
@@ -47,6 +49,7 @@ export function CardPedido({ pedido, tipo, actualizando = false, onAceptar, onLi
   const horaRecogida = formatearHora(pedido.horaRecogida ?? pedido.fechaCreacion)
   // HU015: el backend solo permite PAGADO -> EN_PREPARACION; la tarjeta refleja esa regla.
   const pagado = pedido.estado === 'PAGADO'
+  const [verDetalle, setVerDetalle] = useState(false)
   return (
     <article className={`pedido-card ${tipo === 'preparacion' ? 'en-preparacion' : ''}`}>
       <div className="pedido-card__header">
@@ -65,15 +68,37 @@ export function CardPedido({ pedido, tipo, actualizando = false, onAceptar, onLi
       <div className="pedido-card__productos"><strong>Productos</strong><ul>
         {pedido.details?.length ? pedido.details.map((detalle) => (
           <li key={detalle.detalle_pedido_id ?? detalle.id ?? `${nombreDetalle(detalle)}-${detalle.cantidad}`}>
-            {detalle.cantidad} × {nombreDetalle(detalle)}
-            {detalle.subtotal !== undefined && detalle.subtotal !== null && (
-              <span> · ${Number(detalle.subtotal).toLocaleString('es-CO')}</span>
+            <span className="pedido-card__producto">
+              <strong>{detalle.cantidad} ×</strong> {nombreDetalle(detalle)}
+            </span>
+            {detalle.adiciones && (
+              <span className="pedido-card__extra">+ Extras: {detalle.adiciones}</span>
             )}
-            {detalle.adiciones && <span> — Extras: {detalle.adiciones}</span>}
-            {detalle.observaciones && <span> — Nota: {detalle.observaciones}</span>}
+            {detalle.observaciones && (
+              <span className="pedido-card__nota">Nota: {detalle.observaciones}</span>
+            )}
+            {verDetalle && (
+              <span className="pedido-card__detalle">
+                Precio unitario ${Number(detalle.precio_unitario ?? 0).toLocaleString('es-CO')}
+                {detalle.subtotal !== undefined && detalle.subtotal !== null && (
+                  <> · Subtotal ${Number(detalle.subtotal).toLocaleString('es-CO')}</>
+                )}
+              </span>
+            )}
           </li>
         )) : <li>Sin productos registrados</li>}
-      </ul></div>
+      </ul>
+        {pedido.details?.length > 0 && (
+          <button
+            type="button"
+            className="pedido-card__toggle"
+            aria-expanded={verDetalle}
+            onClick={() => setVerDetalle((valor) => !valor)}
+          >
+            {verDetalle ? 'Ocultar detalle' : 'Ver detalle de productos'}
+          </button>
+        )}
+      </div>
       <div className="pedido-card__acciones">
         {tipo === 'nuevo' && onAceptar && (
           pagado ? (

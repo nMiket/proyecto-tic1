@@ -141,6 +141,7 @@ Haz un respaldo de PostgreSQL y ejecuta una sola vez el script:
 ```text
 DataBase/migrations/20261024_remove_global_admin_add_email_review.sql
 DataBase/migrations/20261024_product_adiciones_por_producto.sql
+DataBase/migrations/20261028_horario_restaurante.sql
 ```
 
 Ejecuta cada migración pendiente una sola vez, en ese orden. La primera elimina las cuentas marcadas como administrador global, retira la columna `es_top_global` y añade los campos para almacenar los hashes de los enlaces de decisión. La segunda crea la relación entre cada producto y los ingredientes extra que ofrece. No borra restaurantes, pedidos, productos ni las cuentas de dueño y administrador de cocina.
@@ -154,6 +155,20 @@ Cada restaurante puede crear ingredientes extra con nombre y precio propios, reu
 Para bases existentes, aplica `DataBase/migrations/20261024_product_adiciones_por_producto.sql` antes de volver a levantar la aplicación. En bases nuevas, la tabla ya se crea desde `DataBase/init.sql`.
 
 ## Ejecutar las pruebas
+
+### Plan de pruebas completo (criterios de aceptación)
+
+Con la aplicación levantada (`docker compose up --build -d`):
+
+```powershell
+cd QA
+npm install
+npm test
+```
+
+Genera `QA/resultados/Plan_de_Pruebas_UPB_resultados.xlsx` con cada criterio en OK / ERROR / PENDIENTE. Detalles en [`QA/README.md`](QA/README.md).
+
+### Pruebas unitarias
 
 Desde `P_upbFood/Backend`:
 

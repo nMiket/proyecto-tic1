@@ -69,6 +69,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/pedidos").permitAll()
                         .requestMatchers(
                                 HttpMethod.POST,
+                                "/api/pedidos/seguimiento/*/iniciar-pago",
                                 "/api/pedidos/seguimiento/*/stripe-session",
                                 "/api/pedidos/seguimiento/*/stripe-confirmar")
                         .permitAll()
@@ -104,6 +105,10 @@ public class SecurityConfig {
                         // clave institucional validada en RevisionUniversidadController.
                         .requestMatchers("/api/upb/solicitudes", "/api/upb/solicitudes/**")
                         .permitAll()
+
+                        // Página de error interna de Spring: sin esto, cualquier excepción no
+                        // manejada se convertía en 401 en lugar de su código real.
+                        .requestMatchers("/error").permitAll()
 
                         // El resto requiere autenticación
                         .anyRequest().authenticated())
