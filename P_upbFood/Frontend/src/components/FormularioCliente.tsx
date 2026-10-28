@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, getApiBaseUrl } from "../auth";
 import { useCart } from "../context/useCart";
+import { guardarPedido } from "../utils/pedidosGuardados";
 import "./FormularioCliente.css";
 
 function crearOpcionesHora(tiempoPreparacionMin: number) {
@@ -126,12 +127,12 @@ export default function FormularioCliente() {
                     total: number;
                 };
 
-                localStorage.setItem("upbfood.lastOrder", JSON.stringify({
+                guardarPedido({
                     ...pedido,
                     clienteNombre: nombre.trim(),
                     clienteCorreo: correo.trim(),
                     clienteTelefono: telefono.trim(),
-                }));
+                });
 
                 vaciarCarrito();
 

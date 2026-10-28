@@ -118,6 +118,22 @@ El administrador global ya no tiene una cuenta ni una vista dentro de la aplicac
 
 Para que los correos se envíen, configura `MAIL_USERNAME`, `MAIL_PASSWORD`, `APP_NOTIFICACIONES_CORREO_DESTINO` y `APP_FRONTEND_URL` en `.env`.
 
+### Panel del encargado de la universidad (HU031)
+
+Además del correo, la persona encargada de la UPB puede revisar todas las solicitudes en `/upb/solicitudes`. El panel pide una clave institucional que se define en `.env` con `APP_UPB_REVISOR_CLAVE` (usa un valor largo y aleatorio). Si la variable queda vacía, el panel está deshabilitado y la API responde `403`.
+
+| Método | Ruta | Uso |
+|---|---|---|
+| `GET` | `/api/upb/solicitudes?estado=PENDIENTE` | Lista solicitudes (`PENDIENTE`, `APROBADA`, `RECHAZADA` o `TODAS`). |
+| `POST` | `/api/upb/solicitudes/{id}/aprobar` | Aprueba y envía al solicitante el enlace para activar su cuenta de dueño. Si el correo no está configurado, la respuesta incluye `enlaceActivacion` para entregarlo manualmente. |
+| `POST` | `/api/upb/solicitudes/{id}/rechazar` | Rechaza con una observación opcional (`{ "observacion": "..." }`) y notifica al solicitante. |
+
+Todas las peticiones envían la clave en la cabecera `X-UPB-Revisor-Clave` y tienen límite de 30 peticiones por minuto por IP.
+
+## Historial de pedidos del cliente (HU027)
+
+La vista `/historial` muestra los pedidos hechos desde el mismo navegador y permite buscar todos los pedidos del cliente con `GET /api/pedidos/historial?correo=...&telefono=...`. Se exigen ambos datos para que nadie pueda ver pedidos ajenos con un solo dato de contacto; el endpoint devuelve hasta 50 pedidos, del más reciente al más antiguo, con su código de seguimiento.
+
 ### Actualizar una base de datos existente
 
 Haz un respaldo de PostgreSQL y ejecuta una sola vez el script:
@@ -142,8 +158,10 @@ Para bases existentes, aplica `DataBase/migrations/20261024_product_adiciones_po
 Desde `P_upbFood/Backend`:
 
 ```powershell
-./mvnw -Dtest=AdminAuthControllerTest test -q
+./mvnw test
 ```
+
+Para ejecutar solo las pruebas de las últimas historias: `./mvnw -Dtest="HistorialClienteTest,RevisionUniversidadControllerTest,TransicionesPedidoTest" test`.
 
 Desde `P_upbFood/Frontend`:
 
@@ -169,6 +187,7 @@ Usa `docker compose down -v` únicamente si necesitas reinicializar la base de d
 
 - No subas `.env`; solo se debe versionar `.env.example`.
 - `APP_JWT_SECRET` debe ser aleatorio y tener al menos 32 bytes.
+- `APP_UPB_REVISOR_CLAVE` habilita el panel del encargado UPB; cámbiala por un valor propio y no la compartas fuera de la universidad.
 - Usa `APP_AUTH_COOKIE_SECURE=true` únicamente cuando el backend esté detrás de HTTPS.
 - Las variables de producción deben configurarse en el proveedor de despliegue, no en archivos del repositorio.
 

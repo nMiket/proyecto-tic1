@@ -170,6 +170,8 @@ Una vez levantados los servicios, accede desde tu navegador web:
 | **Vista Pública**       | [http://localhost:5173](http://localhost:5173)                                 | Explora las cafeterías (`CardRestaurante`) y el catálogo de productos con formato de moneda en COP (`CardProducto`). |
 | **Login Administrativo** | [http://localhost:5173/admin](http://localhost:5173/admin)                     | Inicio de sesión para administradores de restaurante.                                                                     |
 | **Dashboard Admin**      | [http://localhost:5173/admin/dashboard](http://localhost:5173/admin/dashboard) | Métricas activas, resumen del día y CRUD completo de productos (crear, editar, eliminar y cambiar disponibilidad).       |
+| **Historial del cliente** | [http://localhost:5173/historial](http://localhost:5173/historial)             | Pedidos guardados en el navegador y búsqueda de todos los pedidos con correo + teléfono (HU027).                          |
+| **Panel encargado UPB**  | [http://localhost:5173/upb/solicitudes](http://localhost:5173/upb/solicitudes) | Aprobación o rechazo de solicitudes de nuevas cafeterías (HU031). Requiere la clave `APP_UPB_REVISOR_CLAVE` del `.env`. |
 | **Backend REST API**     | [http://localhost:8080](http://localhost:8080)                                 | Endpoints REST (`/api/restaurantes`, `/api/products`, `/api/admin/login`).                                           |
 
 ### Datos de Inicio de Sesión (Sembrados)
@@ -181,7 +183,7 @@ Una vez levantados los servicios, accede desde tu navegador web:
 
 La contraseña se almacena como hash BCrypt. El login entrega un JWT de acceso y administra la renovación mediante un refresh token `HttpOnly`.
 
-Las credenciales de PostgreSQL y el secreto JWT se configuran en `P_upbFood/.env`. Usa [`P_upbFood/.env.example`](P_upbFood/.env.example) como plantilla; nunca subas el archivo `.env` real.
+Las credenciales de PostgreSQL, el secreto JWT y la clave del encargado UPB (`APP_UPB_REVISOR_CLAVE`) se configuran en `P_upbFood/.env`. Usa [`P_upbFood/.env.example`](P_upbFood/.env.example) como plantilla; nunca subas el archivo `.env` real.
 
 ---
 
@@ -234,7 +236,7 @@ Este proyecto es desarrollado en el marco de la asignatura **Proyecto Aplicado e
 
 Trabajamos con un **enfoque híbrido Scrum + Kanban**:
 
-* **Scrum:** Planificación incremental en **4 Sprints** de 2 semanas (8 semanas totales, 72 Puntos de Historia).
+* **Scrum:** Planificación incremental en **4 Sprints** de 2 semanas más un Sprint 4 Extendido (backlog inicial de 72 PH ampliado a 31 HU y 123 PH).
 * **Kanban:** Gestión del flujo de trabajo visualizado mediante **GitHub Projects**.
 
 ---
@@ -251,7 +253,7 @@ El proyecto se gestiona de manera ágil bajo el marco **Scrumban**, combinando l
 | **Sprint 2** | 09/Sep/2026 – 23/Sep/2026 | Catálogo de productos interactivo y gestión del Carrito (Context API) | 19 PH | **Completado (100%)** |
 | **Sprint 3** | 23/Sep/2026 – 07/Oct/2026 | Formalización de pedidos, cliente y Tablero de Cocina en tiempo real | 19 PH | **Completado (100%)** |
 | **Sprint 4** | 07/Oct/2026 – 21/Oct/2026 | Gestión administrativa de catálogo, filtros por categoría y altas | 18 PH | **Completado (100%)** |
-| **Sprint 4 Ext.** | 21/Oct/2026 – Cierre | Trazabilidad por UUID, pago simulado, aislamiento y seguridad RBAC | 51 PH | **En Ejecución** |
+| **Sprint 4 Ext.** | 21/Oct/2026 – Cierre | Trazabilidad por UUID, pago simulado, aislamiento, seguridad RBAC, historial, métricas y aprobación UPB | 51 PH | **Completado (100%)** |
 
 ---
 
@@ -269,7 +271,7 @@ El proyecto se gestiona de manera ágil bajo el marco **Scrumban**, combinando l
 * [x] **HU005: Card producto (3 PH)** — *Ismael López* [AMPLIADA: Selector de adiciones] `Completado`
 * [x] **HU006: Botón y Estado Global del Carrito (4 PH)** — *Valeria Gómez* [AMPLIADA: Carrito de una sola cafetería] `Completado`
 * [x] **HU007: Lista de pedidos y Resumen de Compra (3 PH)** — *Valeria Gómez* [AMPLIADA: Flujo en tres pasos] `Completado`
-* [x] **HU008: Card de productos pedidos y Notas (5 PH)** — *Andrés Martínez* `Completado`
+* [x] **HU008: Card de productos pedidos y Notas (5 PH)** — *Andrés Martínez* [AMPLIADA: Añadir o quitar ingredientes extra desde la revisión] `Completado`
 
 #### Sprint 3: Confirmación, Identificación y Gestión de Pedidos (19 PH)
 * [x] **HU009: Botón confirmar pedido y Persistencia (4 PH)** — *Andrés Martínez* [AMPLIADA: Restricciones de apertura] `Completado`
@@ -284,17 +286,19 @@ El proyecto se gestiona de manera ágil bajo el marco **Scrumban**, combinando l
 * [x] **HU018: Panel de edición de producto (6 PH)** — *Andrés Martínez & Julián Miranda* [AMPLIADA: Soporte de adiciones] `Completado`
 * [x] **HU019: Botón y Formulario para añadir producto (4 PH)** — *Ismael López* `Completado`
 
-#### Sprint 4 (Extendido): Funcionalidades de Robustez y Trazabilidad (42 PH)
-* [ ] **HU020: Seguimiento de pedido por código único UUID (5 PH)** — *Valeria Gómez* `En Progreso`
-* [ ] **HU021: Consulta de pedido por número, correo o teléfono (4 PH)** — *Ismael López* `En Progreso`
-* [ ] **HU022: Portal de pago simulado y validación de total (5 PH)** — *Andrés Martínez* `En Progreso`
+#### Sprint 4 (Extendido): Funcionalidades de Robustez y Trazabilidad (51 PH)
+* [x] **HU020: Seguimiento de pedido por código único UUID (5 PH)** — *Valeria Gómez* `Completado`
+* [x] **HU021: Consulta de pedido por número, correo o teléfono (4 PH)** — *Ismael López* `Completado`
+* [x] **HU022: Portal de pago simulado y validación de total (5 PH)** — *Andrés Martínez* `Completado`
 * [x] **HU023: Sesión persistente y revocación de tokens JWT (4 PH)** — *Andrés Martínez* `Completado`
 * [x] **HU024: Control de acceso basado en roles y cafetería - RBAC (5 PH)** — *Ismael López* `Completado`
 * [x] **HU025: Gestión de administradores de cocina con borrado lógico (5 PH)** — *Ismael López* `Completado`
 * [x] **HU026: Aislamiento estricto de productos por cafetería (4 PH)** — *Ismael López* `Completado`
-* [x] **HU027: Historial de pedidos del cliente (3 PH)** — *Valeria Gómez* `Planificado`
-* [ ] **HU028: Métricas reales del panel administrativo (4 PH)** — *Valeria Gómez* `Planificado`
-* [ ] **HU029: Cambio de estado y tiempo de la cafetería (3 PH)** — *Valeria Gómez* `Planificado`
+* [x] **HU027: Historial de pedidos del cliente (3 PH)** — *Valeria Gómez* `Completado`
+* [x] **HU028: Métricas reales del panel administrativo (4 PH)** — *Valeria Gómez* [Acciones rápidas conectadas] `Completado`
+* [x] **HU029: Cambio de estado y tiempo de la cafetería (3 PH)** — *Valeria Gómez* `Completado`
+* [x] **HU030: Registro de nueva cafetería (5 PH)** — *Andrés Martínez* `Completado`
+* [x] **HU031: Aprobación de solicitudes por la UPB (4 PH)** — *Andrés Martínez* [Panel `/upb/solicitudes`] `Completado`
 
 ---
 

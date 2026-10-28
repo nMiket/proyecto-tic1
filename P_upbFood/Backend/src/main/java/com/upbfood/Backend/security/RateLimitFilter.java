@@ -47,6 +47,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private RateRule resolveRule(String method, String uri) {
+        if (uri != null && uri.startsWith("/api/upb/")) {
+            return new RateRule("panel-upb", 30, 60_000L);
+        }
         if ("POST".equalsIgnoreCase(method)) {
             if ("/api/admin/login".equals(uri)) {
                 return new RateRule("login", 10, 60_000L);
@@ -58,6 +61,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 return new RateRule("activar-invitacion", 10, 60_000L);
             }
         } else if ("GET".equalsIgnoreCase(method)) {
+            if ("/api/pedidos/historial".equals(uri)) {
+                return new RateRule("historial-cliente", 20, 60_000L);
+            }
             if ("/api/pedidos/consulta".equals(uri) || "/api/pedidos/seguimiento/consulta".equals(uri)) {
                 return new RateRule("consulta-pedido", 25, 60_000L);
             }

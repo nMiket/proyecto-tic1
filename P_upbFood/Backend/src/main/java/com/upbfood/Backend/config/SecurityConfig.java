@@ -79,6 +79,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/pedidos/consulta",
+                                "/api/pedidos/historial",
                                 "/api/pedidos/seguimiento/consulta",
                                 "/api/pedidos/seguimiento/*")
                         .permitAll()
@@ -97,6 +98,11 @@ public class SecurityConfig {
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/solicitudes-registro/revisar-correo")
+                        .permitAll()
+
+                        // HU031: panel del encargado de la universidad. Se protege con la
+                        // clave institucional validada en RevisionUniversidadController.
+                        .requestMatchers("/api/upb/solicitudes", "/api/upb/solicitudes/**")
                         .permitAll()
 
                         // El resto requiere autenticación

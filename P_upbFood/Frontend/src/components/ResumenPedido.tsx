@@ -77,6 +77,7 @@ function ResumenPedido({
     quitarProducto,
     eliminarProducto,
     actualizarObservaciones,
+    actualizarAdiciones,
     vaciarCarrito,
   } = useCart()
   const navigate = useNavigate()
@@ -86,13 +87,11 @@ function ResumenPedido({
   const tiempoEstimadoMin =
     items.length > 0 ? Math.max(15, ...items.map((item) => item.tiempoEstimadoMin || 15)) : 15
   const restauranteActivoId = items[0]?.restauranteId
-  const [cafeteriaCerrada, setCafeteriaCerrada] = useState(false)
+  const [estadoCerrada, setCafeteriaCerrada] = useState(false)
+  const cafeteriaCerrada = Boolean(restauranteActivoId) && estadoCerrada
 
   useEffect(() => {
-    if (!restauranteActivoId) {
-      setCafeteriaCerrada(false)
-      return
-    }
+    if (!restauranteActivoId) return
     let cancelled = false
     void apiFetch(`${getApiBaseUrl()}/api/restaurantes`)
       .then((res) => (res.ok ? (res.json() as Promise<Array<{ id: number; estado?: string }>>) : []))
@@ -225,7 +224,37 @@ function ResumenPedido({
                     </div>
                   </div>
 
-                  {(item.adiciones ?? []).length > 0 && (
+                  {(item.ingredientesExtra ?? []).length > 0 ? (
+                    <fieldset className="order-item__suggestions order-item__extras-editor">
+                      <legend>Ingredientes extra</legend>
+                      <p>Agrega o quita adiciones sin volver a la carta. Se cobran por cada unidad.</p>
+                      <div className="suggestion-options">
+                        {item.ingredientesExtra?.map((extra) => {
+                          const seleccionado = (item.adiciones ?? []).some(
+                            (actual) => Number(actual.id) === Number(extra.id),
+                          )
+                          return (
+                            <label key={extra.id}>
+                              <input
+                                type="checkbox"
+                                checked={seleccionado}
+                                onChange={(event) => {
+                                  const actuales = item.adiciones ?? []
+                                  const nuevas = event.target.checked
+                                    ? [...actuales, extra]
+                                    : actuales.filter((actual) => Number(actual.id) !== Number(extra.id))
+                                  actualizarAdiciones(item.cartKey, nuevas)
+                                }}
+                              />
+                              <span>
+                                {extra.nombre} <strong>+{precioCOP(Number(extra.precio))}</strong>
+                              </span>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </fieldset>
+                  ) : (item.adiciones ?? []).length > 0 && (
                     <div className="order-item__extras">
                       <span>Extras seleccionados</span>
                       {item.adiciones?.map((extra) => (

@@ -7,6 +7,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from 'react'
+import { Link } from 'react-router-dom'
 import { apiFetch, getApiBaseUrl, type AsignacionRestaurante } from '../auth'
 import { formatCOP, formatDateTime as formatOrderDateTime, getProductFallbackImage } from '../utils/formatters'
 import './AdminDashboardPage.css'
@@ -1464,6 +1465,58 @@ export default function AdminDashboardPage({
             >
               {loadingStats ? 'Actualizando...' : 'Actualizar métricas'}
             </button>
+          </div>
+
+          {/* HU028: acciones rápidas conectadas con las secciones reales del panel */}
+          <div className="admin-quick-actions" aria-label="Acciones rápidas">
+            <Link className="admin-quick-action" to="/admin/cocina">
+              <strong>Ver pedidos en cocina</strong>
+              <span>{estadisticas?.pedidosActivos ?? 0} activos ahora</span>
+            </Link>
+            <button
+              type="button"
+              className="admin-quick-action"
+              onClick={() => {
+                setFiltroHistorial('activos')
+                setActiveTab('historial')
+              }}
+            >
+              <strong>Pedidos en curso</strong>
+              <span>Abrir historial filtrado</span>
+            </button>
+            <button
+              type="button"
+              className="admin-quick-action"
+              onClick={() => {
+                setActiveTab('menu')
+                window.setTimeout(() => document.getElementById('prod-nombre')?.focus(), 0)
+              }}
+            >
+              <strong>Agregar producto</strong>
+              <span>{products.length} en el menú</span>
+            </button>
+            <button
+              type="button"
+              className="admin-quick-action"
+              onClick={() => {
+                const campo = document.getElementById('cafe-nombre')
+                campo?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                campo?.focus({ preventScroll: true })
+              }}
+            >
+              <strong>Estado y tiempo de espera</strong>
+              <span>Abrir, cerrar o marcar alta demanda</span>
+            </button>
+            {esDueno && (
+              <button
+                type="button"
+                className="admin-quick-action"
+                onClick={() => setActiveTab('personal')}
+              >
+                <strong>Personal de cocina</strong>
+                <span>{administradoresCocina.length} registrados</span>
+              </button>
+            )}
           </div>
 
           <div className="admin-kpi-grid">

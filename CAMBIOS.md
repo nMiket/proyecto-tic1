@@ -116,3 +116,31 @@ try {
 3. **Zona horaria en contenedores (`DB-03`):**
    - Los contenedores `db` y `backend` ahora operan en `America/Bogota` (`UTC-5`). Los pedidos antiguos creados cuando el contenedor estaba en `UTC` conservan su marca de tiempo anterior, mientras que todos los pedidos nuevos y el corte diario de estadísticas se calculan con la hora local de Colombia.
 
+---
+
+## 5. Cierre del backlog HU001–HU031 (Documento Acumulativo, 28/Oct/2026)
+
+Se revisó el *Documento Acumulativo del Proyecto UPB Food* contra el código y se completaron las historias que figuraban como **PARCIAL** o **PENDIENTE**. Las que ya estaban implementadas en el repositorio solo se actualizaron en la documentación.
+
+| HU | Estado en el documento | Qué se hizo | Archivos |
+|---|---|---|---|
+| **HU008** | Parcial | En la revisión del pedido el cliente puede añadir o quitar ingredientes extra de cada producto; el precio se recalcula y, si la combinación ya existe en el carrito, las líneas se unifican. | `Frontend/src/context/CartContext.tsx`, `Frontend/src/components/ResumenPedido.tsx` |
+| **HU015** | Parcial | La tarjeta de cocina solo permite *Aceptar e iniciar preparación* cuando el pedido está `PAGADO` (misma regla que la máquina de estados del backend) y muestra el contacto del cliente y el subtotal por producto. Pruebas de transiciones inválidas. | `Frontend/src/components/CardPedido.tsx`, `Backend/src/test/.../TransicionesPedidoTest.java` |
+| **HU024** | Parcial | Páginas 403 (rol sin permiso, p. ej. cocina entrando al panel del dueño) y 404 (ruta inexistente) en el frontend. | `Frontend/src/components/EstadoAccesoPage.tsx`, `Frontend/src/App.tsx` |
+| **HU027** | Pendiente | Nueva vista `/historial` con los pedidos del dispositivo y búsqueda de todo el historial por correo + teléfono (`GET /api/pedidos/historial`, máx. 50 pedidos, límite de 20 consultas/min por IP). Enlace *Historial* en la barra de navegación. | `Backend/.../controller/OrderController.java`, `Backend/.../service/PedidoService.java`, `Backend/.../config/SecurityConfig.java`, `Backend/.../security/RateLimitFilter.java`, `Frontend/src/components/HistorialPedidosPage.tsx`, `Frontend/src/utils/pedidosGuardados.ts`, `Frontend/src/components/FormularioCliente.tsx` |
+| **HU028** | Pendiente | Las métricas ya eran reales (`/api/admin/pedidos/estadisticas`); se conectaron las **acciones rápidas** del panel: ver cocina, pedidos en curso, agregar producto, estado/tiempo de la cafetería y personal de cocina. | `Frontend/src/components/AdminDashboardPage.tsx`, `AdminDashboardPage.css` |
+| **HU029** | Pendiente | Ya implementada (`PATCH /api/admin/restaurantes/{id}` con estado Abierto/Cerrado/Alta demanda y tiempo de espera; el backend rechaza pedidos a cafeterías cerradas). Solo se actualizó la documentación. | — |
+| **HU030** | Pendiente | Ya implementada (formulario *Registrar restaurante* y `POST /api/solicitudes-registro` en estado `PENDIENTE`). Solo se actualizó la documentación. | — |
+| **HU031** | Pendiente | Nuevo **panel del encargado UPB** en `/upb/solicitudes` para listar, aprobar y rechazar solicitudes sin depender del correo. Protegido con la clave `APP_UPB_REVISOR_CLAVE` (cabecera `X-UPB-Revisor-Clave`, comparación en tiempo constante, 30 peticiones/min). Si el SMTP no está configurado, la aprobación devuelve el enlace de activación para entregarlo manualmente. | `Backend/.../controller/RevisionUniversidadController.java`, `Backend/.../service/AprobacionSolicitudService.java`, `application.properties`, `docker-compose.yml`, `.env.example`, `Frontend/src/components/PanelUniversidadPage.tsx` |
+| HU005, HU016–HU019, HU021 | Parcial | Revisadas en el código: selector de adiciones, selector de cafetería, retiro de producto con preservación histórica, gestión de adiciones con precio histórico, carga de imagen y consulta por número + correo/teléfono ya estaban implementados. Se marcaron como completas. | — |
+
+### Pruebas nuevas
+
+- `HistorialClienteTest` (HU027): exige correo y teléfono, normaliza datos y mapea la respuesta.
+- `RevisionUniversidadControllerTest` (HU031): panel deshabilitado sin clave, 401/403 con clave ausente o incorrecta, listado, aprobación sin correo y rechazo con observación.
+- `TransicionesPedidoTest` (HU015): la cocina no puede preparar pedidos sin pago, entregar pedidos no listos ni retroceder estados.
+
+### Variables nuevas
+
+- `APP_UPB_REVISOR_CLAVE`: clave del encargado de la universidad. Agrégala a tu `.env` (ver `.env.example`) y reconstruye con `docker compose up --build -d`. No requiere migraciones de base de datos.
+

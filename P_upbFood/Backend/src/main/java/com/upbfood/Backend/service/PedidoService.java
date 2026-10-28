@@ -208,6 +208,43 @@ public class PedidoService {
         );
     }
 
+    /**
+     * HU027: historial de pedidos del cliente. Exige correo y teléfono para no
+     * exponer pedidos de otras personas con un solo dato de contacto.
+     */
+    public List<Map<String, Object>> obtenerHistorialCliente(String correo, String telefono) {
+        String correoNorm = correo == null ? "" : correo.trim().toLowerCase();
+        String telefonoDigitos = telefono == null ? "" : telefono.replaceAll("\\D", "");
+
+        if (correoNorm.isEmpty() || telefonoDigitos.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Ingresa el correo y el teléfono con los que hiciste tus pedidos.");
+        }
+
+        return jdbcTemplate.queryForList(
+                """
+                SELECT p.pedido_id,
+                       p.codigo_seguimiento,
+                       r.nombre_restaurante,
+                       p.estado,
+                       p.total,
+                       p.fecha,
+                       p.hora_recogida,
+                       (SELECT COALESCE(SUM(dp.cantidad), 0)
+                          FROM detalle_pedido dp
+                         WHERE dp.pedido_id = p.pedido_id) AS cantidad_productos
+                FROM pedido p
+                JOIN restaurante r ON r.restaurante_id = p.restaurante_id
+                WHERE LOWER(TRIM(p.correo_cliente)) = ?
+                  AND REGEXP_REPLACE(p.telefono_cliente, '\\D', '', 'g') = ?
+                ORDER BY p.fecha DESC
+                LIMIT 50
+                """,
+                correoNorm,
+                telefonoDigitos
+        );
+    }
+
     public List<Map<String, Object>> obtenerDetalle(Integer pedidoId) {
         return jdbcTemplate.queryForList(
                 """

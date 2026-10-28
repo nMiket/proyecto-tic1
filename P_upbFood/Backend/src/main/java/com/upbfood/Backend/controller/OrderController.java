@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -177,6 +178,32 @@ public class OrderController {
         response.put("clienteNombre", pedido.get("nombre_cliente"));
         response.put("tiempoPedido", pedido.get("tiempo_pedido"));
         response.put("productos", pedidoService.obtenerDetalle(((Number) pedido.get("pedido_id")).intValue()));
+
+        return ResponseEntity.ok(response);
+    }
+
+    // HU027: historial de pedidos del cliente por correo y teléfono.
+    @GetMapping("/historial")
+    public ResponseEntity<List<Map<String, Object>>> historialCliente(
+            @RequestParam(required = false) String correo,
+            @RequestParam(required = false) String telefono
+    ) {
+        List<Map<String, Object>> pedidos = pedidoService.obtenerHistorialCliente(correo, telefono);
+
+        List<Map<String, Object>> response = pedidos.stream()
+                .map(pedido -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("id", pedido.get("pedido_id"));
+                    item.put("codigoSeguimiento", pedido.get("codigo_seguimiento"));
+                    item.put("nombreRestaurante", pedido.get("nombre_restaurante"));
+                    item.put("estado", pedido.get("estado"));
+                    item.put("total", pedido.get("total"));
+                    item.put("fecha", pedido.get("fecha"));
+                    item.put("horaRecogida", pedido.get("hora_recogida"));
+                    item.put("cantidadProductos", pedido.get("cantidad_productos"));
+                    return item;
+                })
+                .toList();
 
         return ResponseEntity.ok(response);
     }

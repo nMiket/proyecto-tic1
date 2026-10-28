@@ -66,6 +66,36 @@ public class AprobacionSolicitudService {
         );
     }
 
+    /**
+     * HU031: rechazo desde el panel del encargado de la universidad.
+     */
+    @Transactional
+    public SolicitudRegistroRestaurante rechazar(Long solicitudId, String observacion) {
+        SolicitudRegistroRestaurante solicitud =
+                solicitudRepository.buscarPorIdParaRevision(solicitudId)
+                        .orElseThrow(() -> new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "No se encontró la solicitud."
+                        ));
+
+        if (!"PENDIENTE".equals(solicitud.getEstado())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Esta solicitud ya fue revisada."
+            );
+        }
+
+        solicitud.setEstado("RECHAZADA");
+        solicitud.setFechaRevision(LocalDateTime.now());
+        solicitud.setObservacionRevision(
+                observacion == null || observacion.isBlank() ? null : observacion.trim()
+        );
+        solicitud.setTokenAprobacionHash(null);
+        solicitud.setTokenRechazoHash(null);
+        solicitud.setTokenRevisionExpiracion(null);
+        return solicitudRepository.save(solicitud);
+    }
+
     @Transactional
     public SolicitudRegistroRestaurante rechazarPorToken(String tokenHash, String observacion) {
         SolicitudRegistroRestaurante solicitud =

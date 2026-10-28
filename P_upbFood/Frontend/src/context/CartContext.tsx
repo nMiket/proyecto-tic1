@@ -32,6 +32,8 @@ export type CartProduct = {
   tiempoEstimadoMin?: number
   imagenUrl?: string
   adiciones?: IngredienteExtra[]
+  // Adiciones habilitadas para el producto: permiten editar los extras desde la revisión del pedido (HU008).
+  ingredientesExtra?: IngredienteExtra[]
 }
 
 export type CartItem = CartProduct & {
@@ -49,6 +51,7 @@ type CartContextValue = {
   quitarProducto: (cartKey: string) => void
   eliminarProducto: (cartKey: string) => void
   actualizarObservaciones: (cartKey: string, observaciones: string) => void
+  actualizarAdiciones: (cartKey: string, adiciones: IngredienteExtra[]) => void
   vaciarCarrito: () => void
 }
 
@@ -107,6 +110,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
       actualizarObservaciones: (cartKey, observaciones) => setItems((current) => current.map((item) => (
         item.cartKey === cartKey ? { ...item, observaciones } : item
       ))),
+      actualizarAdiciones: (cartKey, adiciones) => setItems((current) => {
+        const actual = current.find((item) => item.cartKey === cartKey)
+        if (!actual) return current
+        const actualizado: CartItem = { ...actual, adiciones }
+        const nuevaKey = getCartKey(actualizado)
+        if (nuevaKey === cartKey) {
+          return current.map((item) => (item.cartKey === cartKey ? actualizado : item))
+        }
+        // Si ya existe una línea con la misma combinación de extras, se unifican las cantidades.
+        const existente = current.find((item) => item.cartKey === nuevaKey)
+        if (existente) {
+          return current
+            .filter((item) => item.cartKey !== cartKey)
+            .map((item) => (
+              item.cartKey === nuevaKey
+                ? {
+                    ...item,
+                    cantidad: item.cantidad + actual.cantidad,
+                    observaciones: [item.observaciones, actual.observaciones]
+                      .map((nota) => nota.trim())
+                      .filter(Boolean)
+                      .join(', '),
+                  }
+                : item
+            ))
+        }
+        return current.map((item) => (item.cartKey === cartKey ? { ...actualizado, cartKey: nuevaKey } : item))
+      }),
       quitarProducto: (cartKey) => {
         setItems((current) => current.flatMap((item) => {
           if (item.cartKey !== cartKey) return [item]

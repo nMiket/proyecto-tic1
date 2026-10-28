@@ -25,6 +25,9 @@ import FormularioCliente from './components/FormularioCliente'
 import PagoPage from './components/PagoPage'
 import { DashboardCocina } from './components/DashboardCocina'
 import AdminDashboardPage from './components/AdminDashboardPage'
+import HistorialPedidosPage from './components/HistorialPedidosPage'
+import PanelUniversidadPage from './components/PanelUniversidadPage'
+import EstadoAccesoPage from './components/EstadoAccesoPage'
 import './App.css'
 
 export function App() {
@@ -144,6 +147,13 @@ const rutaPanelPrincipal = soloCocina
               >
                 Consultar pedido
               </NavLink>
+
+              <NavLink
+                to="/historial"
+                className={({ isActive }) => (isActive ? 'active' : '')}
+              >
+                Historial
+              </NavLink>
             </>
           ) : (
             <>
@@ -219,6 +229,13 @@ const rutaPanelPrincipal = soloCocina
                   asignaciones={asignaciones}
                   onLogout={handleLogout}
                 />
+              ) : isLoggedIn ? (
+                // HU024: el personal de cocina no puede abrir el panel del dueño.
+                <EstadoAccesoPage
+                  tipo="prohibido"
+                  destino={tieneRolCocina ? '/admin/cocina' : '/'}
+                  textoDestino={tieneRolCocina ? 'Ir al panel de cocina' : 'Volver al inicio'}
+                />
               ) : (
                 <Navigate to="/admin" replace />
               )
@@ -230,6 +247,8 @@ const rutaPanelPrincipal = soloCocina
             element={
               isLoggedIn && (tieneRolDueno || tieneRolCocina) && restauranteCocinaId !== null ? (
                 <DashboardCocina restauranteId={restauranteCocinaId} onLogout={handleLogout} />
+              ) : isLoggedIn && !tieneAccesoAdmin ? (
+                <EstadoAccesoPage tipo="prohibido" />
               ) : (
                 <Navigate
                   to={tieneAccesoAdmin ? '/admin/dashboard' : '/admin'}
@@ -240,9 +259,12 @@ const rutaPanelPrincipal = soloCocina
           />
 
           <Route path="/pedido" element={<PedidoPage />} />
-          <Route path="/historial" element={<HistorialPage />} />
+          <Route path="/historial" element={<HistorialPedidosPage />} />
           <Route path="/cliente" element={<FormularioCliente />} />
           <Route path="/pago" element={<PagoPage />} />
+          <Route path="/upb/solicitudes" element={<PanelUniversidadPage />} />
+          <Route path="/acceso-denegado" element={<EstadoAccesoPage tipo="prohibido" />} />
+          <Route path="*" element={<EstadoAccesoPage tipo="no-encontrado" />} />
         </Routes>
       </CartProvider>
     </main>
@@ -635,51 +657,6 @@ function PedidoPage() {
           </div>
         </div>
       </div>
-    </section>
-  )
-}
-
-function HistorialPage() {
-  const [ultimoPedido] = useState(() => {
-    try {
-      const raw = localStorage.getItem('upbfood.lastOrder')
-      if (!raw) return null
-      return JSON.parse(raw) as {
-        id?: number
-        codigoSeguimiento?: string
-        total?: number
-        clienteNombre?: string
-      }
-    } catch {
-      return null
-    }
-  })
-
-  return (
-    <section className="hero-card">
-      <h1>Mi último pedido</h1>
-      {ultimoPedido?.codigoSeguimiento ? (
-        <div>
-          <p>
-            Pedido <strong>#{ultimoPedido.id}</strong> · Total:{' '}
-            <strong>${Number(ultimoPedido.total ?? 0).toLocaleString('es-CO')}</strong>
-          </p>
-          <p>Código de seguimiento: <strong>{ultimoPedido.codigoSeguimiento}</strong></p>
-          <Link
-            className="directory-tracking-cta"
-            to={`/seguimiento/${ultimoPedido.codigoSeguimiento}`}
-          >
-            Ver estado en tiempo real
-          </Link>
-        </div>
-      ) : (
-        <div>
-          <p>Aún no tienes pedidos recientes guardados en este navegador.</p>
-          <Link className="directory-tracking-cta" to="/seguimiento">
-            Buscar un pedido por código o número
-          </Link>
-        </div>
-      )}
     </section>
   )
 }
